@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang=\“en\“ class="">
+<head>
+	<meta charset='utf-8'><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+	<title>Digital meter - Main Menu</title>
+	<style>
+		div,
+		fieldset,
+		input,
+		select {
+			padding: 5px;
+			font-size: 1em;
+		}
+
+		fieldset {
+			background: #4f4f4f;
+		}
+
+		p {
+			margin: 0.5em 0;
+		}
+
+		input {
+			width: 100%;
+			box-sizing: border-box;
+			-webkit-box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			background: #dddddd;
+			color: #000000;
+		}
+
+		input[type=checkbox],
+		input[type=radio] {
+			width: 1em;
+			margin-right: 6px;
+			vertical-align: -1px;
+		}
+
+		input[type=range] {
+			width: 99%;
+		}
+
+		select {
+			width: 100%;
+			background: #dddddd;
+			color: #000000;
+		}
+
+		textarea {
+			resize: vertical;
+			width: 98%;
+			height: 318px;
+			padding: 5px;
+			overflow: auto;
+			background: #1f1f1f;
+			color: #65c115;
+		}
+
+		body {
+			text-align: center;
+			font-family: verdana, sans-serif;
+			background: #252525;
+		}
+
+		td {
+			padding: 0px;
+		}
+
+		button {
+			border: 0;
+			border-radius: 0.3rem;
+			background: #1fa3ec;
+			color: #faffff;
+			line-height: 2.4rem;
+			font-size: 1.2rem;
+			width: 100%;
+			-webkit-transition-duration: 0.4s;
+			transition-duration: 0.4s;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background: #0e70a4;
+		}
+
+		.bred {
+			background: #d43535;
+		}
+
+		.bred:hover {
+			background: #931f1f;
+		}
+
+		.bgrn {
+			background: #47c266;
+		}
+		.save h3 {
+		  color: green;
+		  text-align: center;
+		}
+		.bgrn:hover {
+			background: #5aaf6f;
+		}
+
+		a {
+			color: #1fa3ec;
+			text-decoration: none;
+		}
+
+		.p {
+			float: left;
+			text-align: left;
+		}
+
+		.q {
+			float: right;
+			text-align: right;
+		}
+
+		.r {
+			border-radius: 0.3em;
+			padding: 2px;
+			margin: 6px 2px;
+		}
+	</style>
+</head>
+<script>
+setTimeout(function() {
+  getSaveState();
+}, 500); //500mSeconds update rate
+function getSSIDlist() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (this.status == 200) {
+      document.getElementById("StateValue").innerHTML =
+      this.responseText;
+    }
+  };
+  xhttp.open("GET", "ssidlist", true);
+  xhttp.send();
+}
+function getSaveState() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (this.status == 200) {
+      document.getElementById("SaveMessage").innerHTML =
+      this.responseText;
+    }
+  };
+  xhttp.open("GET", "settingssaved", true);
+  xhttp.send();
+}
+function mouseoverPass(obj) {
+  var obj = document.getElementById('myPassword');
+  obj.type = "text";
+}
+function mouseoutPass(obj) {
+  var obj = document.getElementById('myPassword');
+  obj.type = "password";
+}
+</script>
+
+<body onload="getSSIDlist()">
+	<div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+		<div style='text-align:center;color:#eaeaea;'>
+			<noscript>To use the digital meter dongle, please enable JavaScript<br></noscript>
+			<h2>Digital meter dongle</h2>
+			<h3>Wifi configuration</h3>
+		</div>
+		<p><form method="get" action="setap"><label>SSID:</label></p>
+		<p id = "StateValue">STATE</p>
+		<p>Password:</p>
+		<p style="vertical-align: middle;"><input name="pass" length=64 type="password" id="myPassword" style="width:88%">&nbsp;&nbsp;<img src="eye" style="vertical-align: middle;" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();" /></p>
+		<p><input type="submit" class='button bgrn'></form></p>
+		<p><div style='text-align:center;color:green;' id = "SaveMessage" class="save"><h3></h3></div></p>
+		<p><form action='/wificn' method='get'><input type="hidden" name="rescan" value="true" /> <button>Rescan wifi</button></form></p>
+		<p><div></div></p>
+		<p><form action='/config' method='get'><button>Configuration</button></form></p>
+		<p><form action='/' method='get'><button>Main menu</button></form></p>
+		<p><div></div></p>
+		<p><form action='.' method='get' onsubmit='return confirm("Confirm Restart");'><button name='rst' class='button bred'>Reset configuration</button></form></p>
+		<div style='text-align:right;font-size:11px;'><hr/><a href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle V0.1 by plan-d.io</a></div>
+	</div>
+</body>
+</html>

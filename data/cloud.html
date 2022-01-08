@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang=\“en\“ class="">
+<head>
+	<meta charset='utf-8'><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+	<title>Digital meter - Configure cloud</title>
+</head>
+	<style>
+		div,
+		fieldset,
+		input,
+		select {
+			padding: 5px;
+			font-size: 1em;
+		}
+
+		fieldset {
+			background: #4f4f4f;
+		}
+
+		p {
+			margin: 0.5em 0;
+		}
+
+		input {
+			width: 100%;
+			box-sizing: border-box;
+			-webkit-box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			background: #dddddd;
+			color: #000000;
+		}
+
+		input[type=checkbox],
+		input[type=radio] {
+			width: 1em;
+			margin-right: 6px;
+			vertical-align: -1px;
+		}
+
+		input[type=range] {
+			width: 99%;
+		}
+
+		select {
+			width: 100%;
+			background: #dddddd;
+			color: #000000;
+		}
+
+		textarea {
+			resize: vertical;
+			width: 98%;
+			height: 318px;
+			padding: 5px;
+			overflow: auto;
+			background: #1f1f1f;
+			color: #65c115;
+		}
+
+		body {
+			text-align: center;
+			font-family: verdana, sans-serif;
+			background: #252525;
+		}
+
+		td {
+			padding: 0px;
+		}
+
+		button {
+			border: 0;
+			border-radius: 0.3rem;
+			background: #1fa3ec;
+			color: #faffff;
+			line-height: 2.4rem;
+			font-size: 1.2rem;
+			width: 100%;
+			-webkit-transition-duration: 0.4s;
+			transition-duration: 0.4s;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background: #0e70a4;
+		}
+
+		.bred {
+			background: #d43535;
+		}
+
+		.bred:hover {
+			background: #931f1f;
+		}
+
+		.bgrn {
+			background: #47c266;
+		}
+		.save h3 {
+		  color: green;
+		  text-align: center;
+		}
+		.bgrn:hover {
+			background: #5aaf6f;
+		}
+
+		a {
+			color: #1fa3ec;
+			text-decoration: none;
+		}
+
+		.p {
+			float: left;
+			text-align: left;
+		}
+
+		.q {
+			float: right;
+			text-align: right;
+		}
+
+		.r {
+			border-radius: 0.3em;
+			padding: 2px;
+			margin: 6px 2px;
+		}
+	</style>
+<script>
+setTimeout(function() {
+  getSaveState();
+}, 200); //200mSeconds update rate
+
+function getJsonData() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (this.status == 200) {
+	 var jsonResponse = JSON.parse(this.responseText);
+      if(jsonResponse.innerHTML){   
+          var innerHtmlKeys = Object.keys(jsonResponse.innerHTML);
+		  innerHtmlKeys.forEach((key, index) => {
+			var element = document.getElementById(key);
+			if (element) {
+				element.innerHTML = jsonResponse.innerHTML[key].value;
+			}
+		  });
+      }
+      if(jsonResponse.innerValues){   
+          var innerValueKeys = Object.keys(jsonResponse.innerValues);
+		  innerValueKeys.forEach((key, index) => {
+			var element = document.getElementById(key);
+			if (element) {
+				element.value = jsonResponse.innerValues[key].value;
+			}
+		  });
+      }
+      if(jsonResponse.innerSrc){          
+          var innerSrckeys = Object.keys(jsonResponse.innerSrc);
+		  innerSrckeys.forEach((key, index) => {
+			var element = document.getElementById(key);
+			if (element) {
+				element.src = jsonResponse.innerSrc[key].value;
+			}
+		  });
+      }
+      if(jsonResponse.innerTitles){     
+          var innerTitlekeys = Object.keys(jsonResponse.innerTitles);
+		  innerTitlekeys.forEach((key, index) => {
+			var element = document.getElementById(key);
+			if (element) {
+				element.title = jsonResponse.innerTitles[key].value;
+			}
+		  });
+      }
+      if(jsonResponse.innerChecks){     
+          var innerCheckkeys = Object.keys(jsonResponse.innerChecks);
+		  innerCheckkeys.forEach((key, index) => {
+			var element = document.getElementById(key);
+			if (element && jsonResponse.innerChecks[key]['value'] == true) {
+				element.checked = true;
+			}
+		  });
+      }
+    }
+  };
+  xhttp.open("GET", "configData", true);
+  xhttp.send();
+}
+
+function getSaveState() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (this.status == 200) {
+      document.getElementById("SaveMessage").innerHTML =
+      this.responseText;
+    }
+  };
+  xhttp.open("GET", "settingssaved", true);
+  xhttp.send();
+}
+
+function mouseoverPass(obj) {
+  var obj = document.getElementById('mqtt_pass');
+  obj.type = "text";
+}
+function mouseoutPass(obj) {
+  var obj = document.getElementById('mqtt_pass');
+  obj.type = "password";
+}
+
+
+</script>
+
+<body onload="getJsonData()">
+	<div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+		<div style='text-align:center;color:#eaeaea;'>
+			<noscript>To use the digital meter dongle, please enable JavaScript<br></noscript>
+			<h2>Digital meter dongle</h2>
+			<h3><span id="HostValue">STATE</span></h3>
+			<h3><span id="InfoMessage" style='text-align:center;color:red;' ></span></h3>
+			<h3>Cloud configuration</h3>
+		</div>
+		<h4>MQTT configuration</h4>
+		<p><form method="get" action="setcloud">
+		<label><input name ="mqtt_en" type="checkbox" id="mqtt_en" value = "true" />Use MQTT client</label>
+		<p>Broker hostname or IP address:</p>
+		<p style="vertical-align: middle;"><input name="mqtt_host" type="text" id="mqtt_host"/></p>
+		<p>Broker port:</p>
+		<p style="vertical-align: middle;"><input name="mqtt_port" type="number" id="mqtt_port"/></p>
+		<label><input name ="mqtt_tls" type="checkbox" id="mqtt_tls" value = "true" />Use TLS (SSL)</label>
+		<p>Client ID:</p>
+		<p style="vertical-align: middle;"><input name="mqtt_id" type="text" id="mqtt_id"></p>
+		<label><input name ="mqtt_auth" type="checkbox" id="mqtt_auth" value = "true" />Use MQTT auth (optional)</label>
+		<p>Client username:</p>
+		<p style="vertical-align: middle;"><input name="mqtt_user" type="text" id="mqtt_user"></p>
+		<p>Client password:</p>
+		<p style="vertical-align: middle;"><input name="mqtt_pass" length=64 type="password" id="mqtt_pass" style="width:88%">&nbsp;&nbsp;<img src="eye" style="vertical-align: middle;" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();" /></p>
+		<label><input name ="ha_en" type="checkbox" id="ha_en" value = "true" />Use Home Assistant MQTT discovery</label>
+		<h4>EnergieID integration</h4>
+		<label><input name ="eid_en" type="checkbox" id="eid_en" value = "true" />Send metering data to EnergieID</label>
+		<p>Webhook URL:</p>
+		<p style="vertical-align: middle;"><input name="eid_webhook" type="text" id="eid_webhook"/></p>
+		<h4>General settings</h4>
+		<p>Throttle data push (sec):</p>
+		<p style="vertical-align: middle;"><input name="upload_throttle" type="number" id="upload_throttle"/></p>
+		<p><input type="submit" class='button bgrn'></form></p>
+		<p><div  style='text-align:center;color:green;' id = "SaveMessage" class="save"><h3></h3></div></p>
+		<p><div></div></p>
+		<p><form action='/config' method='get'><button>Configuration</button></form></p>
+		<p><form action='/' method='get'><button>Main menu</button></form></p>
+		<p><div></div></p>
+		<p><form action='.' method='get' onsubmit='return confirm("Confirm Restart");'><button name='rst' class='button bred'>Reset configuration</button></form></p>
+		<div style='text-align:right;font-size:11px;'><hr/><a href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle V0.1 by plan-d.io</a></div>
+	</div>
+</body>
+</html>
