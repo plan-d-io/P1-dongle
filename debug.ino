@@ -1,0 +1,76 @@
+void get_reset_reason(RESET_REASON reason){
+  switch ( reason){
+    case 1 : resetReason = "POWERON_RESET";break;          /**<1,  Vbat power on reset*/
+    case 3 : resetReason = "SW_RESET";break;               /**<3,  Software reset digital core*/
+    case 4 : resetReason = "OWDT_RESET";break;             /**<4,  Legacy watch dog reset digital core*/
+    case 5 : resetReason = "DEEPSLEEP_RESET";break;        /**<5,  Deep Sleep reset digital core*/
+    case 6 : resetReason = "SDIO_RESET";break;             /**<6,  Reset by SLC module, reset digital core*/
+    case 7 : resetReason = "TG0WDT_SYS_RESET";break;       /**<7,  Timer Group0 Watch dog reset digital core*/
+    case 8 : resetReason = "TG1WDT_SYS_RESET";break;       /**<8,  Timer Group1 Watch dog reset digital core*/
+    case 9 : resetReason = "RTCWDT_SYS_RESET";break;       /**<9,  RTC Watch dog Reset digital core*/
+    case 10 : resetReason = "INTRUSION_RESET";break;       /**<10, Instrusion tested to reset CPU*/
+    case 11 : resetReason = "TGWDT_CPU_RESET";break;       /**<11, Time Group reset CPU*/
+    case 12 : resetReason = "SW_CPU_RESET";break;          /**<12, Software reset CPU*/
+    case 13 : resetReason = "RTCWDT_CPU_RESET";break;      /**<13, RTC Watch dog Reset CPU*/
+    case 14 : resetReason = "EXT_CPU_RESET";break;         /**<14, for APP CPU, reseted by PRO CPU*/
+    case 15 : resetReason = "RTCWDT_BROWN_OUT_RESET";break;/**<15, Reset when the vdd voltage is not stable*/
+    case 16 : resetReason = "RTCWDT_RTC_RESET";break;      /**<16, RTC Watch dog reset digital core and rtc module*/
+    default : resetReason = "NO_MEAN";
+  }
+}
+
+void getHeapDebug(){
+  freeHeap = ESP.getFreeHeap()/1000.0;
+  minFreeHeap = ESP.getMinFreeHeap()/1000.0;
+  maxAllocHeap = ESP.getMaxAllocHeap()/1000.0;
+  if(mqtt_en && debugInfo) pushDebugValues();
+}
+
+void pushDebugValues(){
+  time_t now;
+  unsigned long dtimestamp = time(&now);
+  for(int i = 0; i < 5; i++){
+    String chanName = "";
+    String dtopic = "";
+    DynamicJsonDocument doc(128);
+    if(i == 0){
+      chanName = "reboots";
+      doc["friendly_name"] = "Reboots";
+      doc["value"] = bootcount;
+    }
+    else if(i == 1){
+      chanName = "last_reset_reason";
+      doc["friendly_name"] = "Last reset reason";
+      doc["value"] = resetReason;
+    }
+    else if(i == 2){
+      chanName = "free_heap_size";
+      doc["friendly_name"] = "Free heap size";
+      doc["unit_of_measurement"] = "kB";
+      doc["value"] = freeHeap;
+    }
+    else if(i == 3){
+      chanName = "max_allocatable_block";
+      doc["friendly_name"] = "Allocatable block size";
+      doc["unit_of_measurement"] = "kB";
+      doc["value"] = maxAllocHeap;
+    }
+    else if(i == 4){
+      chanName = "min_free_heap";
+      doc["friendly_name"] = "Lowest free heap size";
+      doc["unit_of_measurement"] = "kB";
+      doc["value"] = minFreeHeap;
+    }
+    doc["entity"] = apSSID;
+    doc["sensorId"] = chanName;
+    doc["timestamp"] = dtimestamp;
+    dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
+    String jsonOutput;
+    serializeJson(doc, jsonOutput);
+    if(mqtt_en){
+      if(sinceLastUpload >= upload_throttle){
+       pubMqtt(dtopic, jsonOutput, false);
+      }
+    }
+  }
+}
