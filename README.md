@@ -28,6 +28,6 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
 > install through the library manager
 - (Alternatively, use the precompiled bin file available under /bin with esptool.py)
 - Flash the sketch to the ESP32 using the following settings:
---Flash mode: DIO
---Partion mode: minimal SPIFFS
+    Flash mode: DIO
+    Partion mode: minimal SPIFFS
 - After flashing, use the ESP32 Sketch Data Upload function to transfer the web interface files to the ESP32
