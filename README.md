@@ -32,5 +32,19 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
   - Partion mode: minimal SPIFFS
 - After flashing, use the ESP32 Sketch Data Upload function to transfer the web interface files to the ESP32
 ### Direct flash with esptool
-You can download a binary compiled for ESP32-PICO-D4 chips (e.g. M5 Atom Lite) and flash this directly with the Espressif esptool with the following options (change the serial port and binary name)
-> python3 -m esptool --chip esp32 --port /dev/YOURSERIALPORTHERE --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_dio_80m.bin 0x10000 P1-dongle-VX.YY.ino.bin 0x8000 P1-dongle-VX.YY.ino.partitions.bin
+You can download a binary compiled for ESP32-PICO-D4 chips (e.g. M5 Atom Lite) from the /bin folder and flash this directly with the Espressif esptool. Use the following options (change the serial port and binary name)
+> python3 -m esptool --chip esp32 --port **/dev/YOURSERIALPORTHERE** --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_dio_80m.bin 0x10000 P1-dongle-V**X.YY**.ino.bin 0x8000 P1-dongle-V**X.YY**.ino.partitions.bin
+The binaries in /bin are kept up to date to the latest version, as they are also downloaded by the dongle when there firmware auto-update is enabled.
+
+## Hardware
+The firmware is built for and tested on ESP32-PICO-D4 chips, but should work on any ESP32 flavour.
+
+The following hardware is recommended:
+- [ATOM Lite ESP32 IoT Development Kit](https://shop.m5stack.com/products/atom-lite-esp32-development-kit?variant=32259605200986)
+- [ATOMIC DIY Proto Kit for ATOM](https://shop.m5stack.com/products/atomic-proto-kit)
+- RJ12 to 6 Pins Dupont-Jumper Adapter
+
+The P1 port is 5V TTL level, while the ESP32 GPIO are rated 3.3V. A schematic for a level shifter is provided in the /hardware folder. You can solder these components onto the proto PCB provided with the ATOMIC DIY Proto Kit. Alternatively, the /hardware folder also contains the files to build a PCB which fits in the ATOMIC DIY Proto Kit housing.
+
+When using this hardware, the end result should look something like this.
+![P1 dongle using the M5 Atom](https://github.com/plan-d-io/P1-dongle/blob/main/hardware/P1-dongle.PNG?raw=true)
