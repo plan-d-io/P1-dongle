@@ -92,6 +92,7 @@ The USB-C port of the cookie is only used for debugging. **Never plug in this US
 Open the yellow cover in the lower left corner of the digital meter. Plug the other end of the cable into the P1 port on the **right**.
 
 ![gebruikerspoorten-digitale-meter.jpg](https://docs.cofybox.io/gebruikerspoorten-digitale-meter.jpg)
+
 *The left port is the S1 port and is not used by the cookie.*
 
 The cookie is now connected to the meter and is starting up. The LED should go from red to green.
