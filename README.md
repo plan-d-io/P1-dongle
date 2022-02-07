@@ -21,7 +21,7 @@ These features are partially implemented or planned to be implemented.
 
 As this is a non-commercial development, we do not provide any timelines nor guarantees for this functionality.
 
-## Requirements for DIY
+## Requirements for DIY build
 - Arduino IDE
 - ESP32-based development board (M5 Atom Lite recommended)
 - P1 level shifter (M5 Atom hardware design available in /hardware)
