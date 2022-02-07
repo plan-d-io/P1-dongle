@@ -82,13 +82,14 @@ Once the P1-port has been opened, which can take up to a day or more, the P1-coo
 
 ### 2. Attaching the P1-cookie to the P1-port
 >The following assumes you are using the recommended hardware
->
+
 Insert the black end of the RJ-12 to DuPont adapter cable into the cookie, **ensuring the blue cable is at the right side of the cookie** when viewed from above.
 
 ![p1cookie5.png](https://docs.cofybox.io/p1cookie5.png)
 *Incorrectly connecting the cable does not damage the cookie, but prevents it from functioning correctly.
 The USB-C port of the cookie is only used for debugging. **Never plug in this USB port while the cookie is connected to the digital meter!***
 
+>The following assumes you have a Fluvius (Flemish) digital meter
 Open the yellow cover in the lower left corner of the digital meter. Plug the other end of the cable into the P1 port on the **right**.
 
 ![gebruikerspoorten-digitale-meter.jpg](https://docs.cofybox.io/gebruikerspoorten-digitale-meter.jpg)
@@ -108,20 +109,13 @@ After connecting, a webpage should open automatically. If this is not the case, 
  Click on `Configure`. On the next page, click on `Configure wifi`.
  
  ![p1cookie2.png](https://docs.cofybox.io/p1cookie2.png)
-Select the COFY-box wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
+Select your home wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
  
 OPTIONAL: You can check if the COFY-box settings are correct by clicking on `Configure cloud`.
 
  ![p1cookie3.png](https://docs.cofybox.io/p1cookie3.png)
  
-The default settings are:
-- `Use MQTT client`: checked
-- `Broker hostname`: 10.42.0.1
-- `Broker port`: 1833
-- `Client ID`: the name of the P1 cookie (prefilled, same as the wifi name)
-- `Client username`: can be left blank
-- `Client password`: can be left blank
-- `Use Home Assistant MQTT discovery`: checked
+You can select a local or remote MQTT broker and optionally use TLS encryption. You can also enable native integration into Home Assistant through its MQTT discovery protocol.
 
 Click on `Submit query` if you changed anything, and then on `Configuration` to return to the previous menu.
 
