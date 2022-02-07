@@ -109,6 +109,7 @@ After connecting, a webpage should open automatically. If this is not the case, 
  Click on `Configure`. On the next page, click on `Configure wifi`.
  
  ![p1cookie2.png](https://docs.cofybox.io/p1cookie2.png)
+
 Select your home wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
  
 OPTIONAL: You can check if the COFY-box settings are correct by clicking on `Configure cloud`.
