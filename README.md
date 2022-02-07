@@ -22,7 +22,6 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
 - Replace default WiFiClientSecure library in your Arduino library folder with the version included here
 > The default WiFiClientSecure does not support verification of arbitrary TLS certificates,
 > which is required to connect to user provided MQTTS or HTTPS servers. 
-- (Optionally) Increase MQTT_MAX_PACKET_SIZE to 2048 in the PubSubClient library
 - Open and compile the P1-dongle-VX.YY.ino sketch in the Arduino IDE
 > The Arduino IDE will throw errors indicating missing libraries, which you can 
 > install through the library manager
@@ -31,3 +30,4 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
   - Flash mode: DIO
   - Partion mode: minimal SPIFFS
 - After flashing, use the ESP32 Sketch Data Upload function to transfer the web interface files to the ESP32
+### Direct flash
