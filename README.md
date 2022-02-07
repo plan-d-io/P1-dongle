@@ -58,8 +58,8 @@ When using this hardware, the end result should look something like this.
 
 Installing a P1 dongle consists of a few steps:
 1. Opening the P1-port on your digital meter
-2. Attaching the P1-cookie to the P1-port
-3. Connecting the cookie to your COFY-box
+2. Attaching the P1-dongle to the P1-port
+3. Connecting the dongle to your COFY-box
 
 ### 1. Opening the P1-port on your digital meter.
 The P1-port is not enabled by default. You might have to unlock it on your DSO's portal. It might take some time for the activation of the P1-port to take effect.
@@ -80,31 +80,31 @@ The P1-port is not enabled by default. You might have to unlock it on your DSO's
 8. Return to `Poortbeheer`. You should now see a toggle that allows you to open or close the P1-port. Click the toggle, and change the status to `Open`.
 9. Wait until the text changes from `Poort openen...` to `Poort open`. This may take some time.
 
-Once the P1-port has been opened, which can take up to a day or more, the P1-cookie can be connected.
+Once the P1-port has been opened, which can take up to a day or more, the P1-dongle can be connected.
 
-### 2. Attaching the P1-cookie to the P1-port
+### 2. Attaching the P1-dongle to the P1-port
 >The following assumes you are using the recommended hardware
 
-Insert the black end of the RJ-12 to DuPont adapter cable into the cookie, **ensuring the blue cable is at the right side of the cookie** when viewed from above.
+Insert the black end of the RJ-12 to DuPont adapter cable into the dongle, **ensuring the blue cable is at the right side of the dongle** when viewed from above.
 
 ![p1cookie5.png](https://docs.cofybox.io/p1cookie5.png)
-*Incorrectly connecting the cable does not damage the cookie, but prevents it from functioning correctly.
-The USB-C port of the cookie is only used for debugging. **Never plug in this USB port while the cookie is connected to the digital meter!***
+*Incorrectly connecting the cable does not damage the dongle, but prevents it from functioning correctly.
+The USB-C port of the dongle is only used for debugging. **Never plug in this USB port while the dongle is connected to the digital meter!***
 
 >The following assumes you have a Fluvius (Flemish) digital meter
 Open the yellow cover in the lower left corner of the digital meter. Plug the other end of the cable into the P1 port on the **right**.
 
 ![gebruikerspoorten-digitale-meter.jpg](https://docs.cofybox.io/gebruikerspoorten-digitale-meter.jpg)
 
-*The left port is the S1 port and is not used by the cookie.*
+*The left port is the S1 port and is not used by the dongle.*
 
-The cookie is now connected to the meter and is starting up. The LED should go from red to green.
+The dongle is now connected to the meter and is starting up. The LED should go from red to green.
 
-### 3. Connecting the cookie to your wifi
-The cookie must now be connected to your home wifi. Use a smartphone, tablet or laptop and scan for wifi networks. You should see a network named `COFY`, followed by a bunch of letters and number, e.g. `COFY33DC`. Connect to this network. 
+### 3. Connecting the dongle to your wifi
+The dongle must now be connected to your home wifi. Use a smartphone, tablet or laptop and scan for wifi networks. You should see a network named `COFY`, followed by a bunch of letters and number, e.g. `COFY33DC`. Connect to this network. 
 *You might receive an error that this network has no internect connectivity, make sure your device still connects to this network.*
 
-After connecting, a webpage should open automatically. If this is not the case, open a browser and surf to `http://192.168.4.1`. This webpage allows you to view the real-time data from your Fluvius digital meter, as well as configure the settings of the cookie.
+After connecting, a webpage should open automatically. If this is not the case, open a browser and surf to `http://192.168.4.1`. This webpage allows you to view the real-time data from your Fluvius digital meter, as well as configure the settings of the dongle.
 
 ![p1cookie1.png](https://docs.cofybox.io/p1cookie1.png)
 
@@ -114,7 +114,7 @@ After connecting, a webpage should open automatically. If this is not the case, 
 
 Select your home wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
  
-OPTIONAL: You can check if the COFY-box settings are correct by clicking on `Configure cloud`.
+OPTIONAL: You can check configure data endpoints at `Configure cloud`.
 
  ![p1cookie3.png](https://docs.cofybox.io/p1cookie3.png)
  
@@ -124,9 +124,9 @@ Click on `Submit query` if you changed anything, and then on `Configuration` to 
 
 Click on `Main menu`. You have now returned to the start page. 
 
-The cookie needs to be rebooted for the changes to take effect. Click on the red `Restart` button and confirm. The cookie will now reboot. You can close the browser and connect back to your normal wifi network.
+The dongle needs to be rebooted for the changes to take effect. Click on the red `Restart` button and confirm. The dongle will now reboot. You can close the browser and connect back to your normal wifi network.
 
-If the cookie has succesfully connected to the COFY-box wifi, the LED should become blue. If it is green, an error has occured (e.g. you mistyped the wifi password). Repeat the procedure in this paragraph.
+If the dongle has succesfully connected to the COFY-box wifi, the LED should become blue. If it is green, an error has occured (e.g. you mistyped the wifi password). Repeat the procedure in this paragraph.
 
 ## Resetting the dongle
 To reset the dongle, press and hold the LED button for around 2 seconds. After release, the dongle will reboot and function as access point again.
