@@ -60,11 +60,9 @@ Installing a P1 dongle consists of a few steps:
 3. Connecting the cookie to your COFY-box
 
 ### 1. Opening the P1-port on your digital meter.
-The P1-port is not enabled by default^*^. You will have to unlock it on your DSO's portal.
+The P1-port is not enabled by default. You might have to unlock it on your DSO's portal. It might take some time for the activation of the P1-port to take effect.
 
-*\*At the time of writing, we don't yet know the procedure for other regions (Netherlands, Brussels, Wallonia (Ores), Wallonia (Resa), France). If you do, please let us know.*
-
-Note for installers: This action should be taken some time *before* you visit the installation site, as it might take some time for the activation of the P1-port to take effect.
+> We only document the procedure for Flemish digital meters, please check with your DSO for their specific procedure
 
 #### Fluvius (Flanders, BE)
 1. Login to your Fluvius portal via mijn.fluvius.be.
@@ -72,9 +70,9 @@ Note for installers: This action should be taken some time *before* you visit th
 3. Click `Poortbeheer aanvragen`.
 4. Select the electricity meter that you wish to unlock. If your electricity meter is not yet in the list, you can add it here*.
 5. Click `Ga verder`.
-6. Confirm your request and click `Aanvraag bevestigen`*.
+6. Confirm your request and click `Aanvraag bevestigen`.
 
-*\*This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.*
+>This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.*
 
 7. Check your mailbox (e-mail or physical), and follow the instructions.
 8. Return to `Poortbeheer`. You should now see a toggle that allows you to open or close the P1-port. Click the toggle, and change the status to `Open`.
@@ -85,12 +83,12 @@ Once the P1-port has been opened, which can take up to a day or more, the P1-coo
 ### 2. Attaching the P1-cookie to the P1-port
 The P1 cookie comes bundled with a cable. Insert the black end of the cable into the cookie, **ensuring the blue cable is at the right side of the cookie** when viewed from above.
 
-![p1cookie5.png](/p1cookie5.png)
+![p1cookie5.png](https://docs.cofybox.io/p1cookie5.png)
 *Incorrectly connecting the cable does not damage the cookie, but prevents it from functioning correctly.
 The USB-C port of the cookie is only used for debugging. **Never plug in this USB port while the cookie is connected to the digital meter!***
 
 Open the yellow cover in the lower left corner of the digital meter. Plug the other end of the cable into the P1 port on the **right**.
-![gebruikerspoorten-digitale-meter.jpg](/gebruikerspoorten-digitale-meter.jpg)
+![gebruikerspoorten-digitale-meter.jpg](https://docs.cofybox.io/gebruikerspoorten-digitale-meter.jpg)
 *The left port is the S1 port and is not used by the cookie.*
 
 The cookie is now connected to the meter and is starting up. The LED should go from red to green.
@@ -101,16 +99,16 @@ The cookie must now be connected to your home wifi. Use a smartphone, tablet or 
 
 After connecting, a webpage should open automatically. If this is not the case, open a browser and surf to `http://192.168.4.1`. This webpage allows you to view the real-time data from your Fluvius digital meter, as well as configure the settings of the cookie.
 
-![p1cookie1.png](/p1cookie1.png)
+![p1cookie1.png](https://docs.cofybox.io/p1cookie1.png)
 
  Click on `Configure`. On the next page, click on `Configure wifi`.
  
- ![p1cookie2.png](/p1cookie2.png)
+ ![p1cookie2.png](https://docs.cofybox.io/p1cookie2.png)
 Select the COFY-box wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
  
 OPTIONAL: You can check if the COFY-box settings are correct by clicking on `Configure cloud`.
 
- ![p1cookie3.png](/p1cookie3.png)
+ ![p1cookie3.png](https://docs.cofybox.io/p1cookie3.png)
  
 The default settings are:
 - `Use MQTT client`: checked
