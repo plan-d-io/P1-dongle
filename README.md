@@ -125,7 +125,7 @@ After connecting, a webpage should open automatically. If this is not the case, 
 
 Select your home wifi from the `SSID` dropdown list, fill in the wifi password at `Password` and click `Submit query`. A green text should appear indicating the settings have been saved. Return to the previous menu by clicking on `Configuration`.
  
-OPTIONAL: You can check configure data endpoints at `Configure cloud`.
+OPTIONAL: You can configure data endpoints at `Configure cloud`.
 
  ![p1cookie3.png](https://docs.cofybox.io/p1cookie3.png)
  
