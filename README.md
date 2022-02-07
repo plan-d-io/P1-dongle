@@ -80,11 +80,11 @@ The P1-port is not enabled by default. You might have to unlock it on your DSO's
 1. Login to your Fluvius portal via mijn.fluvius.be.
 2. Go to port management `(poortbeheer)`.
 3. Click `Poortbeheer aanvragen`.
-4. Select the electricity meter that you wish to unlock. If your electricity meter is not yet in the list, you can add it here*.
+4. Select the electricity meter that you wish to unlock. If your electricity meter is not yet in the list, you can add it here.
 5. Click `Ga verder`.
 6. Confirm your request and click `Aanvraag bevestigen`.
 
->*This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.
+>This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.
 
 7. Check your mailbox (e-mail or physical), and follow the instructions.
 8. Return to `Poortbeheer`. You should now see a toggle that allows you to open or close the P1-port. Click the toggle, and change the status to `Open`.
