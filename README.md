@@ -18,6 +18,7 @@ These features are partially implemented or planned to be implemented.
 - Multiple HTTP(S) endpoints
 - Configurable data payload
 - Temperature sensor input
+
 As this is a non-commercial development, we do not provide any timelines nor guarantees for this functionality.
 
 ## Requirements for DIY
