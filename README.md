@@ -112,7 +112,8 @@ The dongle is now connected to the meter and is starting up. The LED should go f
 
 ### 3. Connecting the dongle to your wifi
 The dongle must now be connected to your home wifi. Use a smartphone, tablet or laptop and scan for wifi networks. You should see a network named `COFY`, followed by a bunch of letters and number, e.g. `COFY33DC`. Connect to this network. 
-*You might receive an error that this network has no internect connectivity, make sure your device still connects to this network.*
+
+>You might receive an error that this network has no internect connectivity, make sure your device still connects to this network.
 
 After connecting, a webpage should open automatically. If this is not the case, open a browser and surf to `http://192.168.4.1`. This webpage allows you to view the real-time data from your Fluvius digital meter, as well as configure the settings of the dongle.
 
