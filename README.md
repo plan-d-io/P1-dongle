@@ -38,7 +38,6 @@ As this is a non-commercial development, we do not provide any timelines nor gua
 - Open and compile the P1-dongle-V**X.YY**.ino sketch in the Arduino IDE (with **X.YY** the current release number)
 > The Arduino IDE will throw errors indicating missing libraries, which you can 
 > install through the library manager
-- (Alternatively, use the precompiled bin file available under /bin with esptool.py)
 - Flash the sketch to the ESP32 using the following settings:
   - Flash mode: DIO
   - Partion mode: minimal SPIFFS
