@@ -74,7 +74,7 @@ Installing a P1 dongle consists of a few steps:
 ### 1. Opening the P1-port on your digital meter.
 The P1-port is not enabled by default. You might have to unlock it on your DSO's portal. It might take some time for the activation of the P1-port to take effect.
 
-> We only document the procedure for Flemish digital meters, please check with your DSO for their specific procedure
+> We only document the procedure for Flemish digital meters, please check with your DSO for their specific procedure.
 
 #### Fluvius (Flanders, BE)
 1. Login to your Fluvius portal via mijn.fluvius.be.
@@ -84,7 +84,7 @@ The P1-port is not enabled by default. You might have to unlock it on your DSO's
 5. Click `Ga verder`.
 6. Confirm your request and click `Aanvraag bevestigen`.
 
->This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.*
+>*This may trigger a verification step by Fluvius. If your e-mail address is known by your energy supplier (and shared with Fluvius), you will receive a verification e-mail. If no e-mail address is know, you will receive a physical letter in the mail.
 
 7. Check your mailbox (e-mail or physical), and follow the instructions.
 8. Return to `Poortbeheer`. You should now see a toggle that allows you to open or close the P1-port. Click the toggle, and change the status to `Open`.
