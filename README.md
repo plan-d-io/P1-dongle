@@ -129,7 +129,7 @@ OPTIONAL: You can configure data endpoints at `Configure cloud`.
 
  ![p1cookie3.png](https://docs.cofybox.io/p1cookie3.png)
  
-You can select a local or remote MQTT broker and optionally use TLS encryption. You can also enable native integration into Home Assistant through its MQTT discovery protocol.
+You can select a local or remote MQTT broker and optionally use TLS encryption. You can also enable native integration into [Home Assistant](https://www.home-assistant.io/) through its MQTT discovery protocol.
 
 Click on `Submit query` if you changed anything, and then on `Configuration` to return to the previous menu.
 
