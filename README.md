@@ -35,7 +35,7 @@ As this is a non-commercial development, we do not provide any timelines nor gua
 - Replace default WiFiClientSecure library in your Arduino library folder with the version included here
 > The default WiFiClientSecure does not support verification of arbitrary TLS certificates,
 > which is required to connect to user provided MQTTS or HTTPS servers. 
-- Open and compile the P1-dongle-VX.YY.ino sketch in the Arduino IDE
+- Open and compile the P1-dongle-V**X.YY**.ino sketch in the Arduino IDE (with **X.YY** the current release number)
 > The Arduino IDE will throw errors indicating missing libraries, which you can 
 > install through the library manager
 - (Alternatively, use the precompiled bin file available under /bin with esptool.py)
