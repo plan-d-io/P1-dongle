@@ -125,3 +125,6 @@ Click on `Main menu`. You have now returned to the start page.
 The cookie needs to be rebooted for the changes to take effect. Click on the red `Restart` button and confirm. The cookie will now reboot. You can close the browser and connect back to your normal wifi network.
 
 If the cookie has succesfully connected to the COFY-box wifi, the LED should become blue. If it is green, an error has occured (e.g. you mistyped the wifi password). Repeat the procedure in this paragraph.
+
+## Resetting the dongle
+To reset the dongle, press and hold the LED button for around 2 seconds. After release, the dongle will reboot and function as access point again.
