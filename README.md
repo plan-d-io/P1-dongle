@@ -11,11 +11,13 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
 - Privacy first: cloud, or even internet access entirely optional
 - Auto-updating firmware (optional)
 
-## Requirements
+## Requirements for DIY
 - Arduino IDE
 - ESP32-based development board (M5 Atom Lite recommended)
 - P1 level shifter (M5 Atom hardware design available in /hardware)
 - Digital meter with P1 port
+
+>Currently this is a DIY project. If we detect sufficient interest in this project, we might start offering ready-to-use prebuilt versions of the dongle for reasonabl prices.
 
 ## Build process
 ### Using the Arduino IDE
