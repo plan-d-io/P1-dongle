@@ -17,7 +17,7 @@ ESP32-based firmware and hardware to receive, parse, store and forward energy da
 - P1 level shifter (M5 Atom hardware design available in /hardware)
 - Digital meter with P1 port
 
->Currently this is a DIY project. If we detect sufficient interest in this project, we might start offering more ready-to-use versions of the dongle for reasonabl prices.
+>Currently this is a DIY project. If we detect sufficient interest in this project, we might start offering more ready-to-use versions of the dongle for reasonable prices.
 
 ## Build process
 ### Using the Arduino IDE
