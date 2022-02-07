@@ -81,13 +81,16 @@ The P1-port is not enabled by default. You might have to unlock it on your DSO's
 Once the P1-port has been opened, which can take up to a day or more, the P1-cookie can be connected.
 
 ### 2. Attaching the P1-cookie to the P1-port
-The P1 cookie comes bundled with a cable. Insert the black end of the cable into the cookie, **ensuring the blue cable is at the right side of the cookie** when viewed from above.
+>The following assumes you are using the recommended hardware
+>
+Insert the black end of the RJ-12 to DuPont adapter cable into the cookie, **ensuring the blue cable is at the right side of the cookie** when viewed from above.
 
 ![p1cookie5.png](https://docs.cofybox.io/p1cookie5.png)
 *Incorrectly connecting the cable does not damage the cookie, but prevents it from functioning correctly.
 The USB-C port of the cookie is only used for debugging. **Never plug in this USB port while the cookie is connected to the digital meter!***
 
 Open the yellow cover in the lower left corner of the digital meter. Plug the other end of the cable into the P1 port on the **right**.
+
 ![gebruikerspoorten-digitale-meter.jpg](https://docs.cofybox.io/gebruikerspoorten-digitale-meter.jpg)
 *The left port is the S1 port and is not used by the cookie.*
 
