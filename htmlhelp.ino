@@ -66,3 +66,64 @@ String getIndexStatic() {
   serializeJson(indexStatic, output);
   return output;
 }
+
+String getUnit() {
+  StaticJsonDocument<128> unitData;
+  unitData["innerChecks"]["update_auto"]["value"] = update_auto;
+  unitData["innerChecks"]["update_autoCheck"]["value"] = update_autoCheck;
+  /*if(dsmrVersion == 0) unitData["innerValues"]["dsmrVersion"]["value"] = "DSMR P1 V5.0.2 (Fluvius BE)";
+  if(dmActiveTariff == "1") unitData["innerChecks"]["dmActiveTariff"]["value"] = true;
+  else unitData["innerChecks"]["dmActiveTariff"]["value"] = false;
+  if(dmVoltagel1 == "1") unitData["innerChecks"]["dmVoltagel1"]["value"] = true;
+  else unitData["innerChecks"]["dmVoltagel1"]["value"] = false;
+  if(dmVoltagel2 == "1") unitData["innerChecks"]["dmVoltagel2"]["value"] = true;
+  else unitData["innerChecks"]["dmVoltagel2"]["value"] = false;
+  if(dmVoltagel3 == "1") unitData["innerChecks"]["dmVoltagel3"]["value"] = true;
+  else unitData["innerChecks"]["dmVoltagel3"]["value"] = false;
+  if(dmCurrentl1 == "1") unitData["innerChecks"]["dmCurrentl1"]["value"] = true;
+  else unitData["innerChecks"]["dmCurrentl1"]["value"] = false;
+  if(dmCurrentl2 == "1") unitData["innerChecks"]["dmCurrentl2"]["value"] = true;
+  else unitData["innerChecks"]["dmCurrentl2"]["value"] = false;
+  if(dmCurrentl3 == "1") unitData["innerChecks"]["dmCurrentl3"]["value"] = true;
+  else unitData["innerChecks"]["dmCurrentl3"]["value"] = false;
+  if(dmGas == "1") unitData["innerChecks"]["dmGas"]["value"] = true;
+  else unitData["innerChecks"]["dmGas"]["value"] = false;
+  if(dmText == "1") unitData["innerChecks"]["dmText"]["value"] = true;
+  else unitData["innerChecks"]["dmText"]["value"] = false;*/
+  String output;
+  serializeJson(unitData, output);
+  return output;
+}
+
+String getDm() {
+  StaticJsonDocument<840> dmData;
+  if(dsmrVersion == 0) dmData["innerValues"]["dsmrVersion"]["value"] = "DSMR P1 V5.0.2 (Fluvius BE)";
+  dmData["innerChecks"]["dmPowCon"]["value"] = true;
+  dmData["innerChecks"]["dmPowIn"]["value"] = true;
+  dmData["innerChecks"]["dmTotConDay"]["value"] = true;
+  dmData["innerChecks"]["dmTotConNight"]["value"] = true;
+  dmData["innerChecks"]["dmTotInDay"]["value"] = true;
+  dmData["innerChecks"]["dmTotInNight"]["value"] = true;
+  if(dmActiveTariff == "1") dmData["innerChecks"]["dmActiveTariff"]["value"] = true;
+  else dmData["innerChecks"]["dmActiveTariff"]["value"] = false;
+  if(dmVoltagel1 == "1") dmData["innerChecks"]["dmVoltagel1"]["value"] = true;
+  else dmData["innerChecks"]["dmVoltagel1"]["value"] = false;
+  if(dmVoltagel2 == "1") dmData["innerChecks"]["dmVoltagel2"]["value"] = true;
+  else dmData["innerChecks"]["dmVoltagel2"]["value"] = false;
+  if(dmVoltagel3 == "1") dmData["innerChecks"]["dmVoltagel3"]["value"] = true;
+  else dmData["innerChecks"]["dmVoltagel3"]["value"] = false;
+  if(dmCurrentl1 == "1") dmData["innerChecks"]["dmCurrentl1"]["value"] = true;
+  else dmData["innerChecks"]["dmCurrentl1"]["value"] = false;
+  if(dmCurrentl2 == "1") dmData["innerChecks"]["dmCurrentl2"]["value"] = true;
+  else dmData["innerChecks"]["dmCurrentl2"]["value"] = false;
+  if(dmCurrentl3 == "1") dmData["innerChecks"]["dmCurrentl3"]["value"] = true;
+  else dmData["innerChecks"]["dmCurrentl3"]["value"] = false;
+  if(dmGas == "1") dmData["innerChecks"]["dmGas"]["value"] = true;
+  else dmData["innerChecks"]["dmGas"]["value"] = false;
+  if(dmText == "1") dmData["innerChecks"]["dmText"]["value"] = true;
+  else dmData["innerChecks"]["dmText"]["value"] = false;
+  dmData["innerValues"]["trigger_interval"]["value"]  = trigger_interval;
+  String output;
+  serializeJson(dmData, output);
+  return output;
+}

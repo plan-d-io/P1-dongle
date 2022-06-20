@@ -1,4 +1,5 @@
 void splitTelegram(String rawTelegram){
+  sinceMeterCheck = 0;
   mTimeFound = false;
   meterError = true;
   int delimStart = 0;
@@ -128,7 +129,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
   DynamicJsonDocument doc(1024);
   doc["entity"] = "utility_meter";
-  doc["sensorId"] = dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
+  doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
   doc["friendly_name"] = dsmrKeys[dsmrKey][2];
   doc["metric"] = dsmrKeys[dsmrKey][4];
   doc["metricKind"] = dsmrKeys[dsmrKey][5];
@@ -146,10 +147,10 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
 }
 
 void sumMeterTotals(){
-  totCon = totConDay + totConNight;
+  totCon = (totConDay + totConNight)*1.0;
   totConToday = totCon - totConYesterday;
-  totIn = totInDay + totInNight;
-  netPowCon = totPowCon - totPowIn;
+  totIn = (totInDay + totInNight)*1.0;
+  netPowCon = (totPowCon - totPowIn)*1.0;
   gasConToday = totGasCon - gasConYesterday;
   if(dm_time.tm_mday != prevDay){
     totConYesterday = totCon;
@@ -161,29 +162,30 @@ void sumMeterTotals(){
       String totalsTopic = "";
       DynamicJsonDocument doc(1024);
       doc["entity"] = "utility_meter";
-      doc["metric"] = "electricityImport";
+      doc["metric"] = "GridElectricityImport";
       doc["metricKind"] = "cumulative";
       doc["unit"] = "kWh";
       if(i == 0){
         totalsTopic = "total_energy_consumed";
-        doc["friendly_name"] = "Total energy consumed";
+        doc["friendly_name"] = "Utility meter total energy consumed";
         doc["value"] = totCon;
       }
       else if(i == 1){
         totalsTopic = "total_energy_injected";
-        doc["metric"] = "electricityExport";
-        doc["friendly_name"] = "Total energy injected";
+        doc["metric"] = "GridElectricityExport";
+        doc["friendly_name"] = "Utility meter total energy injected";
         doc["value"] = totIn;
       }
       else{
         totalsTopic = "total_active_power";
-        doc["friendly_name"] = "Total active power";
+        doc["metric"] = "GridElectricityPower";
+        doc["friendly_name"] = "Utility meter total active power";
         doc["value"] = netPowCon;
         doc["metricKind"] = "gauge";
         doc["unit"] = "kW";
       }
       doc["timestamp"] = dm_timestamp;
-      doc["sensorId"] = totalsTopic;
+      doc["sensorId"] = "utility_meter." + totalsTopic;
       totalsTopic = "data/devices/utility_meter/" + totalsTopic;
       String jsonOutput;
       serializeJson(doc, jsonOutput);

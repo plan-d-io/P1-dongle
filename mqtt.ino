@@ -1,29 +1,21 @@
 void setupMqtt() {
-  Serial.println("MQTT enabled!");
-  Serial.print("Will connect as ");
-  Serial.print(mqtt_id);
+  String mqttinfo = "MQTT enabled! Will connect as " + mqtt_id;
   if (mqtt_auth) {
-    Serial.print(" using authentication, with username ");
-    Serial.println(mqtt_user);
+    mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
-  else {
-    Serial.println("");
-  }
+  syslog(mqttinfo, 0);
   if(mqtt_tls) mqttclientSecure.setClient(*client);
   else mqttclient.setClient(wificlient);
   /*Set broker location*/
   IPAddress addr;
   if (mqtt_host.length() > 0) {
     if (addr.fromString(mqtt_host)) {
-      Serial.print("MQTT host is IP address ");
-      Serial.println(addr);
+      syslog("MQTT host has IP address " + mqtt_host, 0);
       if(mqtt_tls) mqttclientSecure.setServer(addr, mqtt_port);
       else mqttclient.setServer(addr, mqtt_port);
     }
     else {
-      Serial.print("Trying to resolve MQTT host ");
-      Serial.print(mqtt_host);
-      Serial.print(" to IP address ");
+      syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 0);
       int dotLoc = mqtt_host.lastIndexOf('.');
       String tld = mqtt_host.substring(dotLoc+1);
       if(dotLoc == -1 || tld == "local"){
@@ -41,17 +33,16 @@ void setupMqtt() {
           delay(250);
         }
         if(mdnsretry < 10){
-          Serial.println(addr);
+          syslog("MQTT host has IP address " + addr.toString(), 0);
           if(mqtt_tls) mqttclientSecure.setServer(addr, mqtt_port);
           else mqttclient.setServer(addr, mqtt_port); 
         }
         else{
-          Serial.println(" failed.");
+          syslog("MQTT host IP resolving failed", 3);
           mqttHostError = true;
         } 
       }
       else{
-        Serial.println("... skipped");
         if(mqtt_tls) mqttclientSecure.setServer(mqtt_host.c_str(), mqtt_port);
         else mqttclient.setServer(mqtt_host.c_str(), mqtt_port);
       }
@@ -67,35 +58,47 @@ void connectMqtt() {
     if(mqtt_tls && !clientSecureBusy){
       if(!mqttclientSecure.connected()) {
         disconnected = true;
-        Serial.print("Trying to connect to secure MQTT broker");
-        while(!mqttclientSecure.connected() && mqttretry < 5){
+        if(mqttWasConnected) syslog("Lost connection to secure MQTT broker", 2);
+        syslog("Trying to connect to secure MQTT broker", 0);
+        while(!mqttclientSecure.connected() && mqttretry < 2){
           Serial.print("...");
           if (mqtt_auth) mqttclientSecure.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str());
           else mqttclientSecure.connect(mqtt_id.c_str());
           mqttretry++;
           delay(250);
         }
+        Serial.println("");
       }
     }
     else{
       if(!mqttclient.connected()) {
         disconnected = true;
-        Serial.print("Trying to connect to MQTT broker");
-        while(!mqttclient.connected() && mqttretry < 5){
+        if(mqttWasConnected) syslog("Lost connection to MQTT broker", 2);
+        syslog("Trying to connect to MQTT broker", 0);
+        while(!mqttclient.connected() && mqttretry < 2){
           Serial.print("...");
-          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str());
-          else mqttclient.connect(mqtt_id.c_str());
+          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), "data/devices/utility_meter", 1, true, "offline");
+          else mqttclient.connect(mqtt_id.c_str(), "data/devices/utility_meter", 1, true, "offline");
           mqttretry++;
           delay(250);
         }
+        Serial.println("");
       }
     }
     if(disconnected){
-      if(mqttretry < 5){
-        Serial.println(" success!");
+      if(mqttretry < 2){
+        syslog("Connected to MQTT broker", 0);
+        if(mqtt_tls){
+          mqttclientSecure.publish("data/devices/utility_meter", "online", true);
+        }
+        else{
+          mqttclient.publish("data/devices/utility_meter", "online", true);
+        }
+        mqttClientError = false;
+        mqttWasConnected = true;
       }
       else{
-        Serial.println(" failed.");
+        syslog("Failed to connect to MQTT broker", 3);
         mqttClientError = true;
       }
     }
@@ -106,7 +109,7 @@ void connectMqtt() {
 }
 
 void pubMqtt(String topic, String payload, boolean retain){
-  if(mqtt_en){
+  if(mqtt_en && !mqttClientError){
     if(mqtt_tls){
       if(mqttclientSecure.connected()){
         mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain);
@@ -117,54 +120,58 @@ void pubMqtt(String topic, String payload, boolean retain){
         mqttclient.publish(topic.c_str(), payload.c_str(), retain);
       }
     }
-  } 
+  }
 }
 
 void haAutoDiscovery(boolean eraseMeter){
-  if(ha_en && mqtt_en){
+  if(ha_en && mqtt_en && !mqttClientError){
+    syslog("Performing Home Assistant MQTT autodiscovery", 0);
     int channels = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
     for(int dsmrKey = 0; dsmrKey < channels+4; dsmrKey++){
       String chanName = "";
       DynamicJsonDocument doc(1024);
       if(dsmrKey < channels){
-        chanName = dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
-        doc["name"] = dsmrKeys[dsmrKey][2];
+        chanName = String("utility_meter_") + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
+        doc["name"] = String("Utility meter ") + dsmrKeys[dsmrKey][2];
         if(dsmrKeys[dsmrKey][6] != "") doc["device_class"] = dsmrKeys[dsmrKey][6];
         if(dsmrKeys[dsmrKey][6] == "energy") doc["unit_of_measurement"] = "kWh";
         else if(dsmrKeys[dsmrKey][6] == "power") doc["unit_of_measurement"] = "kW";
         else if(dsmrKeys[dsmrKey][6] == "voltage") doc["unit_of_measurement"] = "V";
-        else if(dsmrKeys[dsmrKey][4] == "naturalGasImport") doc["unit_of_measurement"] = "m³";
+        else if(dsmrKeys[dsmrKey][4] == "naturalGasImport") {
+          doc["unit_of_measurement"] = "m³";
+          doc["state_class"] = "total_increasing";
+        }
         //else doc["unit_of_measurement"] = "";
         doc["state_topic"] = dsmrKeys[dsmrKey][3];
       }
       else if(dsmrKey == channels){
-        chanName = "total_energy_consumed";
-        doc["name"] = "Total energy consumed";
+        chanName = "utility_meter_total_energy_consumed";
+        doc["name"] = "Utility meter Total energy consumed";
         doc["device_class"] = "energy";
         doc["unit_of_measurement"] = "kWh";
-        doc["state_topic"] = "data/devices/utility_meter/" + chanName;
-        doc["state_class"] = "measurement";
+        doc["state_topic"] = "data/devices/utility_meter/total_energy_consumed";
+        doc["state_class"] = "total_increasing";
         //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        doc["last_reset_topic"] = "data/devices/utility_meter/" + chanName;
-        doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
+        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_consumed";
+        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+1){
-        chanName = "total_energy_injected";
-        doc["name"] = "Total energy injected";
+        chanName = "utility_meter_total_energy_injected";
+        doc["name"] = "Utility meter Total energy injected";
         doc["device_class"] = "energy";
         doc["unit_of_measurement"] = "kWh";
-        doc["state_topic"] = "data/devices/utility_meter/" + chanName;
-        doc["state_class"] = "measurement";
+        doc["state_topic"] = "data/devices/utility_meter/total_energy_injected";
+        doc["state_class"] = "total_increasing";
         //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        doc["last_reset_topic"] = "data/devices/utility_meter/" + chanName;
-        doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
+        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_injected";
+        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+2){
-        chanName = "total_active_power";
-        doc["name"] = "Total active power";
+        chanName = "utility_meter_total_active_power";
+        doc["name"] = "Utility meter Total active power";
         doc["device_class"] = "power";
         doc["unit_of_measurement"] = "kW";
-        doc["state_topic"] = "data/devices/utility_meter/" + chanName;
+        doc["state_topic"] = "data/devices/utility_meter/total_active_power";
         doc["state_class"] = "measurement";
       }
       else {
@@ -172,50 +179,81 @@ void haAutoDiscovery(boolean eraseMeter){
       }
       doc["unique_id"] = chanName;
       doc["value_template"] = "{{ value_json.value }}";
+      doc["availability_topic"] = "data/devices/utility_meter";
       JsonObject device  = doc.createNestedObject("device");
       JsonArray identifiers = device.createNestedArray("identifiers");
       identifiers.add("P1_utility_meter");
-      device["name"] = "P1 utility meter";
+      device["name"] = "Utility meter";
       device["model"] = "P1 dongle for DSMR compatible utility meters";
       device["manufacturer"] = "plan-d.io";
+      device["configuration_url"] = "http://" + WiFi.localIP().toString();
+      device["sw_version"] = String(fw_ver/100.0);
       String configTopic = "homeassistant/sensor/" + chanName + "/config";
       String jsonOutput ="";
-      if(!eraseMeter) serializeJson(doc, jsonOutput);
+      //Ensure devices are erased before created again
       if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+      delay(100);
+      if(!eraseMeter){
+        serializeJson(doc, jsonOutput);
+        if(chanName.length() > 0){
+          if(dsmrKey < channels){
+            if(meterConfig[dsmrKey] == "1"){
+              pubMqtt(configTopic, jsonOutput, true);
+              //Serial.println(configTopic);
+            }
+          }
+          else{
+            pubMqtt(configTopic, jsonOutput, true);
+            //Serial.println(configTopic);
+          }
+        }
+      }
     }
     if(debugInfo){
-      for(int i = 0; i < 5; i++){
+      firstDebugPush = true;
+      for(int i = 0; i < 7; i++){
         String chanName = "";
         DynamicJsonDocument doc(1024);
         if(i == 0){
-          chanName = String(apSSID ) + "_reboots";
-          doc["name"] = "Reboots";
+          chanName = String(apSSID) + "_reboots";
+          doc["name"] = String(apSSID ) + " Reboots";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboots";
         }
         else if(i == 1){
-          chanName = String(apSSID ) + "_last_reset_reason";
-          doc["name"] = "Last reset reason";
+          chanName = String(apSSID) + "_last_reset_reason";
+          doc["name"] = String(apSSID ) + " Last reset reason";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/last_reset_reason";
         }
         else if(i == 2){
-          chanName = String(apSSID ) + "_free_heap_size";
-          doc["name"] = "Free heap size";
+          chanName = String(apSSID) + "_free_heap_size";
+          doc["name"] = String(apSSID ) + " Free heap size";
           doc["unit_of_measurement"] = "kB";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/free_heap_size";
         }
         else if(i == 3){
-          chanName = String(apSSID ) + "_max_allocatable_block";
-          doc["name"] = "Allocatable block size";
+          chanName = String(apSSID) + "_max_allocatable_block";
+          doc["name"] = String(apSSID ) + " Allocatable block size";
           doc["unit_of_measurement"] = "kB";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/max_allocatable_block";
         }
         else if(i == 4){
-          chanName = String(apSSID ) + "_min_free_heap";
-          doc["name"] = "Lowest free heap size";
+          chanName = String(apSSID) + "_min_free_heap";
+          doc["name"] = String(apSSID ) + " Lowest free heap size";
           doc["unit_of_measurement"] = "kB";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/min_free_heap";
         }
+        else if(i == 5){
+          chanName = String(apSSID) + "_last_reset_reason_verbose";
+          doc["name"] = String(apSSID ) + " Last reset reason (verbose)";
+          doc["state_topic"] = "sys/devices/" + String(apSSID) + "/last_reset_reason_verbose";
+        }
+        else if(i == 6){
+          chanName = String(apSSID) + "_syslog";
+          doc["name"] = String(apSSID ) + " Syslog";
+          doc["state_topic"] = "sys/devices/" + String(apSSID) + "/syslog";
+        }
         doc["unique_id"] = chanName;
+        doc["availability_topic"] = "data/devices/utility_meter";
         doc["value_template"] = "{{ value_json.value }}";
         JsonObject device  = doc.createNestedObject("device");
         JsonArray identifiers = device.createNestedArray("identifiers");
@@ -223,12 +261,18 @@ void haAutoDiscovery(boolean eraseMeter){
         device["name"] = apSSID;
         device["model"] = "P1 dongle debug monitoring";
         device["manufacturer"] = "plan-d.io";
+        device["configuration_url"] = "http://" + WiFi.localIP().toString();
+        device["sw_version"] = String(fw_ver/100.0);
         String configTopic = "homeassistant/sensor/" + chanName + "/config";
         String jsonOutput ="";
-        if(!eraseMeter) serializeJson(doc, jsonOutput);
-        pubMqtt(configTopic, jsonOutput, true);
+        //Temp workaround to ensure devices are erased before created again
+        if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+        if(!eraseMeter){
+          serializeJson(doc, jsonOutput);
+          if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+        }
       }
     }
-    ha_metercreated = true;
+    if(!eraseMeter) ha_metercreated = true;
   }
 }

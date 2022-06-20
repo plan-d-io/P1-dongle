@@ -7,18 +7,18 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook;
-  extern int counter, mqtt_port;
+  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset;
+  extern int counter, mqtt_port, trigger_type, trigger_interval;
   extern unsigned long upload_throttle;
   extern char apSSID[];
-  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave;
+  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, rebootInit, 
+  mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
+  update_autoCheck, update_auto;
   if(request->url() == "/"){
-    request->send(SPIFFS, "/index.html", "text/html");
     counter++;
-    Serial.println("OK");
+    request->send(SPIFFS, "/index.html", "text/html");
   }
   else if(request->url() == "/hostname"){
-    Serial.println("Got hostname");
     request->send(200, "text/plain", apSSID);
   }
   else if(request->url() == "/wifi"){
@@ -57,6 +57,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/config.html", "text/html");
   }
   else if(request->url() == "/wificn"){
+    configSaved = false;
     if(request->hasParam("rescan"))
       scanWifi();
     request->send(SPIFFS, "/wifi.html", "text/html");
@@ -85,15 +86,16 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       wifi_password = temp_pass;
       wifiSave = true;
       if(saveConfig()){
-        Serial.println("Saved wifi config");
+        Serial.println("Saved wifi settings");
         configSaved = true;
         rebootReq = true;
       }
-      scanWifi();    
+      //scanWifi();    
     }
     request->send(SPIFFS, "/wifi.html", "text/html");
   }
   else if(request->url() == "/setcloud"){
+    configSaved = false;
     int params = request->params();
     if(request->hasParam("mqtt_en")){
       AsyncWebParameter* p = request->getParam("mqtt_en");
@@ -131,7 +133,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     }
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      //Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
       if(p->name() == "mqtt_host"){
         mqtt_host = p->value();
       }
@@ -155,7 +157,6 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       }
     }
     if(saveConfig()){
-      Serial.println("Saved cloud config");
       configSaved = true;
       rebootReq = true;
     }
@@ -166,7 +167,6 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/settingssaved"){
     String save;
-    Serial.println("Got settingssave");
     if(configSaved) save = "Settings saved";    
     request->send(200, "text/plain", save);
   }
@@ -192,18 +192,19 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(200, "text/plain", getIndexStatic());
   }
   else if(request->url() == "/reboot"){
-    request->send(SPIFFS, "/index.html", "text/html");
-    if(saveConfig){
-      haAutoDiscovery(true);
-      delay(2000);
-      ESP.restart();
+    last_reset = "Reboot requested by user from webmin";
+    if(saveConfig()){
+      syslog("Reboot requested by user from webmin", 2);
+      setReboot();
+      request->send(SPIFFS, "/reboot.html", "text/html");
     }
     else request->send(SPIFFS, "/index.html", "text/html");
   }
   else if(request->url() == "/upgrade"){
     if(updateAvailable){
       update_start = true;
-      Serial.println("Restarting for update");
+      syslog("Restarting for update", 2);
+      last_reset = "Restarting for update";
       if(saveConfig()){
         request->send(SPIFFS, "/index.html", "text/html");
         delay(200);
@@ -212,6 +213,75 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       else request->send(SPIFFS, "/index.html", "text/html");
     }
     else request->send(SPIFFS, "/index.html", "text/html");
+  }
+  else if(request->url() == "/syslog"){
+    request->send(SPIFFS, "/syslog.txt", "text/plain");
+  }
+  else if(request->url() == "/syslog0"){
+    request->send(SPIFFS, "/syslog0.txt", "text/plain");
+  }
+  else if(request->url() == "/scripts.js"){
+    request->send(SPIFFS, "/scripts.js", "text/javascript");
+  }
+  else if(request->url() == "/style.css"){
+    request->send(SPIFFS, "/style.css", "text/css");
+  }
+  else if(request->url() == "/unitData"){
+    request->send(200, "text/plain", getUnit());
+  }
+  else if(request->url() == "/unit"){
+    configSaved = false;
+    request->send(SPIFFS, "/unit.html", "text/html");
+  }
+  else if(request->url() == "/configdm"){
+    configSaved = false;
+    request->send(SPIFFS, "/dm.html", "text/html");
+  }
+  else if(request->url() == "/dmData"){
+    request->send(200, "text/plain", getDm());
+  }
+  else if(request->url() == "/setunit"){
+    Serial.println("Got setunit");
+    int params = request->params();
+    if(request->hasParam("update_autoCheck")){
+      AsyncWebParameter* p = request->getParam("update_autoCheck");
+      if(p->value() == "true") update_autoCheck = true;
+      else update_autoCheck = false;
+    }
+    if(request->hasParam("update_auto")){
+      AsyncWebParameter* p = request->getParam("update_auto");
+      if(p->value() == "true") update_auto = true;
+      else update_auto = false;
+    }
+    if(saveConfig()){
+      configSaved = true;
+      rebootReq = true;
+    }
+    request->send(SPIFFS, "/unit.html", "text/html");
+  }
+  else if(request->url() == "/setDm"){
+    Serial.println("Got setDM");
+    int params = request->params();
+    if(request->hasParam("trigger_type")){
+      AsyncWebParameter* p = request->getParam("trigger_type");
+      if(p->value() == "interval") trigger_type = 1;
+      else if(p->value() == "external") trigger_type = 2;
+      else trigger_type = 0;
+      Serial.println(trigger_type);
+    }
+    if(request->hasParam("trigger_interval")){
+      AsyncWebParameter* p = request->getParam("trigger_interval");
+      trigger_interval = p->value().toInt();
+    }
+    for(int i=0;i<params;i++){
+      AsyncWebParameter* p = request->getParam(i);
+      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    }
+    if(saveConfig()){
+      configSaved = true;
+      rebootReq = true;
+    }
+    request->send(SPIFFS, "/dm.html", "text/html");
   }
   else{
     request->send(SPIFFS, "/index.html", "text/html");

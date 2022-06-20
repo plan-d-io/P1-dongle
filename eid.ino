@@ -1,50 +1,52 @@
 boolean eidUpload(){
   boolean eidSuccess = false;
-  if(!clientSecureBusy){
-    boolean mqttPaused;
-    if(mqttclientSecure.connected()){
-      Serial.println("Disconnecting TLS MQTT connection");
-      mqttclientSecure.disconnect();
-      mqttPaused = true;
-    }
-    if(bundleLoaded){
-      Serial.print("Making EID data push, channel ");
-      for(int chan = 0; chan < 5; chan++){
-        Serial.print(chan);
-        Serial.print(" ");
-        if (https.begin(*client, eid_webhook)) {  // HTTPS
-          https.addHeader("Content-Type", "application/json");
-          // Send HTTP POST request
-          int httpCode = https.POST(eidData(chan));
-          // httpCode will be negative on error
-          if (httpCode > 0) {
-            // HTTP header has been send and Server response header has been handled
-            if (httpCode == HTTP_CODE_OK ) {
-              eidSuccess = true;
-              eidError = false;
-            }
+  if(WiFi.status() != WL_CONNECTED){
+    if(!clientSecureBusy){
+      boolean mqttPaused;
+      if(mqttclientSecure.connected()){
+        syslog("Disconnecting TLS MQTT connection to perform HTTPS push", 0);
+        mqttclientSecure.disconnect();
+        mqttPaused = true;
+      }
+      if(bundleLoaded){
+        syslog("Performing EID data push", 0);
+        for(int chan = 0; chan < 5; chan++){
+          Serial.print(chan);
+          Serial.print(" ");
+          if (https.begin(*client, eid_webhook)) {  // HTTPS
+            https.addHeader("Content-Type", "application/json");
+            // Send HTTP POST request
+            int httpCode = https.POST(eidData(chan));
+            // httpCode will be negative on error
+            if (httpCode > 0) {
+              // HTTP header has been send and Server response header has been handled
+              if (httpCode == HTTP_CODE_OK ) {
+                eidSuccess = true;
+                eidError = false;
+              }
+              else {
+                syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+                eidError = true;
+              }
+            } 
             else {
-              Serial.printf("[HTTPS] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
+              syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
               eidError = true;
             }
+            https.end();
+            client->stop();
           } 
           else {
-            Serial.printf("[HTTPS] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
+            syslog("Could not connect to EID", 2);
             eidError = true;
           }
-          https.end();
-          client->stop();
-        } 
-        else {
-          Serial.printf("[HTTPS] Unable to connect\n");
-          eidError = true;
         }
+        if(!eidError) Serial.println("");
       }
-      if(!eidError) Serial.println("");
-    }
-    //client->stop();
-    if(mqttPaused){
-      sinceConnCheck = 10000;
+      //client->stop();
+      if(mqttPaused){
+        sinceConnCheck = 10000;
+      }
     }
   }
   return eidSuccess;

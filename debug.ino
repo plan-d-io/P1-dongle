@@ -17,6 +17,9 @@ void get_reset_reason(RESET_REASON reason){
     case 16 : resetReason = "RTCWDT_RTC_RESET";break;      /**<16, RTC Watch dog reset digital core and rtc module*/
     default : resetReason = "NO_MEAN";
   }
+  last_reset_verbose = last_reset;
+  last_reset = "";
+  preferences.putString("LAST_RESET", last_reset);
 }
 
 void getHeapDebug(){
@@ -29,10 +32,10 @@ void getHeapDebug(){
 void pushDebugValues(){
   time_t now;
   unsigned long dtimestamp = time(&now);
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 6; i++){
     String chanName = "";
     String dtopic = "";
-    DynamicJsonDocument doc(128);
+    DynamicJsonDocument doc(1024);
     if(i == 0){
       chanName = "reboots";
       doc["friendly_name"] = "Reboots";
@@ -60,6 +63,11 @@ void pushDebugValues(){
       doc["friendly_name"] = "Lowest free heap size";
       doc["unit_of_measurement"] = "kB";
       doc["value"] = minFreeHeap;
+    }
+    else if(i == 5){
+      chanName = "last_reset_reason_verbose";
+      doc["friendly_name"] = "Last reset reason (verbose)";
+      doc["value"] = last_reset_verbose;
     }
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;
