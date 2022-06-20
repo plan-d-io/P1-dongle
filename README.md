@@ -44,7 +44,7 @@ As this is a non-commercial development, we do not provide any timelines nor gua
 - After flashing, use the ESP32 Sketch Data Upload function to transfer the web interface files to the ESP32
 ### Direct flash with esptool
 You can download a binary compiled for ESP32-PICO-D4 chips (e.g. M5 Atom Lite) from the /bin folder and flash this directly with the Espressif esptool. Use the following options (change the serial port and binary name)
-> python3 -m esptool --chip esp32 --port **/dev/YOURSERIALPORTHERE** --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_dio_80m.bin 0x10000 P1-dongle-V**X.YY**.ino.bin 0x8000 P1-dongle-V**X.YY**.ino.partitions.bin
+> python3 -m esptool --chip esp32 --port **/dev/YOURSERIALPORTHERE** --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_dio_80m.bin 0x10000 P1-dongle-V**X.YY**.ino.bin 0x8000 P1-dongle-V**X.YY**.ino.partitions.bin 0x3D0000 P1-dongle-V**X.YY**.spiffs.bin
 
 The binaries in /bin are kept up to date to the latest version, as they are also downloaded by the dongle when the firmware auto-update is enabled.
 
