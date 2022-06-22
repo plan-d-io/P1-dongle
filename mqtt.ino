@@ -12,7 +12,10 @@ void setupMqtt() {
     if (addr.fromString(mqtt_host)) {
       syslog("MQTT host has IP address " + mqtt_host, 0);
       if(mqtt_tls) mqttclientSecure.setServer(addr, mqtt_port);
-      else mqttclient.setServer(addr, mqtt_port);
+      else{
+        mqttclient.setServer(addr, mqtt_port);
+        mqttclient.setCallback(callback);
+      }
     }
     else {
       syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 0);
@@ -34,8 +37,14 @@ void setupMqtt() {
         }
         if(mdnsretry < 10){
           syslog("MQTT host has IP address " + addr.toString(), 0);
-          if(mqtt_tls) mqttclientSecure.setServer(addr, mqtt_port);
-          else mqttclient.setServer(addr, mqtt_port); 
+          if(mqtt_tls) {
+            mqttclientSecure.setServer(addr, mqtt_port);
+            mqttclientSecure.setCallback(callback);
+          }
+          else {
+            mqttclient.setServer(addr, mqtt_port);
+            mqttclient.setCallback(callback);
+          }
         }
         else{
           syslog("MQTT host IP resolving failed", 3);
@@ -43,8 +52,14 @@ void setupMqtt() {
         } 
       }
       else{
-        if(mqtt_tls) mqttclientSecure.setServer(mqtt_host.c_str(), mqtt_port);
-        else mqttclient.setServer(mqtt_host.c_str(), mqtt_port);
+        if(mqtt_tls){
+          mqttclientSecure.setServer(mqtt_host.c_str(), mqtt_port);
+          mqttclientSecure.setCallback(callback);
+        }
+        else{
+          mqttclient.setServer(mqtt_host.c_str(), mqtt_port);
+          mqttclient.setCallback(callback);
+        }
       }
     }
   }
@@ -65,6 +80,7 @@ void connectMqtt() {
           if (mqtt_auth) mqttclientSecure.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str());
           else mqttclientSecure.connect(mqtt_id.c_str());
           mqttretry++;
+          reconncount++;
           delay(250);
         }
         Serial.println("");
@@ -73,13 +89,17 @@ void connectMqtt() {
     else{
       if(!mqttclient.connected()) {
         disconnected = true;
-        if(mqttWasConnected) syslog("Lost connection to MQTT broker", 2);
+        if(mqttWasConnected){
+          reconncount++;
+          syslog("Lost connection to MQTT broker", 2);
+        }
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
           Serial.print("...");
           if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), "data/devices/utility_meter", 1, true, "offline");
           else mqttclient.connect(mqtt_id.c_str(), "data/devices/utility_meter", 1, true, "offline");
           mqttretry++;
+          reconncount++;
           delay(250);
         }
         Serial.println("");
@@ -90,12 +110,15 @@ void connectMqtt() {
         syslog("Connected to MQTT broker", 0);
         if(mqtt_tls){
           mqttclientSecure.publish("data/devices/utility_meter", "online", true);
+          mqttclientSecure.subscribe("set/devices/utility_meter/reboot");
         }
         else{
           mqttclient.publish("data/devices/utility_meter", "online", true);
+          mqttclient.subscribe("set/devices/utility_meter/reboot");
         }
         mqttClientError = false;
         mqttWasConnected = true;
+        reconncount = 0;
       }
       else{
         syslog("Failed to connect to MQTT broker", 3);
@@ -125,7 +148,7 @@ void pubMqtt(String topic, String payload, boolean retain){
 
 void haAutoDiscovery(boolean eraseMeter){
   if(ha_en && mqtt_en && !mqttClientError){
-    syslog("Performing Home Assistant MQTT autodiscovery", 0);
+    if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 0);
     int channels = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
     for(int dsmrKey = 0; dsmrKey < channels+4; dsmrKey++){
       String chanName = "";
@@ -191,27 +214,27 @@ void haAutoDiscovery(boolean eraseMeter){
       String configTopic = "homeassistant/sensor/" + chanName + "/config";
       String jsonOutput ="";
       //Ensure devices are erased before created again
-      if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
-      delay(100);
-      if(!eraseMeter){
-        serializeJson(doc, jsonOutput);
-        if(chanName.length() > 0){
-          if(dsmrKey < channels){
-            if(meterConfig[dsmrKey] == "1"){
-              pubMqtt(configTopic, jsonOutput, true);
-              //Serial.println(configTopic);
-            }
-          }
-          else{
+      if(eraseMeter){
+        if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+        delay(100);
+      }
+      serializeJson(doc, jsonOutput);
+      if(chanName.length() > 0){
+        if(dsmrKey < channels){
+          if(meterConfig[dsmrKey] == "1"){
             pubMqtt(configTopic, jsonOutput, true);
             //Serial.println(configTopic);
           }
         }
+        else{
+          pubMqtt(configTopic, jsonOutput, true);
+          //Serial.println(configTopic);
+        }
       }
     }
     if(debugInfo){
-      firstDebugPush = true;
-      for(int i = 0; i < 7; i++){
+      //firstDebugPush = true;
+      for(int i = 0; i < 10; i++){
         String chanName = "";
         DynamicJsonDocument doc(1024);
         if(i == 0){
@@ -252,6 +275,23 @@ void haAutoDiscovery(boolean eraseMeter){
           doc["name"] = String(apSSID ) + " Syslog";
           doc["state_topic"] = "sys/devices/" + String(apSSID) + "/syslog";
         }
+        else if(i == 7){
+          chanName = String(apSSID) + "_ip";
+          doc["name"] = String(apSSID ) + " IP";
+          doc["state_topic"] = "sys/devices/" + String(apSSID) + "/ip";
+        }
+        else if(i == 8){
+          chanName = String(apSSID) + "_firmware";
+          doc["name"] = String(apSSID ) + " firmware";
+          doc["state_topic"] = "sys/devices/" + String(apSSID) + "/firmware";
+        }
+        else if(i == 9){
+          chanName = String(apSSID) + "_reboot";
+          doc["name"] = String(apSSID ) + " Reboot";
+          doc["payload_on"] = "{\"value\": \"true\"}";
+          doc["payload_off"] = "{\"value\": \"false\"}";
+          doc["command_topic"] = "set/devices/utility_meter/reboot";
+        }
         doc["unique_id"] = chanName;
         doc["availability_topic"] = "data/devices/utility_meter";
         doc["value_template"] = "{{ value_json.value }}";
@@ -263,16 +303,41 @@ void haAutoDiscovery(boolean eraseMeter){
         device["manufacturer"] = "plan-d.io";
         device["configuration_url"] = "http://" + WiFi.localIP().toString();
         device["sw_version"] = String(fw_ver/100.0);
-        String configTopic = "homeassistant/sensor/" + chanName + "/config";
+        String configTopic = "";
+        if(i == 9) configTopic = "homeassistant/switch/" + chanName + "/config";
+        else configTopic = "homeassistant/sensor/" + chanName + "/config";
         String jsonOutput ="";
-        //Temp workaround to ensure devices are erased before created again
-        if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
-        if(!eraseMeter){
-          serializeJson(doc, jsonOutput);
+        //Ensure devices are erased before created again
+        if(eraseMeter){
           if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+          delay(100);
         }
+        serializeJson(doc, jsonOutput);
+        if(chanName.length() > 0) if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
       }
     }
-    if(!eraseMeter) ha_metercreated = true;
+    ha_metercreated = true;
+  }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  time_t now;
+  unsigned long dtimestamp = time(&now);
+  Serial.print("got mqtt message on ");
+  Serial.println(String(topic));
+  String messageTemp;
+  for (int i = 0; i < length; i++) {
+    messageTemp += (char)payload[i];
+  }
+  if (String(topic) == "set/devices/utility_meter/reboot") {
+    StaticJsonDocument<200> doc;
+    deserializeJson(doc, messageTemp);
+    if(doc["value"] == "true"){
+      last_reset = "Reboot requested by MQTT";
+      if(saveConfig()){
+        syslog("Reboot requested from MQTT", 2);
+        setReboot();
+      }
+    }
   }
 }

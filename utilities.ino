@@ -92,19 +92,24 @@ void checkConnection(){
     WiFi.disconnect();
     elapsedMillis restartAttemptTime;
     while (WiFi.status() != WL_CONNECTED && restartAttemptTime < 20000) {
-      Serial.print(".");
       WiFi.reconnect();
     }
-    Serial.println("");
-    if(restartAttemptTime >= 20000) syslog("Wifi reconnection failed! Trying again in 10s", 3);
-    if(WiFi.status() == WL_CONNECTED){
-      syslog("Reconnected to the WiFi network", 0);
+    if(restartAttemptTime >= 20000) {
+      syslog("Wifi reconnection failed! Trying again in a minute", 3);
+      reconncount++;
+      wifiError = true;
     }
   }
-  else{
+  if(wifiError && WiFi.status() == WL_CONNECTED){
+    wifiError = false;
+    syslog("Reconnected to the WiFi network", 0);
+    if(!mqtt_en) reconncount = 0;
+  }
+  if(WiFi.status() == WL_CONNECTED){
     if(mqtt_en){
       connectMqtt();
-      if(ha_en && !ha_metercreated) haAutoDiscovery(false);
+      if(ha_en && !ha_metercreated) haAutoDiscovery(true);
+      else if(ha_en && ha_metercreated) haAutoDiscovery(false);
     }
   }
 }

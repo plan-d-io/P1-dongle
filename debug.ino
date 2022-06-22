@@ -32,7 +32,7 @@ void getHeapDebug(){
 void pushDebugValues(){
   time_t now;
   unsigned long dtimestamp = time(&now);
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 8; i++){
     String chanName = "";
     String dtopic = "";
     DynamicJsonDocument doc(1024);
@@ -68,6 +68,16 @@ void pushDebugValues(){
       chanName = "last_reset_reason_verbose";
       doc["friendly_name"] = "Last reset reason (verbose)";
       doc["value"] = last_reset_verbose;
+    }
+    else if(i == 6){
+      chanName = "ip";
+      doc["friendly_name"] = "IP";
+      doc["value"] = WiFi.localIP().toString();
+    }
+    else if(i == 7){
+      chanName = "firmware";
+      doc["friendly_name"] = "Firmware";
+      doc["value"] =  fw_ver/100.0;
     }
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;
