@@ -5,6 +5,7 @@ void splitTelegram(String rawTelegram){
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
+  //Serial.println(rawTelegram);
   while(delimEnd < eof){
     delimEnd = rawTelegram.indexOf('\n', delimStart);
     String s = rawTelegram.substring(delimStart, delimEnd);
@@ -66,7 +67,7 @@ void splitTelegram(String rawTelegram){
             String valuetext = sub.substring(0, units);
             int value = valuetext.toInt();
             String unit = sub.substring(units+1);
-            processMeterValue(i, value, 0, false, "", dm_timestamp);
+            processMeterValue(i, value, 0, false, unit, dm_timestamp);
           }
           else if(dsmrKeys[i][1] == "4"){
             byte ends = s.indexOf(')');  
@@ -75,7 +76,7 @@ void splitTelegram(String rawTelegram){
             String valuetext = sub.substring(0, units);
             float value = valuetext.toFloat();
             String unit = sub.substring(units+1);
-            processMeterValue(i, 0, value, true, "", dm_timestamp);
+            processMeterValue(i, 0, value, true, unit, dm_timestamp);
           }
           else if(dsmrKeys[i][1] == "5"){
             byte ends = s.indexOf(')');  
@@ -107,7 +108,8 @@ void splitTelegram(String rawTelegram){
             String valuetext = sub.substring(0, units);
             float value = valuetext.toFloat();
             String unit = sub.substring(units+1);
-            processMeterValue(i, 0, value, true, "", mb1_timestamp);
+            if(unit == "m3") unit = "m³";
+            processMeterValue(i, 0, value, true, unit, mb1_timestamp);
           }
         }
       } 
@@ -130,7 +132,10 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   DynamicJsonDocument doc(1024);
   doc["entity"] = "utility_meter";
   doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
-  doc["friendly_name"] = dsmrKeys[dsmrKey][2];
+  String friendly_name = String(dsmrKeys[dsmrKey][2]);
+  friendly_name.toLowerCase();
+  friendly_name = "Utility meter " + friendly_name;
+  doc["friendly_name"] = friendly_name;
   doc["metric"] = dsmrKeys[dsmrKey][4];
   doc["metricKind"] = dsmrKeys[dsmrKey][5];
   if(floatValue) doc["value"] = fmeasurement;

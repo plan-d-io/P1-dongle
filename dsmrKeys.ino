@@ -17,9 +17,9 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
 { "1-0:32.7.0", "4", "Voltage phase 1", "data/devices/utility_meter/voltage_phase_1", "GridElectricityVoltage", "gauge", "voltage"  },
 { "1-0:52.7.0", "4", "Voltage phase 2", "data/devices/utility_meter/voltage_phase_2", "GridElectricityVoltage", "gauge", "voltage" },
 { "1-0:72.7.0", "4", "Voltage phase 3", "data/devices/utility_meter/voltage_phase_3", "GridElectricityVoltage", "gauge", "voltage" },
-{ "1-0:31.7.0", "4", "Current phase 1", "data/devices/utility_meter/voltage_phase_1", "GridElectricityCurrent", "gauge", "current" },
-{ "1-0:51.7.0", "4", "Current phase 2", "data/devices/utility_meter/voltage_phase_2", "GridElectricityCurrent", "gauge", "current" },
-{ "1-0:71.7.0", "4", "Current phase 3", "data/devices/utility_meter/voltage_phase_3", "GridElectricityCurrent", "gauge", "current" },
+{ "1-0:31.7.0", "4", "Current phase 1", "data/devices/utility_meter/current_phase_1", "GridElectricityCurrent", "gauge", "current" },
+{ "1-0:51.7.0", "4", "Current phase 2", "data/devices/utility_meter/current_phase_2", "GridElectricityCurrent", "gauge", "current" },
+{ "1-0:71.7.0", "4", "Current phase 3", "data/devices/utility_meter/current_phase_3", "GridElectricityCurrent", "gauge", "current" },
 { "0-1:24.2.3", "5", "Natural gas consumption", "data/devices/utility_meter/natural_gas_consumption", "naturalGasImport", "cumulative", "gas" },
 { "0-0:96.13.0", "0", "Text message", "data/devices/utility_meter/text_message", "", "gauge", "" }
 };

@@ -160,7 +160,8 @@ void haAutoDiscovery(boolean eraseMeter){
         if(dsmrKeys[dsmrKey][6] == "energy") doc["unit_of_measurement"] = "kWh";
         else if(dsmrKeys[dsmrKey][6] == "power") doc["unit_of_measurement"] = "kW";
         else if(dsmrKeys[dsmrKey][6] == "voltage") doc["unit_of_measurement"] = "V";
-        else if(dsmrKeys[dsmrKey][4] == "naturalGasImport") {
+        else if(dsmrKeys[dsmrKey][6] == "current") doc["unit_of_measurement"] = "A";
+        else if(dsmrKeys[dsmrKey][6] == "gas") {
           doc["unit_of_measurement"] = "m³";
           doc["state_class"] = "total_increasing";
         }
@@ -219,6 +220,9 @@ void haAutoDiscovery(boolean eraseMeter){
         delay(100);
       }
       serializeJson(doc, jsonOutput);
+      //Serial.print(configTopic);
+      //Serial.print(" ");
+      //Serial.println(jsonOutput);
       if(chanName.length() > 0){
         if(dsmrKey < channels){
           if(meterConfig[dsmrKey] == "1"){
