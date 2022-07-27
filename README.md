@@ -1,6 +1,8 @@
 # P1-dongle
 ESP32-based firmware and hardware to receive, parse, store and forward energy data coming from the P1 port of Fluvius digital meters (Flanders, Belgium). Should also work on Dutch, Walloon, Luxembourg and Swedish digital meters (untested).
 
+![](images/P1dongles.jpg)
+
 Please see the [wiki](https://github.com/plan-d-io/P1-dongle/wiki) for extended instructions on how to build, configure and use the P1-dongle.
 
 ## Features
