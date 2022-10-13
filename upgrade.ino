@@ -44,7 +44,10 @@ boolean checkUpdate(){
 }
 
 boolean startUpdate(){
-  noInterrupts();
+  if(pls_en){
+    detachInterrupt(32);
+    detachInterrupt(26);
+  }
   if(update_auto){
     if(fw_ver < onlineVersion || update_start){
       syslog("Preparing firmware upgrade", 1);
@@ -121,13 +124,11 @@ boolean startUpdate(){
               syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
               update_start = false;
               unitState = 4;
-              interrupts();
             }
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
             update_start = false;
-            interrupts();
             unitState = 4;
           }
           https.end(); 
@@ -135,7 +136,6 @@ boolean startUpdate(){
         else {
           Serial.print("Unable to connect");
           update_start = false;
-          interrupts();
           unitState = 4;
         }
       }
@@ -144,27 +144,27 @@ boolean startUpdate(){
       if(mqttPaused){
         sinceConnCheck = 10000;
       }
-      interrupts();
       update_start = false;
       return true;
     }
     else{
       syslog("No firmware upgrade available", 0);
       update_start = false;
-      interrupts();
       unitState = 4;
       return false;
     }
     update_start = false;
     saveConfig();
-    interrupts();
     delay(500);
     return true;
   }
 }
 
 boolean finishUpdate(){
-  noInterrupts();
+  if(pls_en){
+    detachInterrupt(32);
+    detachInterrupt(26);
+  }
   clientSecureBusy = true;
   boolean mqttPaused;
   boolean filesUpdated = false;
@@ -252,7 +252,6 @@ boolean finishUpdate(){
   }
   saveConfig();
   unitState = 4;
-  interrupts();
   delay(500);
   return true;
 }
