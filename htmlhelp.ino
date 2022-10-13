@@ -71,25 +71,6 @@ String getUnit() {
   StaticJsonDocument<128> unitData;
   unitData["innerChecks"]["update_auto"]["value"] = update_auto;
   unitData["innerChecks"]["update_autoCheck"]["value"] = update_autoCheck;
-  /*if(dsmrVersion == 0) unitData["innerValues"]["dsmrVersion"]["value"] = "DSMR P1 V5.0.2 (Fluvius BE)";
-  if(dmActiveTariff == "1") unitData["innerChecks"]["dmActiveTariff"]["value"] = true;
-  else unitData["innerChecks"]["dmActiveTariff"]["value"] = false;
-  if(dmVoltagel1 == "1") unitData["innerChecks"]["dmVoltagel1"]["value"] = true;
-  else unitData["innerChecks"]["dmVoltagel1"]["value"] = false;
-  if(dmVoltagel2 == "1") unitData["innerChecks"]["dmVoltagel2"]["value"] = true;
-  else unitData["innerChecks"]["dmVoltagel2"]["value"] = false;
-  if(dmVoltagel3 == "1") unitData["innerChecks"]["dmVoltagel3"]["value"] = true;
-  else unitData["innerChecks"]["dmVoltagel3"]["value"] = false;
-  if(dmCurrentl1 == "1") unitData["innerChecks"]["dmCurrentl1"]["value"] = true;
-  else unitData["innerChecks"]["dmCurrentl1"]["value"] = false;
-  if(dmCurrentl2 == "1") unitData["innerChecks"]["dmCurrentl2"]["value"] = true;
-  else unitData["innerChecks"]["dmCurrentl2"]["value"] = false;
-  if(dmCurrentl3 == "1") unitData["innerChecks"]["dmCurrentl3"]["value"] = true;
-  else unitData["innerChecks"]["dmCurrentl3"]["value"] = false;
-  if(dmGas == "1") unitData["innerChecks"]["dmGas"]["value"] = true;
-  else unitData["innerChecks"]["dmGas"]["value"] = false;
-  if(dmText == "1") unitData["innerChecks"]["dmText"]["value"] = true;
-  else unitData["innerChecks"]["dmText"]["value"] = false;*/
   String output;
   serializeJson(unitData, output);
   return output;
@@ -125,5 +106,21 @@ String getDm() {
   dmData["innerValues"]["trigger_interval"]["value"]  = trigger_interval;
   String output;
   serializeJson(dmData, output);
+  return output;
+}
+
+String getIo() {
+  StaticJsonDocument<256> ioData;
+  ioData["innerChecks"]["pls_en"]["value"] = pls_en;
+  ioData["innerValues"]["pls_type1"]["value"] = pls_type1;
+  ioData["innerValues"]["pls_multi1"]["value"] = pls_multi1;
+  ioData["innerValues"]["pls_unit1"]["value"] = pls_unit1;
+  ioData["innerValues"]["pls_mind1"]["value"] = pls_mind1;
+  ioData["innerValues"]["pls_type2"]["value"] = pls_type2;
+  ioData["innerValues"]["pls_multi2"]["value"] = pls_multi2;
+  ioData["innerValues"]["pls_unit2"]["value"] = pls_unit2;
+  ioData["innerValues"]["pls_mind2"]["value"] = pls_mind2;
+  String output;
+  serializeJson(ioData, output);
   return output;
 }

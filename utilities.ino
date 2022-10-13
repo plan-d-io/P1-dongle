@@ -41,6 +41,7 @@ String getHostname(){
   apSSID[5] = macbuf[1];
   apSSID[6] = macbuf[2];
   apSSID[7] = macbuf[3];
+  return macbufs;
 }
 
 String printLocalTime(boolean verbosePrint){
@@ -121,6 +122,7 @@ void setReboot(){
 
 void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
 {
+    //Serial.println("setting LED");
     DisBuff[0] = 0x05;
     DisBuff[1] = 0x05;
     for (int i = 0; i < 25; i++)

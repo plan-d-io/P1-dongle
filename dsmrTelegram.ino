@@ -145,7 +145,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   String jsonOutput;
   serializeJson(doc, jsonOutput);
   if(mqtt_en){
-    if(sinceLastUpload >= upload_throttle){
+    if(sinceLastUpload >= (upload_throttle * 1000)){
      pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
     }
   }
@@ -194,7 +194,7 @@ void sumMeterTotals(){
       totalsTopic = "data/devices/utility_meter/" + totalsTopic;
       String jsonOutput;
       serializeJson(doc, jsonOutput);
-      if(sinceLastUpload >= upload_throttle){
+      if(sinceLastUpload >= (upload_throttle*1000)){
        pubMqtt(totalsTopic, jsonOutput, false);
       }
     }

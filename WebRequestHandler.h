@@ -5,7 +5,7 @@
 
 extern void haAutoDiscovery(boolean), syslog(String, int), setReboot(void);
 extern boolean saveConfig(void), startUpdate(void), scanWifi(void);
-extern String getHostname(void), getConfig(void), getIndexData(void), getIndexStatic(void), getUnit(void), getDm(void);
+extern String getHostname(void), getConfig(void), getIndexData(void), getIndexStatic(void), getUnit(void), getDm(void), getIo(void);
 
 class WebRequestHandler : public AsyncWebHandler {
 public:

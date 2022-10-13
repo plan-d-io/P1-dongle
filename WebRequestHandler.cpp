@@ -7,13 +7,13 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset;
-  extern int counter, mqtt_port, trigger_type, trigger_interval;
+  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2;
+  extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
   extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, rebootInit, 
   mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
-  update_autoCheck, update_auto;
+  update_autoCheck, update_auto, pls_en, pls_emu;
   if(request->url() == "/"){
     counter++;
     request->send(SPIFFS, "/index.html", "text/html");
@@ -55,6 +55,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/config"){
     request->send(SPIFFS, "/config.html", "text/html");
+  }
+  else if(request->url() == "/io"){
+    request->send(SPIFFS, "/io.html", "text/html");
   }
   else if(request->url() == "/wificn"){
     configSaved = false;
@@ -229,6 +232,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   else if(request->url() == "/unitData"){
     request->send(200, "text/plain", getUnit());
   }
+  else if(request->url() == "/ioData"){
+    request->send(200, "text/plain", getIo());
+  }
   else if(request->url() == "/unit"){
     configSaved = false;
     request->send(SPIFFS, "/unit.html", "text/html");
@@ -241,7 +247,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(200, "text/plain", getDm());
   }
   else if(request->url() == "/setunit"){
-    Serial.println("Got setunit");
+    //Serial.println("Got setunit");
     int params = request->params();
     if(request->hasParam("update_autoCheck")){
       AsyncWebParameter* p = request->getParam("update_autoCheck");
@@ -260,7 +266,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/unit.html", "text/html");
   }
   else if(request->url() == "/setDm"){
-    Serial.println("Got setDM");
+    //Serial.println("Got setDM");
     int params = request->params();
     if(request->hasParam("trigger_type")){
       AsyncWebParameter* p = request->getParam("trigger_type");
@@ -282,6 +288,70 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       rebootReq = true;
     }
     request->send(SPIFFS, "/dm.html", "text/html");
+  }
+  else if(request->url() == "/setio"){
+    Serial.println("Got setIO");
+    configSaved = false;
+    int params = request->params();
+    if(request->hasParam("pls_en")){
+      AsyncWebParameter* p = request->getParam("pls_en");
+      if(p->value() == "true") pls_en = true;
+    }
+    else{
+      pls_en = false;
+    }
+    if(request->hasParam("pls_emu")){
+      AsyncWebParameter* p = request->getParam("pls_emu");
+      if(p->value() == "true") pls_emu = true;
+    }
+    else{
+      pls_en = false;
+    }
+    if(request->hasParam("pls_type1")){
+      AsyncWebParameter* p = request->getParam("pls_type1");
+      pls_type1 = p->value().toInt();
+    }
+    if(request->hasParam("pls_multi1")){
+      AsyncWebParameter* p = request->getParam("pls_multi1");
+      pls_multi1 = p->value().toInt();
+    }
+    if(request->hasParam("pls_unit1")){
+      AsyncWebParameter* p = request->getParam("pls_unit1");
+      pls_unit1 = p->value();
+    }
+    if(request->hasParam("pls_mind1")){
+      AsyncWebParameter* p = request->getParam("pls_mind1");
+      pls_mind1 = p->value().toInt();
+    }
+    if(request->hasParam("pls_type2")){
+      AsyncWebParameter* p = request->getParam("pls_type2");
+      pls_type2 = p->value().toInt();
+    }
+    if(request->hasParam("pls_multi2")){
+      AsyncWebParameter* p = request->getParam("pls_multi2");
+      pls_multi1 = p->value().toInt();
+    }
+    if(request->hasParam("pls_unit2")){
+      AsyncWebParameter* p = request->getParam("pls_unit2");
+      pls_unit2 = p->value();
+    }
+    if(request->hasParam("pls_mind2")){
+      AsyncWebParameter* p = request->getParam("pls_mind2");
+      pls_mind2 = p->value().toInt();
+    }
+    if(request->hasParam("pls_emuchan")){
+      AsyncWebParameter* p = request->getParam("pls_emuchan");
+      pls_emuchan = p->value().toInt();
+    }
+    for(int i=0;i<params;i++){
+      AsyncWebParameter* p = request->getParam(i);
+      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    }
+    if(saveConfig()){
+      configSaved = true;
+      rebootReq = true;
+    }
+    request->send(SPIFFS, "/io.html", "text/html");
   }
   else{
     request->send(SPIFFS, "/index.html", "text/html");

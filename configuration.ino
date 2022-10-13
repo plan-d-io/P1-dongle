@@ -25,6 +25,15 @@ boolean restoreConfig() {
   dsmrVersion = preferences.getUInt("DM_DSMRV");
   trigger_interval = preferences.getUInt("TRG_INT");
   trigger_type = preferences.getUInt("TRG_TYPE");
+  pls_en = preferences.getBool("PLS_EN");
+  pls_mind1 = preferences.getInt("PLS_MIND1");
+  pls_mind2 = preferences.getInt("PLS_MIND2");
+  pls_multi1 = preferences.getInt("PLS_MULTI1");
+  pls_multi2 = preferences.getInt("PLS_MULTI2");
+  pls_type1 = preferences.getInt("PLS_TYPE1");
+  pls_type2 = preferences.getInt("PLS_TYPE2");
+  pls_unit1 = preferences.getString("PLS_UNT1");
+  pls_unit2 = preferences.getString("PLS_UNT2");
   if(preferences.getBool("DM_ACTTAR") == true) dmActiveTariff = "1";
   else dmActiveTariff = "0";
   if(preferences.getBool("DM_VOLT1") == true) dmVoltagel1 = "1";
@@ -47,6 +56,7 @@ boolean restoreConfig() {
   if(mqtt_en) mqttSave = true;
   if(eid_en) eidSave = true;
   if(ha_en) haSave = true;
+  return true;
 }
 
 boolean saveConfig() {
@@ -118,6 +128,7 @@ boolean resetConfig() {
     syslog("Restarting for config reset", 2);
     delay(500);
     ESP.restart();
+    return true;
   }
 }
 
@@ -150,10 +161,20 @@ boolean initConfig() {
     preferences.putBool("DM_TXT", false);
     preferences.putInt("TRG_INT", 10);
     preferences.putInt("TRG_TYPE", 0);
+    preferences.putBool("PLS_EN", false);
+    preferences.putInt("PLS_MIND1", 20);
+    preferences.putInt("PLS_MIND2", 20);
+    preferences.putInt("PLS_MULTI1", 1000);
+    preferences.putInt("PLS_MULTI2", 1000);
+    preferences.putInt("PLS_TYPE1", 0);
+    preferences.putInt("PLS_TYPE2", 1);
+    preferences.putString("PLS_UNT1", "kWh");
+    preferences.putString("PLS_UNT2", "m³");
   }
   unsigned int tempMQTTint = preferences.getUInt("MQTT_PORT");
   if(tempMQTTint == 0){
     preferences.putUInt("MQTT_PORT", 1883);
     mqtt_port = 1883;
   }
+  return true;
 }
