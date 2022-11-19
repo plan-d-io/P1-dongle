@@ -34,6 +34,8 @@ boolean restoreConfig() {
   pls_type2 = preferences.getInt("PLS_TYPE2");
   pls_unit1 = preferences.getString("PLS_UNT1");
   pls_unit2 = preferences.getString("PLS_UNT2");
+  pls_off1 = preferences.getUInt("PLS_OFF1");
+  pls_off2 = preferences.getUInt("PLS_OFF2");
   if(preferences.getBool("DM_ACTTAR") == true) dmActiveTariff = "1";
   else dmActiveTariff = "0";
   if(preferences.getBool("DM_VOLT1") == true) dmVoltagel1 = "1";
