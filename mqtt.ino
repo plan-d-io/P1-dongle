@@ -96,8 +96,9 @@ void connectMqtt() {
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
           Serial.print("...");
-          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), "data/devices/utility_meter", 1, true, "offline");
-          else mqttclient.connect(mqtt_id.c_str(), "data/devices/utility_meter", 1, true, "offline");
+          String mqtt_topic = "plan-d/" + String(apSSID);
+          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), mqtt_topic.c_str(), 1, true, "offline");
+          else mqttclient.connect(mqtt_id.c_str(), mqtt_topic.c_str(), 1, true, "offline");
           mqttretry++;
           reconncount++;
           delay(250);
@@ -108,13 +109,16 @@ void connectMqtt() {
     if(disconnected){
       if(mqttretry < 2){
         syslog("Connected to MQTT broker", 0);
+        String mqtt_topic = "plan-d/" + String(apSSID);
         if(mqtt_tls){
-          mqttclientSecure.publish("data/devices/utility_meter", "online", true);
-          mqttclientSecure.subscribe("set/devices/utility_meter/reboot");
+          mqttclientSecure.publish(mqtt_topic.c_str(), "online", true);
+          mqtt_topic += "/set/reboot";
+          mqttclientSecure.subscribe(mqtt_topic.c_str());
         }
         else{
-          mqttclient.publish("data/devices/utility_meter", "online", true);
-          mqttclient.subscribe("set/devices/utility_meter/reboot");
+          mqttclient.publish(mqtt_topic.c_str(), "online", true);
+          mqtt_topic += "/set/reboot";
+          mqttclient.subscribe(mqtt_topic.c_str());
         }
         mqttClientError = false;
         mqttWasConnected = true;
@@ -333,7 +337,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     messageTemp += (char)payload[i];
   }
-  if (String(topic) == "set/devices/utility_meter/reboot") {
+  if (String(topic) == "plan-d/" + String(apSSID) + "/set/reboot") {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
     if(doc["value"] == "true"){

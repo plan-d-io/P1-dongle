@@ -13,7 +13,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   extern char apSSID[];
   extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, rebootInit, 
   mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
-  update_autoCheck, update_auto, pls_en, pls_emu;
+  update_autoCheck, update_auto, pls_en, pls_emu, beta_fleet;
   if(request->url() == "/"){
     counter++;
     request->send(SPIFFS, "/index.html", "text/html");
@@ -258,6 +258,11 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       AsyncWebParameter* p = request->getParam("update_auto");
       if(p->value() == "true") update_auto = true;
       else update_auto = false;
+    }
+    if(request->hasParam("beta_fleet")){
+      AsyncWebParameter* p = request->getParam("beta_fleet");
+      if(p->value() == "true") beta_fleet = true;
+      else beta_fleet = false;
     }
     if(saveConfig()){
       configSaved = true;

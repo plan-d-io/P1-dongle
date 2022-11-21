@@ -146,7 +146,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   serializeJson(doc, jsonOutput);
   if(mqtt_en){
     if(sinceLastUpload >= (upload_throttle * 1000)){
-     pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
+     pubMqtt("plan-d/" + String(apSSID) + dsmrKeys[dsmrKey][3], jsonOutput, false);
     }
   }
 }
@@ -191,13 +191,15 @@ void sumMeterTotals(){
       }
       doc["timestamp"] = dm_timestamp;
       doc["sensorId"] = "utility_meter." + totalsTopic;
-      totalsTopic = "data/devices/utility_meter/" + totalsTopic;
+      totalsTopic = "plan-d/" + String(apSSID) + "/data/" + totalsTopic;
       String jsonOutput;
       serializeJson(doc, jsonOutput);
       if(sinceLastUpload >= (upload_throttle*1000)){
        pubMqtt(totalsTopic, jsonOutput, false);
       }
     }
+    if(sinceLastUpload >= (upload_throttle*1000)){
+      sinceLastUpload = 0;
+    }
   }
-  sinceLastUpload = 0;
 }
