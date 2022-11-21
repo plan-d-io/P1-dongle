@@ -104,12 +104,12 @@ String resetReason, last_reset, last_reset_verbose;
 float freeHeap, minFreeHeap, maxAllocHeap;
 Preferences preferences;  
 String ssidList;
-char apSSID[] = "COFY0000";
+char apSSID[] = "P1000000";
 byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
 String dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
 String meterConfig[15];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -152,7 +152,8 @@ void setup(){
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
   }
   syslog("----------------------------", 1);
-  syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
+  syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io and re.alto", 1);
+  if(beta_fleet) syslog("Using development firmware", 2);
   syslog("Checking if internal clock is set", 0);
   printLocalTime(true);
   bootcount = bootcount + 1;

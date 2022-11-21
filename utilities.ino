@@ -33,14 +33,17 @@ String getHostname(){
   WiFi.macAddress(mac);
   char macbuf[] = "00000";
   String macbufs = "";
+  macbufs += String(mac[3], HEX);
   macbufs += String(mac[4], HEX);
   macbufs += String(mac[5], HEX);
   macbufs.toUpperCase();
-  macbufs.toCharArray(macbuf, 5);
-  apSSID[4] = macbuf[0];
-  apSSID[5] = macbuf[1];
-  apSSID[6] = macbuf[2];
-  apSSID[7] = macbuf[3];
+  macbufs.toCharArray(macbuf, 7);
+  apSSID[2] = macbuf[0];
+  apSSID[3] = macbuf[1];
+  apSSID[4] = macbuf[2];
+  apSSID[5] = macbuf[3];
+  apSSID[6] = macbuf[4];
+  apSSID[7] = macbuf[5];
   return macbufs;
 }
 
