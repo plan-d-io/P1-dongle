@@ -130,14 +130,14 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
   DynamicJsonDocument doc(1024);
-  doc["entity"] = "utility_meter";
-  doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
+  doc["entity"] = apSSID;
+  //doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
   String friendly_name = String(dsmrKeys[dsmrKey][2]);
   friendly_name.toLowerCase();
   friendly_name = "Utility meter " + friendly_name;
   doc["friendly_name"] = friendly_name;
-  doc["metric"] = dsmrKeys[dsmrKey][4];
-  doc["metricKind"] = dsmrKeys[dsmrKey][5];
+  //doc["metric"] = dsmrKeys[dsmrKey][4];
+  //doc["metricKind"] = dsmrKeys[dsmrKey][5];
   if(floatValue) doc["value"] = fmeasurement;
   else doc["value"] = imeasurement;
   if(unit != "") doc["unit"] = unit;
@@ -166,31 +166,32 @@ void sumMeterTotals(){
     for(int i = 0; i < 3; i++){
       String totalsTopic = "";
       DynamicJsonDocument doc(1024);
-      doc["entity"] = "utility_meter";
-      doc["metric"] = "GridElectricityImport";
-      doc["metricKind"] = "cumulative";
-      doc["unit"] = "kWh";
+      doc["entity"] = apSSID;
+      //doc["metric"] = "GridElectricityImport";
+      //doc["metricKind"] = "cumulative";
       if(i == 0){
         totalsTopic = "total_energy_consumed";
         doc["friendly_name"] = "Utility meter total energy consumed";
         doc["value"] = totCon;
+        doc["unit"] = "kWh";
       }
       else if(i == 1){
         totalsTopic = "total_energy_injected";
-        doc["metric"] = "GridElectricityExport";
+        //doc["metric"] = "GridElectricityExport";
         doc["friendly_name"] = "Utility meter total energy injected";
         doc["value"] = totIn;
+        doc["unit"] = "kWh";
       }
       else{
         totalsTopic = "total_active_power";
-        doc["metric"] = "GridElectricityPower";
+        //doc["metric"] = "GridElectricityPower";
         doc["friendly_name"] = "Utility meter total active power";
         doc["value"] = netPowCon;
-        doc["metricKind"] = "gauge";
+        //doc["metricKind"] = "gauge";
         doc["unit"] = "kW";
       }
       doc["timestamp"] = dm_timestamp;
-      doc["sensorId"] = "utility_meter." + totalsTopic;
+      //doc["sensorId"] = "utility_meter." + totalsTopic;
       totalsTopic = "plan-d/" + String(apSSID) + "/data/" + totalsTopic;
       String jsonOutput;
       serializeJson(doc, jsonOutput);
