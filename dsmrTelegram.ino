@@ -136,7 +136,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   friendly_name.toLowerCase();
   friendly_name = "Utility meter " + friendly_name;
   doc["friendly_name"] = friendly_name;
-  doc["metric"] = dsmrKeys[dsmrKey][4];
+  if(dsmrKeys[dsmrKey][4] != "") doc["metric"] = dsmrKeys[dsmrKey][4];
   doc["metricKind"] = dsmrKeys[dsmrKey][5];
   if(floatValue) doc["value"] = fmeasurement;
   else doc["value"] = imeasurement;

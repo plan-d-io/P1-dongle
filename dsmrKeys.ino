@@ -7,10 +7,10 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
  *  4: float with unit
  *  5: timestamped Mbus message
  */
-{ "1-0:1.8.1", "4", "Total consumption day", "data/devices/utility_meter/total_consumption_day", "GridElectricityImport", "cumulative", "energy" },
-{ "1-0:1.8.2", "4", "Total consumption night", "data/devices/utility_meter/total_consumption_night", "GridElectricityImport", "cumulative", "energy" },
-{ "1-0:2.8.1", "4", "Total injection day", "data/devices/utility_meter/total_injection_day", "GridElectricityExport", "cumulative", "energy" }, 
-{ "1-0:2.8.2", "4", "Total injection night", "data/devices/utility_meter/total_injection_night", "GridElectricityExport", "cumulative", "energy" },
+{ "1-0:1.8.1", "4", "Total consumption day", "data/devices/utility_meter/total_consumption_day", "", "cumulative", "energy" },
+{ "1-0:1.8.2", "4", "Total consumption night", "data/devices/utility_meter/total_consumption_night", "", "cumulative", "energy" },
+{ "1-0:2.8.1", "4", "Total injection day", "data/devices/utility_meter/total_injection_day", "", "cumulative", "energy" }, 
+{ "1-0:2.8.2", "4", "Total injection night", "data/devices/utility_meter/total_injection_night", "", "cumulative", "energy" },
 { "0-0:96.14.0", "1", "Active tariff period", "data/devices/utility_meter/active_tariff_period", "", "gauge", "" },  
 { "1-0:1.7.0", "4", "Active power consumption", "data/devices/utility_meter/active_power_consumption", "GridElectricityPower", "gauge", "power" },
 { "1-0:2.7.0", "4", "Active power injection", "data/devices/utility_meter/active_power_injection", "GridElectricityPower", "gauge", "power" },
