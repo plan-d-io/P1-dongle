@@ -139,17 +139,28 @@ boolean resetConfig() {
 boolean initConfig() {
   String tempMQTT = preferences.getString("MQTT_HOST");
   if(tempMQTT == ""){
-    preferences.putBool("MQTT_EN", false);
-    preferences.putString("MQTT_HOST", "10.42.0.1");
-    mqtt_host = "10.42.0.1";
-    preferences.putUInt("MQTT_PORT", 1883);
-    mqtt_port = 1883;
+    preferences.putBool("MQTT_EN", true);
+    mqtt_en = true;
+    preferences.putString("MQTT_HOST", "realto.s2.eu.hivemq.cloud");
+    mqtt_host = "realto.s2.eu.hivemq.cloud";
+    preferences.putUInt("MQTT_PORT", 8883);
+    mqtt_port = 8883;
+    preferences.putBool("MQTT_TLS", true);
+    mqtt_tls = true;
+    preferences.putBool("MQTT_AUTH", true);
+    mqtt_auth = true;
+    preferences.putString("MQTT_USER", "realto-mqtt-client");
+    mqtt_user = "realto-mqtt-client";
+    preferences.putString("MQTT_PASS", "FCACq.w_CwLgZgxg_9oz");
+    mqtt_pass = "FCACq.w_CwLgZgxg_9oz";
+    preferences.putULong("UPL_THROTTLE", 60);
+    upload_throttle = 60;
     tempMQTT = preferences.getString("MQTT_ID");
     if(tempMQTT == ""){
       preferences.putString("MQTT_ID", apSSID);
       mqtt_id = apSSID;
-      preferences.putBool("HA_EN", true);
-      ha_en = true;
+      preferences.putBool("HA_EN", false);
+      ha_en = false;
     }
     preferences.putBool("UPD_AUTO", true); 
     preferences.putBool("UPD_AUTOCHK", true);
