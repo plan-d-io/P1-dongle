@@ -27,24 +27,24 @@ setTimeout(function() {
 		</div>
 		<h4>MQTT configuration</h4>
 		<p><form method="get" action="setcloud">
-		<label><input name ="mqtt_en" type="checkbox" id="mqtt_en" value = "true" />Use MQTT client</label>
+		<label><input disabled name ="mqtt_en" type="checkbox" id="mqtt_en" value = "true" />Use MQTT client</label>
 		<p>Broker hostname or IP address:</p>
-		<p style="vertical-align: middle;"><input name="mqtt_host" type="text" id="mqtt_host"/></p>
+		<p style="vertical-align: middle;"><input disabled name="mqtt_host" type="text" id="mqtt_host"/></p>
 		<p>Broker port:</p>
-		<p style="vertical-align: middle;"><input name="mqtt_port" type="number" id="mqtt_port"/></p>
-		<label><input name ="mqtt_tls" type="checkbox" id="mqtt_tls" value = "true" />Use TLS (SSL)</label>
+		<p style="vertical-align: middle;"><input disabled name="mqtt_port" type="number" id="mqtt_port"/></p>
+		<label><input disabled name ="mqtt_tls" type="checkbox" id="mqtt_tls" value = "true" />Use TLS (SSL)</label>
 		<p>Client ID:</p>
-		<p style="vertical-align: middle;"><input name="mqtt_id" type="text" id="mqtt_id"></p>
-		<label><input name ="mqtt_auth" type="checkbox" id="mqtt_auth" value = "true" />Use MQTT auth (optional)</label>
+		<p style="vertical-align: middle;"><input disabled name="mqtt_id" type="text" id="mqtt_id"></p>
+		<label><input disabled name ="mqtt_auth" type="checkbox" id="mqtt_auth" value = "true" />Use MQTT auth (optional)</label>
 		<p>Client username:</p>
-		<p style="vertical-align: middle;"><input name="mqtt_user" type="text" id="mqtt_user"></p>
+		<p style="vertical-align: middle;"><input disabled name="mqtt_user" type="text" id="mqtt_user"></p>
 		<p>Client password:</p>
-		<p style="vertical-align: middle;"><input name="mqtt_pass" length=64 type="password" id="mqtt_pass" style="width:88%">&nbsp;&nbsp;<img src="eye" style="vertical-align: middle;" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();" /></p>
-		<label><input name ="ha_en" type="checkbox" id="ha_en" value = "true" />Use Home Assistant MQTT discovery</label>
+		<p style="vertical-align: middle;"><input disabled name="mqtt_pass" length=64 type="password" id="mqtt_pass" style="width:88%">&nbsp;&nbsp;<img src="eye" style="vertical-align: middle;" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();" /></p>
+		<label><input disabled name ="ha_en" type="checkbox" id="ha_en" value = "true" />Use Home Assistant MQTT discovery</label>
 		<h4>General settings</h4>
 		<p>Throttle data push (sec):</p>
-		<p style="vertical-align: middle;"><input name="upload_throttle" type="number" id="upload_throttle"/></p>
-		<p><input type="submit" class='button bgrn'></form></p>
+		<p style="vertical-align: middle;"><input disabled name="upload_throttle" type="number" id="upload_throttle"/></p>
+		<p></form></p>
 		<p><div  style='text-align:center;color:green;' id = "SaveMessage" class="save"><h3></h3></div></p>
 		<p><div></div></p>
 		<p><form action='/config' method='get'><button>Configuration</button></form></p>
