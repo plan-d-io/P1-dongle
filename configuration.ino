@@ -153,8 +153,8 @@ boolean initConfig() {
     mqtt_user = "realto-mqtt-client";
     preferences.putString("MQTT_PASS", "FCACq.w_CwLgZgxg_9oz");
     mqtt_pass = "FCACq.w_CwLgZgxg_9oz";
-    preferences.putULong("UPL_THROTTLE", 60);
-    upload_throttle = 60;
+    preferences.putULong("UPL_THROTTLE", 15);
+    upload_throttle = 15;
     tempMQTT = preferences.getString("MQTT_ID");
     if(tempMQTT == ""){
       preferences.putString("MQTT_ID", apSSID);

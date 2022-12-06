@@ -82,7 +82,7 @@ void pushDebugValues(){
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;
     doc["timestamp"] = dtimestamp;
-    dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
+    dtopic = "plan-d/" + String(apSSID) + "/sys/" + chanName; //JSI: Changed to plan-d/P1XXXXXX/sys/#
     String jsonOutput;
     serializeJson(doc, jsonOutput);
     if(mqtt_en){
