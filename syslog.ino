@@ -18,7 +18,7 @@ void syslog(String msg, int level){
     doc["entity"] = apSSID;
     doc["sensorId"] = "syslog";
     doc["timestamp"] = dtimestamp;
-    String dtopic = "sys/devices/" + String(apSSID) + "/syslog";
+    String dtopic = "plan-d/" + String(apSSID) + "/sys/syslog"; //JSI: Changed to plan-d/P1XXXXXX/sys/syslog
     String jsonOutput;
     serializeJson(doc, jsonOutput);
     pubMqtt(dtopic, jsonOutput, true);

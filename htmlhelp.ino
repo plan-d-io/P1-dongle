@@ -50,7 +50,7 @@ String getIndexData() {
 String getIndexStatic() {
   StaticJsonDocument<840> indexStatic;
   indexStatic["innerHTML"]["HostValue"]["value"] = apSSID; 
-  indexStatic["innerHTML"]["footer"]["value"] = "Digital meter dongle V" + String(fw_ver/100.0) + " by plan-d.io"; 
+  indexStatic["innerHTML"]["footer"]["value"] = "Digital meter dongle V" + String(fw_ver/100.0) + " by plan-d.io and re.alto"; 
   if(wifiSTA) indexStatic["innerTitles"]["WifiStrength"]["value"] = "Wifi connected";
   else indexStatic["innerTitles"]["WifiStrength"]["value"] = "Wifi not connected/configured";
   if(mqtt_en){

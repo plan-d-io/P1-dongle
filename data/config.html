@@ -14,11 +14,14 @@
 			<h3><span id="HostValue">STATE</span></h3>
 			<h3>Configuration</h3>
 		</div>
-		<p><form action='wificn' method='get'><button>Configure wifi</button></form></p>
 		<p><form action='cloudcn' method='get'><button>Configure cloud</button></form></p>
 		<p><form action='unit' method='get'><button>Configure dongle</button></form></p>
 		<p><form action='configdm' method='get'><button>Configure digital meter</button></form></p>
 		<p><form action='cs' method='get'><button>Configure external IO</button></form></p>
+		<p><form action='in' method='get'><button>Information</button></form></p>
+		<p><form action='upgrade' method='get' onsubmit='return confirm("Confirm you want to upgrade the firmware (unit will reboot multiple times and be unresponsive for several minutes)");'><button>Firmware Upgrade</button></form></p>
+		<p><form action='cs' method='get'><button>Console</button></form></p>
+		<p><button name='rst' class='button bred' onclick="if (confirm('Confirm reboot?')) window.location.href='reboot';">Restart</button></p>
 		<p><form action='.' method='get' onsubmit='return confirm("Confirm Restart");'><button name='rst' class='button bred'>Reset configuration</button></form></p>
 		<p><form action='/' method='get'><button>Main menu</button></form></p>
 		<div style='text-align:right;font-size:11px;'><hr/><a id="footer" href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle by plan-d.io</a></div>
