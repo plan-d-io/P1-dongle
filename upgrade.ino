@@ -4,7 +4,9 @@ boolean checkUpdate(){
     boolean needUpdate = false;
     boolean mqttPaused;
     if(mqttclientSecure.connected()){
-      Serial.println("Disconnecting TLS MQTT connection");
+      syslog("Disconnecting TLS MQTT connection", 0);
+      String mqtt_topic = "plan-d/" + String(apSSID);
+      mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
       mqttclientSecure.disconnect();
       mqttPaused = true;
     }
