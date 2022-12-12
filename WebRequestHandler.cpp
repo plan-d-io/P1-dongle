@@ -81,6 +81,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
         }
         else if(p->name() == "pass"){
           temp_pass = p->value();
+          if(temp_pass.length() == 0) temp_pass = wifi_password;
         }
         else if(p->name() == "email"){
           email = p->value();
