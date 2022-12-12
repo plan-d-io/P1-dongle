@@ -114,7 +114,7 @@ String dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCur
 String meterConfig[15];
 int dsmrVersion, trigger_type, trigger_interval;
 boolean timeSet, mTimeFound, spiffsMounted;
-String wifi_ssid, wifi_password;
+String wifi_ssid, wifi_password, email;
 String mqtt_host, mqtt_id, mqtt_user, mqtt_pass;
 uint8_t prevButtonState = false;
 boolean configSaved, resetWifi, resetAll;
@@ -253,12 +253,7 @@ void setup(){
 
 void loop(){
   blinkLed();
-  if(mqtt_tls){
-    mqttclientSecure.loop();
-  }
-  else{
-    mqttclient.loop();
-  }
+  mqttclient.loop();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       if(!clientSecureBusy){

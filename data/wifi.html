@@ -13,6 +13,7 @@ setTimeout(function() {
 function start(){
     getSSIDlist();
     getStaticData();
+    getJsonData('email');
 }
 function getSSIDlist() {
   var xhttp = new XMLHttpRequest();
@@ -34,12 +35,14 @@ function getSSIDlist() {
 			<noscript>To use the digital meter dongle, please enable JavaScript<br></noscript>
 			<h2>Digital meter dongle</h2>
 			<h3><span id="HostValue">STATE</span></h3>
-			<h3>Wifi configuration</h3>
+			<h3>Wifi and Email configuration</h3>
 		</div>
 		<p><form method="get" action="setap"><label>SSID:</label></p>
 		<p id = "StateValue">STATE</p>
 		<p>Password:</p>
 		<p style="vertical-align: middle;"><input name="pass" length=64 type="password" id="myPassword" style="width:88%">&nbsp;&nbsp;<img src="eye" style="vertical-align: middle;" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();" /></p>
+		<p>Email:</p>
+		<p style="vertical-align: middle;"><input name="email" type="email" id="email"/></p>
 		<p><input type="submit" class='button bgrn'></form></p>
 		<p><div style='text-align:center;color:green;' id = "SaveMessage" class="save"><h3></h3></div></p>
 		<p><form action='/wificn' method='get'><input type="hidden" name="rescan" value="true" /> <button>Rescan wifi</button></form></p>

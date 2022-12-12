@@ -1,6 +1,7 @@
 boolean restoreConfig() {
   wifi_ssid = preferences.getString("WIFI_SSID");
-  wifi_password = preferences.getString("WIFI_PASSWD");  
+  wifi_password = preferences.getString("WIFI_PASSWD");
+  email = preferences.getString("EMAIL");  
   wifiSTA = preferences.getBool("WIFI_STA");
   mqtt_en = preferences.getBool("MQTT_EN");
   mqtt_tls = preferences.getBool("MQTT_TLS");
@@ -65,6 +66,7 @@ boolean restoreConfig() {
 boolean saveConfig() {
   preferences.putString("WIFI_SSID", wifi_ssid);
   preferences.putString("WIFI_PASSWD", wifi_password);
+  preferences.putString("EMAIL", email);
   if(wifiSave) preferences.putBool("WIFI_STA", true);
   else preferences.putBool("WIFI_STA", wifiSTA);
   preferences.putBool("MQTT_EN", mqttSave);
@@ -123,6 +125,7 @@ boolean resetConfig() {
     Serial.print("Executing wifi reset");
     preferences.remove("WIFI_SSID");
     preferences.remove("WIFI_PASSWD");
+    preferences.remove("EMAIL");
     preferences.remove("MQTT_HOST");
     preferences.putBool("WIFI_STA", false);
     preferences.putBool("UPD_AUTO", true);
