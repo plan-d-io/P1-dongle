@@ -21,6 +21,15 @@ String getConfig() {
   return output;
 }
 
+String getEmail() {
+  StaticJsonDocument<100> emailJson;
+  emailJson["innerValues"]["email"]["value"] = email;
+  String output;
+  serializeJson(emailJson, output);
+  return output;
+}
+
+
 String getIndexData() {
   StaticJsonDocument<840> indexData;
   String hostValue = "N/A";

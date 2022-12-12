@@ -7,7 +7,7 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2;
+  extern String ssidList, wifi_ssid, wifi_password, email, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2;
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
@@ -81,6 +81,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
         }
         else if(p->name() == "pass"){
           temp_pass = p->value();
+        }
+        else if(p->name() == "email"){
+          email = p->value();
         }
       }
     }
@@ -187,6 +190,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/configData"){
     request->send(200, "text/plain", getConfig());
+  }
+  else if(request->url() == "/email"){
+    request->send(200, "text/plain", getEmail());
   }
   else if(request->url() == "/indexData"){
     request->send(200, "text/plain", getIndexData());
