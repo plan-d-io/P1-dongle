@@ -253,7 +253,12 @@ void setup(){
 
 void loop(){
   blinkLed();
-  mqttclient.loop();
+  if(mqtt_tls){
+    mqttclientSecure.loop();
+  }
+  else{
+    mqttclient.loop();
+  }
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       if(!clientSecureBusy){
