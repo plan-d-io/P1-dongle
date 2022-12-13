@@ -1,4 +1,5 @@
 void splitTelegram(String rawTelegram){
+  DynamicJsonDocument readings(1024);
   sinceMeterCheck = 0;
   mTimeFound = false;
   meterError = true;
@@ -39,6 +40,7 @@ void splitTelegram(String rawTelegram){
       if(!wifiSTA) unitState = 2;
       else unitState = 4;
       meterError = false;
+      readings["timestamp"] = dm_timestamp;
     }
     else{
       //Serial.println(key);
@@ -76,6 +78,8 @@ void splitTelegram(String rawTelegram){
             String valuetext = sub.substring(0, units);
             float value = valuetext.toFloat();
             String unit = sub.substring(units+1);
+            readings[key]["value"] = value;
+            readings[key]["unit"] = unit;
             processMeterValue(i, 0, value, true, unit, dm_timestamp);
           }
           else if(dsmrKeys[i][1] == "5"){
@@ -113,6 +117,14 @@ void splitTelegram(String rawTelegram){
           }
         }
       } 
+    }
+  }
+  // Send MQTT output in one JSON payload
+  String jsonOutputReadings;
+  serializeJson(readings, jsonOutputReadings);
+  if(mqtt_en){
+    if(sinceLastUpload >= (upload_throttle * 1000)){
+     pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
     }
   }
   if(!meterError) sumMeterTotals();
