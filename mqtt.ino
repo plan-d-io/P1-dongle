@@ -6,16 +6,14 @@ void setupMqtt() {
   syslog(mqttinfo, 0);
   if(mqtt_tls){
     mqttclientSecure.setClient(*client);
-    if(upload_throttle > 15){
-      mqttclientSecure.setClient(*client).setKeepAlive(upload_throttle);
-      mqttclientSecure.setClient(*client).setSocketTimeout(upload_throttle);
+    if(upload_throttle > 10){
+      mqttclientSecure.setKeepAlive(upload_throttle*2).setSocketTimeout(upload_throttle*2);
     }
   }
   else {
     mqttclient.setClient(wificlient);
-    if(upload_throttle > 15){
-      mqttclient.setClient(*client).setKeepAlive(upload_throttle);
-      mqttclient.setClient(*client).setSocketTimeout(upload_throttle);
+    if(upload_throttle > 10){
+      mqttclient.setKeepAlive(upload_throttle*2).setSocketTimeout(upload_throttle*2);
     }
   }
   /*Set broker location*/
