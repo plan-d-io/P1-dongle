@@ -27,7 +27,7 @@ void splitTelegram(String rawTelegram){
       dm_time.tm_hour = houri;
       dm_time.tm_min = minutei;
       dm_time.tm_mday = dayi;
-      dm_time.tm_mon = monthi;      // months start from 0, so deduct 1
+      dm_time.tm_mon = monthi - 1;      // months start from 0, so deduct 1
       dm_time.tm_year = yeari - 1900; // years since 1900, so deduct 1900
       dm_timestamp =  mktime(&dm_time);
       if(DST == "S"){
