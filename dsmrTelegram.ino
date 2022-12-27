@@ -5,7 +5,7 @@ void splitTelegram(String rawTelegram){
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
-  Serial.println(rawTelegram);
+  //Serial.println(rawTelegram);
   while(delimEnd < eof){
     delimEnd = rawTelegram.indexOf('\n', delimStart);
     String s = rawTelegram.substring(delimStart, delimEnd);
@@ -144,7 +144,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   doc["timestamp"] = meterTime;
   String jsonOutput;
   serializeJson(doc, jsonOutput);
-  if(mqtt_en){
+  if(mqtt_en && meterConfig[dsmrKey] == "1"){
     if(sinceLastUpload >= (upload_throttle * 1000)){
      pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
     }
