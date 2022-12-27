@@ -4,7 +4,7 @@ boolean checkUpdate(){
     boolean needUpdate = false;
     boolean mqttPaused;
     if(mqttclientSecure.connected()){
-      Serial.println("Disconnecting TLS MQTT connection");
+      syslog("Disconnecting TLS MQTT connection", 0);
       String mqtt_topic = "data/devices/utility_meter";
       mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
       mqttclientSecure.disconnect();
@@ -15,8 +15,7 @@ boolean checkUpdate(){
       String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
       if(beta_fleet) checkUrl += "develop/version";
       else checkUrl += "main/version";
-      Serial.print("Connecting to ");
-      Serial.println(checkUrl);
+      syslog("Connecting to " + checkUrl, 0);
       if (https.begin(*client, checkUrl)) {  
         int httpCode = https.GET();
         if (httpCode > 0) {

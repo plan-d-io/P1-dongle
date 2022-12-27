@@ -190,9 +190,6 @@ void haAutoDiscovery(boolean eraseMeter){
         doc["unit_of_measurement"] = "kWh";
         doc["state_topic"] = "data/devices/utility_meter/total_energy_consumed";
         doc["state_class"] = "total_increasing";
-        //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_consumed";
-        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+1){
         chanName = "utility_meter_total_energy_injected";
@@ -201,9 +198,6 @@ void haAutoDiscovery(boolean eraseMeter){
         doc["unit_of_measurement"] = "kWh";
         doc["state_topic"] = "data/devices/utility_meter/total_energy_injected";
         doc["state_class"] = "total_increasing";
-        //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_injected";
-        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+2){
         chanName = "utility_meter_total_active_power";
@@ -239,6 +233,7 @@ void haAutoDiscovery(boolean eraseMeter){
       //Serial.print(" ");
       //Serial.println(jsonOutput);
       if(chanName.length() > 0){
+        if(eraseMeter) delay(100);
         if(dsmrKey < channels){
           if(meterConfig[dsmrKey] == "1"){
             pubMqtt(configTopic, jsonOutput, true);

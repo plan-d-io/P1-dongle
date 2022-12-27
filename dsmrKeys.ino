@@ -7,10 +7,10 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
  *  4: float with unit
  *  5: timestamped Mbus message
  */
-{ "1-0:1.8.1", "4", "Total consumption day", "data/devices/utility_meter/total_consumption_day", "", "cumulative", "energy" },
-{ "1-0:1.8.2", "4", "Total consumption night", "data/devices/utility_meter/total_consumption_night", "", "cumulative", "energy" },
-{ "1-0:2.8.1", "4", "Total injection day", "data/devices/utility_meter/total_injection_day", "", "cumulative", "energy" }, 
-{ "1-0:2.8.2", "4", "Total injection night", "data/devices/utility_meter/total_injection_night", "", "cumulative", "energy" },
+{ "1-0:1.8.1", "4", "Total consumption T1", "data/devices/utility_meter/total_consumption_t1", "", "cumulative", "energy" },
+{ "1-0:1.8.2", "4", "Total consumption T2", "data/devices/utility_meter/total_consumption_t2", "", "cumulative", "energy" },
+{ "1-0:2.8.1", "4", "Total injection T1", "data/devices/utility_meter/total_injection_t1", "", "cumulative", "energy" }, 
+{ "1-0:2.8.2", "4", "Total injection T2", "data/devices/utility_meter/total_injection_t2", "", "cumulative", "energy" },
 { "0-0:96.14.0", "1", "Active tariff period", "data/devices/utility_meter/active_tariff_period", "", "gauge", "" },  
 { "1-0:1.7.0", "4", "Active power consumption", "data/devices/utility_meter/active_power_consumption", "GridElectricityPower", "gauge", "power" },
 { "1-0:2.7.0", "4", "Active power injection", "data/devices/utility_meter/active_power_injection", "GridElectricityPower", "gauge", "power" },
@@ -25,13 +25,13 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
 };
 
 void configMeter(){
-  meterConfig[0] = "1";
-  meterConfig[1] = "1";
-  meterConfig[2] = "1";
-  meterConfig[3] = "1";
+  meterConfig[0] = dmTotCont1;
+  meterConfig[1] = dmTotCont2;
+  meterConfig[2] = dmTotInt1;
+  meterConfig[3] = dmTotInt2;
   meterConfig[4] = dmActiveTariff;
-  meterConfig[5] = "1";
-  meterConfig[6] = "1";
+  meterConfig[5] = dmPowCon;
+  meterConfig[6] = dmPowIn;
   meterConfig[7] = dmVoltagel1;
   meterConfig[8] = dmVoltagel2;
   meterConfig[9] = dmVoltagel3;

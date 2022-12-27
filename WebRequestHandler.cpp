@@ -7,7 +7,8 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2;
+  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2, 
+  dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
@@ -255,16 +256,19 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       if(p->value() == "true") update_autoCheck = true;
       else update_autoCheck = false;
     }
+    else update_autoCheck = false;
     if(request->hasParam("update_auto")){
       AsyncWebParameter* p = request->getParam("update_auto");
       if(p->value() == "true") update_auto = true;
       else update_auto = false;
     }
+    else update_auto = false;
     if(request->hasParam("beta_fleet")){
       AsyncWebParameter* p = request->getParam("beta_fleet");
       if(p->value() == "true") beta_fleet = true;
       else beta_fleet = false;
     }
+    else beta_fleet = false;
     if(saveConfig()){
       configSaved = true;
       rebootReq = true;
@@ -279,12 +283,101 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       if(p->value() == "interval") trigger_type = 1;
       else if(p->value() == "external") trigger_type = 2;
       else trigger_type = 0;
-      Serial.println(trigger_type);
     }
     if(request->hasParam("trigger_interval")){
       AsyncWebParameter* p = request->getParam("trigger_interval");
       trigger_interval = p->value().toInt();
     }
+    if(request->hasParam("dmPowCon")){
+      AsyncWebParameter* p = request->getParam("dmPowCon");
+      if(p->value() == "true") dmPowCon = "1";
+      else dmPowCon = "0";
+    }
+    else dmPowCon = "0";
+    if(request->hasParam("dmPowIn")){
+      AsyncWebParameter* p = request->getParam("dmPowIn");
+      if(p->value() == "true") dmPowIn = "1";
+      else dmPowIn = "0";
+    }
+    else dmPowIn = "0";
+    if(request->hasParam("dmTotCont1")){
+      AsyncWebParameter* p = request->getParam("dmTotCont1");
+      if(p->value() == "true") dmTotCont1 = "1";
+      else dmTotCont1 = "0";
+    }
+    else dmTotCont1 = "0";
+    if(request->hasParam("dmTotCont2")){
+      AsyncWebParameter* p = request->getParam("dmTotCont2");
+      if(p->value() == "true") dmTotCont2 = "1";
+      else dmTotCont2 = "0";
+    }
+    else dmTotCont2 = "0";
+    if(request->hasParam("dmTotInt1")){
+      AsyncWebParameter* p = request->getParam("dmTotInt1");
+      if(p->value() == "true") dmTotInt1 = "1";
+      else dmTotInt1 = "0";
+    }
+    else dmTotInt1 = "0";
+    if(request->hasParam("dmTotInt2")){
+      AsyncWebParameter* p = request->getParam("dmTotInt2");
+      if(p->value() == "true") dmTotInt2 = "1";
+      else dmTotInt2 = "0";
+    }
+    else dmTotInt2 = "0";
+    if(request->hasParam("dmActiveTariff")){
+      AsyncWebParameter* p = request->getParam("dmActiveTariff");
+      if(p->value() == "true") dmActiveTariff = "1";
+      else dmActiveTariff = "0";
+    }
+    else dmActiveTariff = "0";
+    if(request->hasParam("dmVoltagel1")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel1");
+      if(p->value() == "true") dmVoltagel1 = "1";
+      else dmVoltagel1 = "0";
+    }
+    else dmVoltagel1 = "0";
+    if(request->hasParam("dmVoltagel2")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel2");
+      if(p->value() == "true") dmVoltagel2 = "1";
+      else dmVoltagel2 = "0";
+    }
+    else dmVoltagel2 = "0";
+    if(request->hasParam("dmVoltagel3")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel3");
+      if(p->value() == "true") dmVoltagel3 = "1";
+      else dmVoltagel3 = "0";
+    }
+    else dmVoltagel3 = "0";
+    if(request->hasParam("dmCurrentl1")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl1");
+      if(p->value() == "true") dmCurrentl1 = "1";
+      else dmCurrentl1 = "0";
+    }
+    else dmCurrentl1 = "0";
+    if(request->hasParam("dmCurrentl2")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl2");
+      if(p->value() == "true") dmCurrentl2 = "1";
+      else dmCurrentl2 = "0";
+    }
+    else dmCurrentl2 = "0";
+    if(request->hasParam("dmCurrentl3")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl3");
+      if(p->value() == "true") dmCurrentl3 = "1";
+      else dmCurrentl3 = "0";
+    }
+    else dmCurrentl3 = "0";
+    if(request->hasParam("dmGas")){
+      AsyncWebParameter* p = request->getParam("dmGas");
+      if(p->value() == "true") dmGas = "1";
+      else dmGas = "0";
+    }
+    else dmGas = "0";
+    if(request->hasParam("dmText")){
+      AsyncWebParameter* p = request->getParam("dmText");
+      if(p->value() == "true") dmText = "1";
+      else dmText = "0";
+    }
+    else dmText = "0";
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
       Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
@@ -351,7 +444,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     }
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      //Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
     if(saveConfig()){
       configSaved = true;

@@ -192,11 +192,11 @@ void sumMeterTotals(){
       }
       doc["timestamp"] = dm_timestamp;
       doc["sensorId"] = "utility_meter." + totalsTopic;
-      totalsTopic = "/data/devices/utility_meter/" + totalsTopic;
+      totalsTopic = "data/devices/utility_meter/" + totalsTopic;
       String jsonOutput;
       serializeJson(doc, jsonOutput);
       if(sinceLastUpload >= (upload_throttle*1000)){
-       pubMqtt(totalsTopic, jsonOutput, false);
+        pubMqtt(totalsTopic, jsonOutput, false);
       }
     }
     if(sinceLastUpload >= (upload_throttle*1000)){
