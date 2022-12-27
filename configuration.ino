@@ -37,6 +37,10 @@ boolean restoreConfig() {
   pls_unit2 = preferences.getString("PLS_UNT2");
   pls_off1 = preferences.getUInt("PLS_OFF1");
   pls_off2 = preferences.getUInt("PLS_OFF2");
+  if(preferences.getBool("DM_AVDEM") == true) dmAvDem = "1";
+  else dmAvDem = "0";
+  if(preferences.getBool("DM_MAXDEMM") == true) dmMaxDemM = "1";
+  else dmMaxDemM = "0";
   if(preferences.getBool("DM_POWIN") == true) dmPowIn = "1";
   else dmPowIn = "0";
   if(preferences.getBool("DM_POWCON") == true) dmPowCon = "1";
@@ -103,6 +107,10 @@ boolean saveConfig() {
   preferences.putUInt("DM_DSMRV", dsmrVersion);
   preferences.putUInt("TRG_INT", trigger_interval);
   preferences.putUInt("TRG_TYPE", trigger_type);
+  if (dmAvDem == "1") preferences.putBool("DM_AVDEM", true);
+  else preferences.putBool("DM_AVDEM", false);
+  if (dmMaxDemM == "1") preferences.putBool("DM_MAXDEMM", true);
+  else preferences.putBool("DM_MAXDEMM", false);
   if (dmPowIn == "1") preferences.putBool("DM_POWIN", true);
   else preferences.putBool("DM_POWIN", false);
   if (dmPowCon == "1") preferences.putBool("DM_POWCON", true);
@@ -179,6 +187,8 @@ boolean initConfig() {
     preferences.putBool("UPD_AUTOCHK", true);
     preferences.putBool("BETA_FLT", false);
     preferences.putUInt("DM_DSMRV", 0);
+    preferences.putBool("DM_AVDEM", true);
+    preferences.putBool("DM_MAXDEMM", true);
     preferences.putBool("DM_ACTTAR", true);
     preferences.putBool("DM_VOLT1", true);
     preferences.putBool("DM_VOLT2", false);

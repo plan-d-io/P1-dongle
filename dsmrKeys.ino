@@ -14,6 +14,8 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
 { "0-0:96.14.0", "1", "Active tariff period", "data/devices/utility_meter/active_tariff_period", "", "gauge", "" },  
 { "1-0:1.7.0", "4", "Active power consumption", "data/devices/utility_meter/active_power_consumption", "GridElectricityPower", "gauge", "power" },
 { "1-0:2.7.0", "4", "Active power injection", "data/devices/utility_meter/active_power_injection", "GridElectricityPower", "gauge", "power" },
+{ "1-0:1.4.0", "4", "Current average demand", "data/devices/utility_meter/current_average_demand", "", "gauge", "power" },
+{ "1-0:1.6.0", "5", "Maximum demand current month", "data/devices/utility_meter/maximum_demand_current_month", "", "gauge", "power" },
 { "1-0:32.7.0", "4", "Voltage phase 1", "data/devices/utility_meter/voltage_phase_1", "GridElectricityVoltage", "gauge", "voltage"  },
 { "1-0:52.7.0", "4", "Voltage phase 2", "data/devices/utility_meter/voltage_phase_2", "GridElectricityVoltage", "gauge", "voltage" },
 { "1-0:72.7.0", "4", "Voltage phase 3", "data/devices/utility_meter/voltage_phase_3", "GridElectricityVoltage", "gauge", "voltage" },
@@ -32,12 +34,14 @@ void configMeter(){
   meterConfig[4] = dmActiveTariff;
   meterConfig[5] = dmPowCon;
   meterConfig[6] = dmPowIn;
-  meterConfig[7] = dmVoltagel1;
-  meterConfig[8] = dmVoltagel2;
-  meterConfig[9] = dmVoltagel3;
-  meterConfig[10] = dmCurrentl1;
-  meterConfig[11] = dmCurrentl2;
-  meterConfig[12] = dmCurrentl3;
-  meterConfig[13] = dmGas;
-  meterConfig[14] = dmText;
+  meterConfig[7] = dmAvDem;
+  meterConfig[8] = dmMaxDemM;
+  meterConfig[9] = dmVoltagel1;
+  meterConfig[10] = dmVoltagel2;
+  meterConfig[11] = dmVoltagel3;
+  meterConfig[12] = dmCurrentl1;
+  meterConfig[13] = dmCurrentl2;
+  meterConfig[14] = dmCurrentl3;
+  meterConfig[15] = dmGas;
+  meterConfig[16] = dmText;
 }

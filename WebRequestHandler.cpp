@@ -8,7 +8,7 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
   extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2, 
-  dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
+  dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
@@ -288,6 +288,18 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       AsyncWebParameter* p = request->getParam("trigger_interval");
       trigger_interval = p->value().toInt();
     }
+    if(request->hasParam("dmAvDem")){
+      AsyncWebParameter* p = request->getParam("dmAvDem");
+      if(p->value() == "true") dmAvDem = "1";
+      else dmAvDem = "0";
+    }
+    else dmAvDem = "0";
+    if(request->hasParam("dmMaxDemM")){
+      AsyncWebParameter* p = request->getParam("dmMaxDemM");
+      if(p->value() == "true") dmMaxDemM = "1";
+      else dmMaxDemM = "0";
+    }
+    else dmMaxDemM = "0";
     if(request->hasParam("dmPowCon")){
       AsyncWebParameter* p = request->getParam("dmPowCon");
       if(p->value() == "true") dmPowCon = "1";
