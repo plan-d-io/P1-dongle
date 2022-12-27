@@ -80,6 +80,7 @@ elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload
 
 //Global vars to store basic digital meter telegram values
 float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
+String jsonValues;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
 bool pls_en, pls_emu;

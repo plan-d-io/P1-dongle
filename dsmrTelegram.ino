@@ -1,11 +1,12 @@
 void splitTelegram(String rawTelegram){
   sinceMeterCheck = 0;
+  jsonValues = "[";
   mTimeFound = false;
   meterError = true;
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
-  //Serial.println(rawTelegram);
+  Serial.println(rawTelegram);
   while(delimEnd < eof){
     delimEnd = rawTelegram.indexOf('\n', delimStart);
     String s = rawTelegram.substring(delimStart, delimEnd);
@@ -130,24 +131,31 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
+  String jsonOutput;
   DynamicJsonDocument doc(1024);
-  doc["entity"] = "utility_meter";
   doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
+  if(floatValue) doc["value"] = round2(fmeasurement);
+  else doc["value"] = imeasurement;
+  if(unit != "") doc["unit"] = unit;
+  doc["timestamp"] = meterTime;
+  if(meterConfig[dsmrKey] == "1"){
+    serializeJson(doc, jsonOutput);
+    jsonValues += jsonOutput;
+    jsonValues += ",";
+  }
+  doc["entity"] = "utility_meter";
   String friendly_name = String(dsmrKeys[dsmrKey][2]);
   friendly_name.toLowerCase();
   friendly_name = "Utility meter " + friendly_name;
   doc["friendly_name"] = friendly_name;
   if(dsmrKeys[dsmrKey][4] != "") doc["metric"] = dsmrKeys[dsmrKey][4];
   doc["metricKind"] = dsmrKeys[dsmrKey][5];
-  if(floatValue) doc["value"] = round2(fmeasurement);
-  else doc["value"] = imeasurement;
-  if(unit != "") doc["unit"] = unit;
-  doc["timestamp"] = meterTime;
-  String jsonOutput;
   serializeJson(doc, jsonOutput);
-  if(mqtt_en){
-    if(sinceLastUpload >= (upload_throttle * 1000)){
-     pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
+  if(meterConfig[dsmrKey] == "1"){
+    if(mqtt_en) {
+      if(sinceLastUpload >= (upload_throttle * 1000)){
+       pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
+      }
     }
   }
 }
@@ -163,38 +171,54 @@ void sumMeterTotals(){
     gasConYesterday = totGasCon;
     prevDay = dm_time.tm_mday ;
   }
-  if(mqtt_en && meterConfig[dsmrKey] == "1"){
+  if(mqtt_en){
     for(int i = 0; i < 3; i++){
       String totalsTopic = "";
+      String jsonOutput;
       DynamicJsonDocument doc(1024);
-      doc["entity"] = "utility_meter";
-      doc["metric"] = "GridElectricityImport";
-      doc["metricKind"] = "cumulative";
       if(i == 0){
         totalsTopic = "total_energy_consumed";
-        doc["friendly_name"] = "Utility meter total energy consumed";
+        doc["sensorId"] = "utility_meter." + totalsTopic;
         doc["value"] = round2(totCon);
         doc["unit"] = "kWh";
+        doc["timestamp"] = dm_timestamp;
+        serializeJson(doc, jsonOutput);
+        jsonValues += jsonOutput;
+        jsonValues += ",";
+        doc["entity"] = "utility_meter";
+        doc["friendly_name"] = "Utility meter total energy consumed";
+        doc["metric"] = "GridElectricityImport";
+        doc["metricKind"] = "cumulative";
       }
       else if(i == 1){
         totalsTopic = "total_energy_injected";
-        doc["metric"] = "GridElectricityExport";
-        doc["friendly_name"] = "Utility meter total energy injected";
+        doc["sensorId"] = "utility_meter." + totalsTopic;
         doc["value"] = round2(totIn);
         doc["unit"] = "kWh";
+        doc["timestamp"] = dm_timestamp;
+        serializeJson(doc, jsonOutput);
+        jsonValues += jsonOutput;
+        jsonValues += ",";
+        doc["entity"] = "utility_meter";
+        doc["friendly_name"] = "Utility meter total energy injected";
+        doc["metric"] = "GridElectricityExport";
+        doc["metricKind"] = "cumulative";
       }
       else{
         totalsTopic = "total_active_power";
-        doc["metric"] = "GridElectricityPower";
-        doc["friendly_name"] = "Utility meter total active power";
+        doc["sensorId"] = "utility_meter." + totalsTopic;
         doc["value"] = round2(netPowCon);
-        doc["metricKind"] = "gauge";
         doc["unit"] = "kW";
+        doc["timestamp"] = dm_timestamp;
+        serializeJson(doc, jsonOutput);
+        jsonValues += jsonOutput;
+        jsonValues += "]";
+        doc["entity"] = "utility_meter";
+        doc["friendly_name"] = "Utility meter total active power";
+        doc["metric"] = "GridElectricityPower";
+        doc["metricKind"] = "gauge";
       }
-      doc["timestamp"] = dm_timestamp;
-      doc["sensorId"] = "utility_meter." + totalsTopic;
       totalsTopic = "data/devices/utility_meter/" + totalsTopic;
-      String jsonOutput;
       serializeJson(doc, jsonOutput);
       if(sinceLastUpload >= (upload_throttle*1000)){
         pubMqtt(totalsTopic, jsonOutput, false);
