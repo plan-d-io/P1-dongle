@@ -4,14 +4,27 @@ void setupMqtt() {
     mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
   syslog(mqttinfo, 0);
-  if(mqtt_tls) mqttclientSecure.setClient(*client);
-  else mqttclient.setClient(wificlient);
+  if(mqtt_tls){
+    mqttclientSecure.setClient(*client);
+    if(upload_throttle > 0){
+      mqttclientSecure.setKeepAlive(upload_throttle +1).setSocketTimeout(upload_throttle +1);
+    }
+  }
+  else {
+    mqttclient.setClient(wificlient);
+    if(upload_throttle > 0){
+      mqttclient.setKeepAlive(upload_throttle +1).setSocketTimeout(upload_throttle +1);
+    }
+  }
   /*Set broker location*/
   IPAddress addr;
   if (mqtt_host.length() > 0) {
     if (addr.fromString(mqtt_host)) {
       syslog("MQTT host has IP address " + mqtt_host, 0);
-      if(mqtt_tls) mqttclientSecure.setServer(addr, mqtt_port);
+      if(mqtt_tls){
+        mqttclientSecure.setServer(addr, mqtt_port);
+        mqttclientSecure.setCallback(callback);
+      }
       else{
         mqttclient.setServer(addr, mqtt_port);
         mqttclient.setCallback(callback);
@@ -77,7 +90,8 @@ void connectMqtt() {
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
           Serial.print("...");
-          if (mqtt_auth) mqttclientSecure.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str());
+          String mqtt_topic = "data/devices/utility_meter";
+          if (mqtt_auth) mqttclientSecure.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), mqtt_topic.c_str(), 1, true, "offline");
           else mqttclientSecure.connect(mqtt_id.c_str());
           mqttretry++;
           reconncount++;
@@ -96,7 +110,8 @@ void connectMqtt() {
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
           Serial.print("...");
-          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), "data/devices/utility_meter", 1, true, "offline");
+          String mqtt_topic = "data/devices/utility_meter";
+          if (mqtt_auth) mqttclient.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), mqtt_topic.c_str(), 1, true, "offline");
           else mqttclient.connect(mqtt_id.c_str(), "data/devices/utility_meter", 1, true, "offline");
           mqttretry++;
           reconncount++;

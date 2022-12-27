@@ -13,6 +13,7 @@ boolean restoreConfig() {
   upload_throttle = preferences.getULong("UPL_THROTTLE");
   update_auto = preferences.getBool("UPD_AUTO");
   update_autoCheck = preferences.getBool("UPD_AUTOCHK");
+  beta_fleet = preferences.getBool("BETA_FLT");
   fw_new = preferences.getUInt("FW_NEW");
   update_start = preferences.getBool("UPD_START");
   update_finish = preferences.getBool("UPD_FINISH");
@@ -77,6 +78,7 @@ boolean saveConfig() {
   preferences.putULong("UPL_THROTTLE", upload_throttle);
   preferences.putBool("UPD_AUTO", update_auto);
   preferences.putBool("UPD_AUTOCHK", update_autoCheck);
+  preferences.putBool("BETA_FLT", beta_fleet);
   preferences.putUInt("FW_NEW", onlineVersion);
   preferences.putBool("UPD_START", update_start);
   preferences.putBool("UPD_FINISH", update_finish);
@@ -151,6 +153,7 @@ boolean initConfig() {
     }
     preferences.putBool("UPD_AUTO", true); 
     preferences.putBool("UPD_AUTOCHK", true);
+    preferences.putBool("BETA_FLT", false);
     preferences.putUInt("DM_DSMRV", 0);
     preferences.putBool("DM_ACTTAR", true);
     preferences.putBool("DM_VOLT1", true);

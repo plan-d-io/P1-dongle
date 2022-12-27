@@ -5,12 +5,19 @@ boolean checkUpdate(){
     boolean mqttPaused;
     if(mqttclientSecure.connected()){
       Serial.println("Disconnecting TLS MQTT connection");
+      String mqtt_topic = "data/devices/utility_meter";
+      mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
       mqttclientSecure.disconnect();
       mqttPaused = true;
     }
     if(bundleLoaded){
       syslog("Checking repository for firmware update... ", 0);
-      if (https.begin(*client, "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/version")) {  
+      String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+      if(beta_fleet) checkUrl += "develop/version";
+      else checkUrl += "main/version";
+      Serial.print("Connecting to ");
+      Serial.println(checkUrl);
+      if (https.begin(*client, checkUrl)) {  
         int httpCode = https.GET();
         if (httpCode > 0) {
           // HTTP header has been send and Server response header has been handled
@@ -59,10 +66,10 @@ boolean startUpdate(){
         mqttPaused = true;
       }
       if(bundleLoaded){
-        //String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main";
-        //String fileUrl = baseUrl + "/bin/P1-dongle-V" + String(onlineVersion/100.0) +"ino.bin";
-        String baseUrl ="https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/bin/P1-dongle-V";
-        String fileUrl = baseUrl + String(onlineVersion/100.0) +".ino.bin";
+        String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+        if(beta_fleet) baseUrl += "develop/bin/P1-dongle";
+        else baseUrl += "main/bin/P1-dongle";
+        String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
         syslog("Getting new firmware over HTTPS/TLS", 0);
         syslog("Found new firmware at "+ fileUrl, 0);
         if (https.begin(*client, fileUrl)) {  
@@ -175,7 +182,9 @@ boolean finishUpdate(){
   }
   if(bundleLoaded){
     syslog("Finishing upgrade. Preparing to download static files.", 1);
-    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main";
+    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+    if(beta_fleet) baseUrl += "develop";
+    else baseUrl += "main";
     String fileUrl = baseUrl + "/bin/files";
     String payload;
     if (https.begin(*client, fileUrl)) {  
