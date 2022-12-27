@@ -83,6 +83,10 @@ String getDm() {
   dmData["innerChecks"]["dmActPow"]["value"] = true;
   dmData["innerChecks"]["dmTotCon"]["value"] = true;
   dmData["innerChecks"]["dmTotIn"]["value"] = true;
+  if(dmAvDem == "1") dmData["innerChecks"]["dmAvDem"]["value"] = true;
+  else dmData["innerChecks"]["dmAvDem"]["value"] = false;
+  if(dmMaxDemM == "1") dmData["innerChecks"]["dmMaxDemM"]["value"] = true;
+  else dmData["innerChecks"]["dmMaxDemM"]["value"] = false;
   if(dsmrVersion == 0) dmData["innerValues"]["dsmrVersion"]["value"] = "DSMR P1 V5.0.2 (Fluvius BE)";
   if(dmPowCon == "1") dmData["innerChecks"]["dmPowCon"]["value"] = true;
   else dmData["innerChecks"]["dmPowCon"]["value"] = false;
