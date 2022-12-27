@@ -119,6 +119,7 @@ void splitTelegram(String rawTelegram){
 }
 
 void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolean floatValue, String unit, unsigned long meterTime){
+  //fmeasurement = round2(fmeasurement);
   if(dsmrKeys[dsmrKey][0] == "1-0:1.8.1") totConDay = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:1.8.2") totConNight = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.1") totInDay = fmeasurement;
@@ -138,13 +139,13 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   doc["friendly_name"] = friendly_name;
   if(dsmrKeys[dsmrKey][4] != "") doc["metric"] = dsmrKeys[dsmrKey][4];
   doc["metricKind"] = dsmrKeys[dsmrKey][5];
-  if(floatValue) doc["value"] = fmeasurement;
+  if(floatValue) doc["value"] = round2(fmeasurement);
   else doc["value"] = imeasurement;
   if(unit != "") doc["unit"] = unit;
   doc["timestamp"] = meterTime;
   String jsonOutput;
   serializeJson(doc, jsonOutput);
-  if(mqtt_en && meterConfig[dsmrKey] == "1"){
+  if(mqtt_en){
     if(sinceLastUpload >= (upload_throttle * 1000)){
      pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
     }
@@ -162,7 +163,7 @@ void sumMeterTotals(){
     gasConYesterday = totGasCon;
     prevDay = dm_time.tm_mday ;
   }
-  if(mqtt_en){
+  if(mqtt_en && meterConfig[dsmrKey] == "1"){
     for(int i = 0; i < 3; i++){
       String totalsTopic = "";
       DynamicJsonDocument doc(1024);
@@ -172,21 +173,21 @@ void sumMeterTotals(){
       if(i == 0){
         totalsTopic = "total_energy_consumed";
         doc["friendly_name"] = "Utility meter total energy consumed";
-        doc["value"] = totCon;
+        doc["value"] = round2(totCon);
         doc["unit"] = "kWh";
       }
       else if(i == 1){
         totalsTopic = "total_energy_injected";
         doc["metric"] = "GridElectricityExport";
         doc["friendly_name"] = "Utility meter total energy injected";
-        doc["value"] = totIn;
+        doc["value"] = round2(totIn);
         doc["unit"] = "kWh";
       }
       else{
         totalsTopic = "total_active_power";
         doc["metric"] = "GridElectricityPower";
         doc["friendly_name"] = "Utility meter total active power";
-        doc["value"] = netPowCon;
+        doc["value"] = round2(netPowCon);
         doc["metricKind"] = "gauge";
         doc["unit"] = "kW";
       }

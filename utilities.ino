@@ -149,3 +149,7 @@ void blinkLed(){
     M5.dis.displaybuff(DisBuff);
   }
 }
+
+double round2(double value) {
+   return (int)(value * 100 + 0.05) / 100.0;
+}
