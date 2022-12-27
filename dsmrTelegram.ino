@@ -26,7 +26,7 @@ void splitTelegram(String rawTelegram){
       dm_time.tm_hour = houri;
       dm_time.tm_min = minutei;
       dm_time.tm_mday = dayi;
-      dm_time.tm_mon = monthi;      // months start from 0, so deduct 1
+      dm_time.tm_mon = monthi - 1;      // months start from 0, so deduct 1
       dm_time.tm_year = yeari - 1900; // years since 1900, so deduct 1900
       dm_timestamp =  mktime(&dm_time);
       if(DST == "S"){
@@ -169,17 +169,18 @@ void sumMeterTotals(){
       doc["entity"] = "utility_meter";
       doc["metric"] = "GridElectricityImport";
       doc["metricKind"] = "cumulative";
-      doc["unit"] = "kWh";
       if(i == 0){
         totalsTopic = "total_energy_consumed";
         doc["friendly_name"] = "Utility meter total energy consumed";
         doc["value"] = totCon;
+        doc["unit"] = "kWh";
       }
       else if(i == 1){
         totalsTopic = "total_energy_injected";
         doc["metric"] = "GridElectricityExport";
         doc["friendly_name"] = "Utility meter total energy injected";
         doc["value"] = totIn;
+        doc["unit"] = "kWh";
       }
       else{
         totalsTopic = "total_active_power";

@@ -1,5 +1,5 @@
 boolean scanWifi(){
-  Serial.println("Performing wifi scan");
+  syslog("Performing wifi scan", 0);
   int16_t n = WiFi.scanNetworks();
   String savedSSID = wifi_ssid;
   boolean foundSavedSSID = false;
