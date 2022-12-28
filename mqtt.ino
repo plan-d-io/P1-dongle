@@ -164,7 +164,12 @@ void pubMqtt(String topic, String payload, boolean retain){
   }
 }
 
-void haAutoDiscovery(boolean eraseMeter){
+void haAutoDiscovery(int eraseMeter){
+  /*eraseMeter behaviour:
+   * 0: do not erase meter
+   * 1: erase meter and recreate it
+   * 2: erase meter only
+  */
   if(ha_en && mqtt_en && !mqttClientError){
     if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 1);
     int channels = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
@@ -228,16 +233,13 @@ void haAutoDiscovery(boolean eraseMeter){
       String configTopic = "homeassistant/sensor/" + chanName + "/config";
       String jsonOutput ="";
       //Ensure devices are erased before created again
-      if(eraseMeter){
+      if(eraseMeter > 0){ //erase meter in HA by sending empty payload to configtopic
         if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
         delay(100);
       }
       serializeJson(doc, jsonOutput);
-      //Serial.print(configTopic);
-      //Serial.print(" ");
-      //Serial.println(jsonOutput);
-      if(chanName.length() > 0){
-        if(eraseMeter) delay(100);
+      if(eraseMeter < 2 && chanName.length() > 0){
+        if(eraseMeter == 1) delay(100);
         if(dsmrKey < channels){
           if(meterConfig[dsmrKey] == "1"){
             pubMqtt(configTopic, jsonOutput, true);
@@ -246,7 +248,7 @@ void haAutoDiscovery(boolean eraseMeter){
         }
         else{
           pubMqtt(configTopic, jsonOutput, true);
-          //Serial.println(configTopic);
+          Serial.println(configTopic);
         }
       }
     }
@@ -327,12 +329,12 @@ void haAutoDiscovery(boolean eraseMeter){
         else configTopic = "homeassistant/sensor/" + chanName + "/config";
         String jsonOutput ="";
         //Ensure devices are erased before created again
-        if(eraseMeter){
+        if(eraseMeter > 0){
           if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
           delay(100);
         }
         serializeJson(doc, jsonOutput);
-        if(chanName.length() > 0) if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+        if(eraseMeter < 2 && chanName.length() > 0) if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
       }
     }
     ha_metercreated = true;

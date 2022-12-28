@@ -269,10 +269,8 @@ void loop(){
     if(rebootInit){
       if(!clientSecureBusy){
         ESP.restart();
-      }
-      
+      } 
     }
-    //Serial.println(mqttclient.state());
     sinceRebootCheck = 0;
   }
   if(sinceMeterCheck > 60000){

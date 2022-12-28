@@ -109,15 +109,21 @@ void checkConnection(){
   if(WiFi.status() == WL_CONNECTED){
     if(mqtt_en){
       connectMqtt();
-      if(ha_en && !ha_metercreated) haAutoDiscovery(true);
-      else if(ha_en && ha_metercreated) haAutoDiscovery(false);
+      if(ha_en && !ha_metercreated) haAutoDiscovery(1);
+      else if(ha_en && ha_metercreated) haAutoDiscovery(0);
     }
   }
 }
 
 void setReboot(){
+  sinceConnCheck = 0;
+  syslog("Removing Home Assistant entities", 0);
+  haAutoDiscovery(3);
+  syslog("Saving configuration", 0);
+  saveConfig();
   rebootInit = true;
   sinceRebootCheck = 0;
+  syslog("Rebooting", 2);
 }
 
 void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
