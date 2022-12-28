@@ -80,7 +80,7 @@ elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload
 
 //Global vars to store basic digital meter telegram values
 float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
-String jsonValues;
+String jsonData;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
 bool pls_en, pls_emu;
@@ -112,7 +112,7 @@ boolean rebootReq = false;
 boolean rebootInit = false;
 boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
-String meterConfig[15];
+String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
 boolean timeSet, mTimeFound, spiffsMounted;
 String wifi_ssid, wifi_password;

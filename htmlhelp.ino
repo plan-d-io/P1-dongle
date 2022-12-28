@@ -78,6 +78,8 @@ String getUnit() {
 }
 
 String getDm() {
+  Serial.print("dmAvDem: ");
+  Serial.println(dmAvDem);
   //Note to self: for the love of God please refactor this
   StaticJsonDocument<840> dmData;
   dmData["innerChecks"]["dmActPow"]["value"] = true;

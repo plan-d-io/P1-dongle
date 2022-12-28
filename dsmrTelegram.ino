@@ -1,12 +1,12 @@
 void splitTelegram(String rawTelegram){
   sinceMeterCheck = 0;
-  jsonValues = "[";
+  jsonData = "[";
   mTimeFound = false;
   meterError = true;
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
-  Serial.println(rawTelegram);
+  //Serial.println(rawTelegram);
   while(delimEnd < eof){
     delimEnd = rawTelegram.indexOf('\n', delimStart);
     String s = rawTelegram.substring(delimStart, delimEnd);
@@ -127,7 +127,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.2") totInNight = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:1.7.0") totPowCon = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:2.7.0") totPowIn = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.4.0") totPowIn = fmeasurement;
+  else if(dsmrKeys[dsmrKey][0] == "0-1:24.2.3") totGasCon = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
@@ -140,8 +140,8 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   doc["timestamp"] = meterTime;
   if(meterConfig[dsmrKey] == "1"){
     serializeJson(doc, jsonOutput);
-    jsonValues += jsonOutput;
-    jsonValues += ",";
+    jsonData += jsonOutput;
+    jsonData += ",";
   }
   doc["entity"] = "utility_meter";
   String friendly_name = String(dsmrKeys[dsmrKey][2]);
@@ -183,8 +183,8 @@ void sumMeterTotals(){
         doc["unit"] = "kWh";
         doc["timestamp"] = dm_timestamp;
         serializeJson(doc, jsonOutput);
-        jsonValues += jsonOutput;
-        jsonValues += ",";
+        jsonData += jsonOutput;
+        jsonData += ",";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total energy consumed";
         doc["metric"] = "GridElectricityImport";
@@ -197,8 +197,8 @@ void sumMeterTotals(){
         doc["unit"] = "kWh";
         doc["timestamp"] = dm_timestamp;
         serializeJson(doc, jsonOutput);
-        jsonValues += jsonOutput;
-        jsonValues += ",";
+        jsonData += jsonOutput;
+        jsonData += ",";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total energy injected";
         doc["metric"] = "GridElectricityExport";
@@ -211,8 +211,8 @@ void sumMeterTotals(){
         doc["unit"] = "kW";
         doc["timestamp"] = dm_timestamp;
         serializeJson(doc, jsonOutput);
-        jsonValues += jsonOutput;
-        jsonValues += "]";
+        jsonData += jsonOutput;
+        jsonData += "]";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total active power";
         doc["metric"] = "GridElectricityPower";

@@ -7,7 +7,7 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2, 
+  extern String jsonData, ssidList, wifi_ssid, wifi_password, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2, 
   dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
@@ -21,6 +21,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/hostname"){
     request->send(200, "text/plain", apSSID);
+  }
+  else if(request->url() == "/data"){
+    request->send(200, "application/json", jsonData);
   }
   else if(request->url() == "/wifi"){
     if(WiFi.status() == WL_CONNECTED){
@@ -392,7 +395,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     else dmText = "0";
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      //Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
     if(saveConfig()){
       configSaved = true;
@@ -401,7 +404,6 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/dm.html", "text/html");
   }
   else if(request->url() == "/setio"){
-    Serial.println("Got setIO");
     configSaved = false;
     int params = request->params();
     if(request->hasParam("pls_en")){
