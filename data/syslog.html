@@ -31,7 +31,7 @@ function start(){
 		})
 		.then(text => {
 			text = text.replace(/\n/g, "</br>"); 
-			document.getElementById("demo").innerHTML = text;
+			document.getElementById("log0").innerHTML = text;
 		})
 		.catch(error => {
 			// Handle/report error
@@ -47,18 +47,17 @@ function start(){
 		})
 		.then(text => {
 			text = text.replace(/\n/g, "</br>"); 
-			document.getElementById("demo").innerHTML = text;
+			document.getElementById("log1").innerHTML = text;
 		})
 		.catch(error => {
 			// Handle/report error
 		});
 		</script>
-		<p id="demo"></p>
+		<p id="log0" style='font-size: smaller;'></p>
+		<p id="log1" style='font-size: smaller;'></p>
 		<p><div></div></p>
-		<p><form action='/config' method='get'><button>Configuration</button></form></p>
 		<p><form action='/' method='get'><button>Main menu</button></form></p>
 		<p><div></div></p>
-		<p><form action='.' method='get' onsubmit='return confirm("Confirm Restart");'><button name='rst' class='button bred'>Reset configuration</button></form></p>
 		<div style='text-align:right;font-size:11px;'><hr/><a id="footer" href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle by plan-d.io</a></div>
 	</div>
 </body>
