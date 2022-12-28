@@ -51,6 +51,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     else request->send(SPIFFS, "/counter-off.png", "image/png");
     
   }
+  if(request->url() == "/cs"){
+    request->send(SPIFFS, "/syslog.html", "text/html");
+  }
   else if(request->url() == "/sensor"){
     request->send(SPIFFS, "/connection-off.png", "image/png");
   }

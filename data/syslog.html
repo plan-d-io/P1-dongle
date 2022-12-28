@@ -8,12 +8,9 @@
 <script src="scripts.js"></script>
 <script>
 function start(){
-    getJsonData('unitData');
     getStaticData();
 }
-setTimeout(function() {
-  getSaveState();
-}, 200); //200mSeconds update rate
+
 </script>
 
 <body onload="start()">
@@ -22,50 +19,41 @@ setTimeout(function() {
 			<noscript>To use the digital meter dongle, please enable JavaScript<br></noscript>
 			<h2>Digital meter dongle</h2>
 			<h3><span id="HostValue">STATE</span></h3>
-			<h3>Dongle configuration</h3>
+			<h3>Syslog</h3>
 		</div>
-		<h4>Firmware update</h4>
-		<p>INFO: ----------------------------
-INFO: Digital meter dongle COFYA984 V1.01 by plan-d.io
-WARNING: Using development firmware
-WARNING: Failed to obtain time from RTC
-INFO: Boot #152
-INFO: Last reset reason: POWERON_RESET
-INFO: Last reset reason (verbose): 
-INFO: WiFi mode: station
-INFO: Connected to the WiFi network Aether
-INFO: Time set: 2022/12/28 11:00:21
-INFO: ----------------------------
-INFO: Digital meter dongle COFYA984 V1.01 by plan-d.io
-WARNING: Using development firmware
-WARNING: Failed to obtain time from RTC
-INFO: Boot #153
-INFO: Last reset reason: POWERON_RESET
-INFO: Last reset reason (verbose): 
-INFO: WiFi mode: station
-INFO: Connected to the WiFi network Aether
-WARNING: Failed to obtain time from RTC
-INFO: ----------------------------
-INFO: Digital meter dongle COFYA984 V1.01 by plan-d.io
-WARNING: Using development firmware
-WARNING: Failed to obtain time from RTC
-INFO: Boot #154
-INFO: Last reset reason: POWERON_RESET
-INFO: Last reset reason (verbose): 
-INFO: WiFi mode: station
-INFO: Connected to the WiFi network Aether
-INFO: Time set: 2022/12/28 11:10:02
-2022/12/28 11:11:21 WARNING: Reboot requested by user from webmin
-INFO: ----------------------------
-INFO: Digital meter dongle COFYA984 V1.01 by plan-d.io
-WARNING: Using development firmware
-INFO: Time set: 2022/12/28 11:11:25
-2022/12/28 11:11:25 INFO: Boot #155
-2022/12/28 11:11:26 INFO: Last reset reason: SW_CPU_RESET
-2022/12/28 11:11:26 INFO: Last reset reason (verbose): Reboot requested by user from webmin
-2022/12/28 11:11:26 INFO: WiFi mode: station
-2022/12/28 11:11:26 INFO: Connected to the WiFi network Aether
-2022/12/28 11:11:26 INFO: Time set: 2022/12/28 11:11:26</p>
+		<script>
+		fetch('syslog0')
+		.then(response => {
+			if (!response.ok) {
+				throw new Error("HTTP error " + response.status);
+			}
+			return response.text();
+		})
+		.then(text => {
+			text = text.replace(/\n/g, "</br>"); 
+			document.getElementById("demo").innerHTML = text;
+		})
+		.catch(error => {
+			// Handle/report error
+		});
+		</script>
+		<script>
+		fetch('syslog')
+		.then(response => {
+			if (!response.ok) {
+				throw new Error("HTTP error " + response.status);
+			}
+			return response.text();
+		})
+		.then(text => {
+			text = text.replace(/\n/g, "</br>"); 
+			document.getElementById("demo").innerHTML = text;
+		})
+		.catch(error => {
+			// Handle/report error
+		});
+		</script>
+		<p id="demo"></p>
 		<p><div></div></p>
 		<p><form action='/config' method='get'><button>Configuration</button></form></p>
 		<p><form action='/' method='get'><button>Main menu</button></form></p>
