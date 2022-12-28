@@ -248,7 +248,7 @@ void haAutoDiscovery(int eraseMeter){
         }
         else{
           pubMqtt(configTopic, jsonOutput, true);
-          Serial.println(configTopic);
+          //Serial.println(configTopic);
         }
       }
     }
