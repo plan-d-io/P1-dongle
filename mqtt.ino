@@ -211,6 +211,7 @@ void haAutoDiscovery(boolean eraseMeter){
         chanName = "";
       }
       doc["unique_id"] = chanName;
+      doc["object_id"] = chanName;
       doc["value_template"] = "{{ value_json.value }}";
       doc["availability_topic"] = "data/devices/utility_meter";
       JsonObject device  = doc.createNestedObject("device");
@@ -307,6 +308,7 @@ void haAutoDiscovery(boolean eraseMeter){
           doc["command_topic"] = "set/devices/utility_meter/reboot";
         }
         doc["unique_id"] = chanName;
+        doc["object_id"] = chanName;
         doc["availability_topic"] = "data/devices/utility_meter";
         doc["value_template"] = "{{ value_json.value }}";
         JsonObject device  = doc.createNestedObject("device");
