@@ -130,7 +130,9 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "0-1:24.2.3") totGasCon = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
+  else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement; 
+  else if(dsmrKeys[dsmrKey][0] == "1-0:1.4.0") avgDem = fmeasurement;  
+  else if(dsmrKeys[dsmrKey][0] == "1-0:1.6.0") maxDemM = fmeasurement;  
   String jsonOutput;
   DynamicJsonDocument doc(1024);
   doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);

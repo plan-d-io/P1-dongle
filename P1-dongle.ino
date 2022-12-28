@@ -79,7 +79,7 @@ void IRAM_ATTR pulseCounter2() {
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceEidUpload, sinceLastWebRequest, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 
 //Global vars to store basic digital meter telegram values
-float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
+float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
 String jsonData;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars

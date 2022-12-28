@@ -39,9 +39,13 @@ String getIndexData() {
   if(mTimeFound) hostValue = String(totIn) + " kWh";
   indexData["innerHTML"]["totIn"]["value"] = hostValue;
   if(mTimeFound) hostValue = String(gasConToday) + " m³";
+  indexData["innerHTML"]["totGasCon"]["value"] = hostValue;
+  if(mTimeFound) hostValue = String(avgDem) + " kW";
+  indexData["innerHTML"]["dmAvDem"]["value"] = hostValue;
+  if(mTimeFound) hostValue = String(maxDemM) + " kW";
+  indexData["innerHTML"]["dmMaxDemM"]["value"] = hostValue;
   indexData["innerHTML"]["gasConToday"]["value"] = hostValue;
   if(mTimeFound) hostValue = String(totGasCon) + " m³";
-  indexData["innerHTML"]["totGasCon"]["value"] = hostValue;
   String output;
   serializeJson(indexData, output);
   return output;
