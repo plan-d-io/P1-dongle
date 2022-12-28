@@ -38,7 +38,7 @@ String getIndexData() {
   indexData["innerHTML"]["totCon"]["value"] = hostValue;
   if(mTimeFound) hostValue = String(totIn) + " kWh";
   indexData["innerHTML"]["totIn"]["value"] = hostValue;
-  if(mTimeFound) hostValue = String(gasConToday) + " m³";
+  if(mTimeFound) hostValue = String(totGasCon) + " m³";
   indexData["innerHTML"]["totGasCon"]["value"] = hostValue;
   if(mTimeFound) hostValue = String(avgDem) + " kW";
   indexData["innerHTML"]["dmAvDem"]["value"] = hostValue;
