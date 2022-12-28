@@ -3,7 +3,7 @@ void setupMqtt() {
   if (mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
-  syslog(mqttinfo, 0);
+  syslog(mqttinfo, 1);
   if(mqtt_tls){
     mqttclientSecure.setClient(*client);
     if(upload_throttle > 0){
@@ -31,7 +31,7 @@ void setupMqtt() {
       }
     }
     else {
-      syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 0);
+      syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 1);
       int dotLoc = mqtt_host.lastIndexOf('.');
       String tld = mqtt_host.substring(dotLoc+1);
       if(dotLoc == -1 || tld == "local"){
@@ -49,7 +49,7 @@ void setupMqtt() {
           delay(250);
         }
         if(mdnsretry < 10){
-          syslog("MQTT host has IP address " + addr.toString(), 0);
+          syslog("MQTT host has IP address " + addr.toString(), 1);
           if(mqtt_tls) {
             mqttclientSecure.setServer(addr, mqtt_port);
             mqttclientSecure.setCallback(callback);
@@ -86,7 +86,9 @@ void connectMqtt() {
     if(mqtt_tls && !clientSecureBusy){
       if(!mqttclientSecure.connected()) {
         disconnected = true;
-        if(mqttWasConnected) syslog("Lost connection to secure MQTT broker", 2);
+        if(mqttWasConnected){
+          if(!mqttPaused) syslog("Lost connection to secure MQTT broker", 2);
+        }
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
           Serial.print("...");
@@ -104,8 +106,8 @@ void connectMqtt() {
       if(!mqttclient.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          reconncount++;
-          syslog("Lost connection to MQTT broker", 2);
+          //reconncount++;
+          if(!mqttPaused) syslog("Lost connection to MQTT broker", 2);
         }
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
@@ -122,7 +124,8 @@ void connectMqtt() {
     }
     if(disconnected){
       if(mqttretry < 2){
-        syslog("Connected to MQTT broker", 0);
+        syslog("Connected to MQTT broker", 1);
+        if(mqttPaused) mqttPaused = false;
         if(mqtt_tls){
           mqttclientSecure.publish("data/devices/utility_meter", "online", true);
           mqttclientSecure.subscribe("set/devices/utility_meter/reboot");
@@ -163,7 +166,7 @@ void pubMqtt(String topic, String payload, boolean retain){
 
 void haAutoDiscovery(boolean eraseMeter){
   if(ha_en && mqtt_en && !mqttClientError){
-    if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 0);
+    if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 1);
     int channels = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
     for(int dsmrKey = 0; dsmrKey < channels+4; dsmrKey++){
       String chanName = "";

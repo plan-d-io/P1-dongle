@@ -30,7 +30,7 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 bool bundleLoaded = true;
-bool clientSecureBusy;
+bool clientSecureBusy, mqttPaused;
 
 #define HWSERIAL Serial1 //Use hardware UART for communication with digital meter
 #define TRIGGER 25 //Pin to trigger meter telegram request
@@ -83,7 +83,7 @@ float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, to
 String jsonData;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
-bool pls_en, pls_emu;
+boolean pls_en, pls_emu;
 int pls_mind1, pls_mind2, pls_multi1, pls_multi2, pls_type1, pls_type2, pls_emuchan;
 String pls_unit1, pls_unit2;
 //Meter telegram timestamp vars
@@ -250,7 +250,7 @@ void setup(){
     dnsServer.start(53, "*", WiFi.softAPIP());
     MDNS.begin("p1dongle");
     server.addHandler(new WebRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-    Serial.println("AP set up");
+    syslog("AP set up", 1);
     unitState = 3;
   }
   scanWifi();
