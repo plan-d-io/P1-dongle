@@ -173,9 +173,6 @@ void setup(){
     attachInterrupt(26, pulseCounter2, CHANGE);
   }
   delay(100);
-  /*Temporary bootstrap*/
-  preferences.putBool("DM_AVDEM", true);
-  preferences.putBool("DM_MAXDEMM", true);
   //your other setup stuff...
   if(wifiSTA){
     syslog("WiFi mode: station", 1);
@@ -223,6 +220,10 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
+        /*Temporary bootstrap*/
+        preferences.putBool("DM_AVDEM", true);
+        preferences.putBool("DM_MAXDEMM", true);
+        /*End temporary bootstrap*/
         finishUpdate();
       }
       if(mqtt_en) setupMqtt();
