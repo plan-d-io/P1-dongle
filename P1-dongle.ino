@@ -181,7 +181,7 @@ void setup(){
     syslog("WiFi mode: station", 1);
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
-    WiFi.setHostname(apSSID);
+    WiFi.setHostname("p1dongle");
     elapsedMillis startAttemptTime;
     syslog("Attempting connection to WiFi network " + wifi_ssid, 0);
     while (WiFi.status() != WL_CONNECTED && startAttemptTime < 20000) {
@@ -191,8 +191,9 @@ void setup(){
     Serial.println("");
     if(WiFi.status() == WL_CONNECTED){
       syslog("Connected to the WiFi network " + wifi_ssid, 1);
-      MDNS.begin("apSSID");
+      MDNS.begin("p1dongle");
       unitState = 5;
+      MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
       printLocalTime(true);
@@ -244,9 +245,9 @@ void setup(){
   if(!wifiSTA){
     syslog("WiFi mode: access point", 1);
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(apSSID);
+    WiFi.softAP("p1dongle");
     dnsServer.start(53, "*", WiFi.softAPIP());
-    MDNS.begin("apSSID");
+    MDNS.begin("p1dongle");
     server.addHandler(new WebRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
     Serial.println("AP set up");
     unitState = 3;
