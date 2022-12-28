@@ -27,12 +27,17 @@ setTimeout(function() {
 		<h4>Data points</h4>
 		<p>Select digital meter data points to process</p>
 		<p><form method="get" action="setDm">
-		<p><label><input name ="dmPowCon" type="checkbox" id="dmPowCon" value = "true" disabled="disabled"/>Active power consumption</label></p>
-		<p><label><input name ="dmPowIn" type="checkbox" id="dmPowIn" value = "true" disabled="disabled"/>Active power injection</label></p>
-		<p><label><input name ="dmTotConDay" type="checkbox" id="dmTotConDay" value = "true" disabled="disabled"/>Total consumption day</label></p>
-		<p><label><input name ="dmTotConNight" type="checkbox" id="dmTotConNight" value = "true" disabled="disabled"/>Total consumption night</label></p>
-		<p><label><input name ="dmTotInDay" type="checkbox" id="dmTotInDay" value = "true" disabled="disabled"/>Total injection day</label></p>
-		<p><label><input name ="dmTotInNight" type="checkbox" id="dmTotInNight" value = "true" disabled="disabled"/>Total injection night</label></p>
+		<p><label><input name ="dmActPow" type="checkbox" id="dmActPow" value = "true" disabled="disabled"/>Active power</label></p>
+		<p><label><input name ="dmTotCon" type="checkbox" id="dmTotCon" value = "true" disabled="disabled"/>Total energy consumed</label></p>
+		<p><label><input name ="dmTotIn" type="checkbox" id="dmTotIn" value = "true" disabled="disabled"/>Total energy injected</label></p>
+		<p><label><input name ="dmAvDem" type="checkbox" id="dmAvDem" value = "true" />Current average demand</label></p>
+		<p><label><input name ="dmMaxDemM" type="checkbox" id="dmMaxDemM" value = "true" />Max demand current month</label></p>
+		<p><label><input name ="dmPowCon" type="checkbox" id="dmPowCon" value = "true" />Active power consumption</label></p>
+		<p><label><input name ="dmPowIn" type="checkbox" id="dmPowIn" value = "true" />Active power injection</label></p>
+		<p><label><input name ="dmTotCont1" type="checkbox" id="dmTotCont1" value = "true" />Total consumption tariff 1</label></p>
+		<p><label><input name ="dmTotCont2" type="checkbox" id="dmTotCont2" value = "true" />Total consumption tariff 2</label></p>
+		<p><label><input name ="dmTotInt1" type="checkbox" id="dmTotInt1" value = "true" />Total injection tariff 1</label></p>
+		<p><label><input name ="dmTotInt2" type="checkbox" id="dmTotInt2" value = "true" />Total injection tariff 2</label></p>
 		<p><label><input name ="dmActiveTariff" type="checkbox" id="dmActiveTariff" value = "true" />Active tariff</label></p>
 		<p><label><input name ="dmVoltagel1" type="checkbox" id="dmVoltagel1" value = "true" />Voltage phase 1</label></p>
 		<p><label><input name ="dmVoltagel2" type="checkbox" id="dmVoltagel2" value = "true" />Voltage phase 2</label></p>

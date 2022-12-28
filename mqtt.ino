@@ -3,7 +3,7 @@ void setupMqtt() {
   if (mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
-  syslog(mqttinfo, 0);
+  syslog(mqttinfo, 1);
   if(mqtt_tls){
     mqttclientSecure.setClient(*client);
     if(upload_throttle > 0){
@@ -31,7 +31,7 @@ void setupMqtt() {
       }
     }
     else {
-      syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 0);
+      syslog("Trying to resolve MQTT host " + mqtt_host + " to IP address", 1);
       int dotLoc = mqtt_host.lastIndexOf('.');
       String tld = mqtt_host.substring(dotLoc+1);
       if(dotLoc == -1 || tld == "local"){
@@ -49,7 +49,7 @@ void setupMqtt() {
           delay(250);
         }
         if(mdnsretry < 10){
-          syslog("MQTT host has IP address " + addr.toString(), 0);
+          syslog("MQTT host has IP address " + addr.toString(), 1);
           if(mqtt_tls) {
             mqttclientSecure.setServer(addr, mqtt_port);
             mqttclientSecure.setCallback(callback);
@@ -86,7 +86,9 @@ void connectMqtt() {
     if(mqtt_tls && !clientSecureBusy){
       if(!mqttclientSecure.connected()) {
         disconnected = true;
-        if(mqttWasConnected) syslog("Lost connection to secure MQTT broker", 2);
+        if(mqttWasConnected){
+          if(!mqttPaused) syslog("Lost connection to secure MQTT broker", 2);
+        }
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
           Serial.print("...");
@@ -104,8 +106,8 @@ void connectMqtt() {
       if(!mqttclient.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          reconncount++;
-          syslog("Lost connection to MQTT broker", 2);
+          //reconncount++;
+          if(!mqttPaused) syslog("Lost connection to MQTT broker", 2);
         }
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
@@ -122,7 +124,8 @@ void connectMqtt() {
     }
     if(disconnected){
       if(mqttretry < 2){
-        syslog("Connected to MQTT broker", 0);
+        syslog("Connected to MQTT broker", 1);
+        if(mqttPaused) mqttPaused = false;
         if(mqtt_tls){
           mqttclientSecure.publish("data/devices/utility_meter", "online", true);
           mqttclientSecure.subscribe("set/devices/utility_meter/reboot");
@@ -161,9 +164,14 @@ void pubMqtt(String topic, String payload, boolean retain){
   }
 }
 
-void haAutoDiscovery(boolean eraseMeter){
+void haAutoDiscovery(int eraseMeter){
+  /*eraseMeter behaviour:
+   * 0: do not erase meter
+   * 1: erase meter and recreate it
+   * 2: erase meter only
+  */
   if(ha_en && mqtt_en && !mqttClientError){
-    if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 0);
+    if(!ha_metercreated) syslog("Performing Home Assistant MQTT autodiscovery", 1);
     int channels = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
     for(int dsmrKey = 0; dsmrKey < channels+4; dsmrKey++){
       String chanName = "";
@@ -190,9 +198,6 @@ void haAutoDiscovery(boolean eraseMeter){
         doc["unit_of_measurement"] = "kWh";
         doc["state_topic"] = "data/devices/utility_meter/total_energy_consumed";
         doc["state_class"] = "total_increasing";
-        //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_consumed";
-        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+1){
         chanName = "utility_meter_total_energy_injected";
@@ -201,9 +206,6 @@ void haAutoDiscovery(boolean eraseMeter){
         doc["unit_of_measurement"] = "kWh";
         doc["state_topic"] = "data/devices/utility_meter/total_energy_injected";
         doc["state_class"] = "total_increasing";
-        //doc["last_reset_topic"] = "1970-01-01T00:00:00+00:00";
-        //doc["last_reset_topic"] = "data/devices/utility_meter/total_energy_injected";
-        //doc["last_reset_value_template"] = "1970-01-01T00:00:00+00:00";
       }
       else if(dsmrKey == channels+2){
         chanName = "utility_meter_total_active_power";
@@ -217,6 +219,7 @@ void haAutoDiscovery(boolean eraseMeter){
         chanName = "";
       }
       doc["unique_id"] = chanName;
+      doc["object_id"] = chanName;
       doc["value_template"] = "{{ value_json.value }}";
       doc["availability_topic"] = "data/devices/utility_meter";
       JsonObject device  = doc.createNestedObject("device");
@@ -230,15 +233,13 @@ void haAutoDiscovery(boolean eraseMeter){
       String configTopic = "homeassistant/sensor/" + chanName + "/config";
       String jsonOutput ="";
       //Ensure devices are erased before created again
-      if(eraseMeter){
+      if(eraseMeter > 0){ //erase meter in HA by sending empty payload to configtopic
         if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
         delay(100);
       }
       serializeJson(doc, jsonOutput);
-      //Serial.print(configTopic);
-      //Serial.print(" ");
-      //Serial.println(jsonOutput);
-      if(chanName.length() > 0){
+      if(eraseMeter < 2 && chanName.length() > 0){
+        if(eraseMeter == 1) delay(100);
         if(dsmrKey < channels){
           if(meterConfig[dsmrKey] == "1"){
             pubMqtt(configTopic, jsonOutput, true);
@@ -312,6 +313,7 @@ void haAutoDiscovery(boolean eraseMeter){
           doc["command_topic"] = "set/devices/utility_meter/reboot";
         }
         doc["unique_id"] = chanName;
+        doc["object_id"] = chanName;
         doc["availability_topic"] = "data/devices/utility_meter";
         doc["value_template"] = "{{ value_json.value }}";
         JsonObject device  = doc.createNestedObject("device");
@@ -327,12 +329,12 @@ void haAutoDiscovery(boolean eraseMeter){
         else configTopic = "homeassistant/sensor/" + chanName + "/config";
         String jsonOutput ="";
         //Ensure devices are erased before created again
-        if(eraseMeter){
+        if(eraseMeter > 0){
           if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
           delay(100);
         }
         serializeJson(doc, jsonOutput);
-        if(chanName.length() > 0) if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
+        if(eraseMeter < 2 && chanName.length() > 0) if(chanName.length() > 0) pubMqtt(configTopic, jsonOutput, true);
       }
     }
     ha_metercreated = true;

@@ -20,7 +20,7 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 101;
+unsigned int fw_ver = 102;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -30,7 +30,7 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 bool bundleLoaded = true;
-bool clientSecureBusy;
+bool clientSecureBusy, mqttPaused;
 
 #define HWSERIAL Serial1 //Use hardware UART for communication with digital meter
 #define TRIGGER 25 //Pin to trigger meter telegram request
@@ -79,10 +79,11 @@ void IRAM_ATTR pulseCounter2() {
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceEidUpload, sinceLastWebRequest, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 
 //Global vars to store basic digital meter telegram values
-float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
+float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
+String jsonData;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
-bool pls_en, pls_emu;
+boolean pls_en, pls_emu;
 int pls_mind1, pls_mind2, pls_multi1, pls_multi2, pls_type1, pls_type2, pls_emuchan;
 String pls_unit1, pls_unit2;
 //Meter telegram timestamp vars
@@ -110,8 +111,8 @@ boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
 boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
-String dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
-String meterConfig[15];
+String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
+String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
 boolean timeSet, mTimeFound, spiffsMounted;
 String wifi_ssid, wifi_password;
@@ -177,7 +178,7 @@ void setup(){
     syslog("WiFi mode: station", 1);
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
-    WiFi.setHostname(apSSID);
+    WiFi.setHostname("p1dongle");
     elapsedMillis startAttemptTime;
     syslog("Attempting connection to WiFi network " + wifi_ssid, 0);
     while (WiFi.status() != WL_CONNECTED && startAttemptTime < 20000) {
@@ -187,8 +188,9 @@ void setup(){
     Serial.println("");
     if(WiFi.status() == WL_CONNECTED){
       syslog("Connected to the WiFi network " + wifi_ssid, 1);
-      MDNS.begin("apSSID");
+      MDNS.begin("p1dongle");
       unitState = 5;
+      MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
       printLocalTime(true);
@@ -218,6 +220,10 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
+        /*Temporary bootstrap*/
+        preferences.putBool("DM_AVDEM", true);
+        preferences.putBool("DM_MAXDEMM", true);
+        /*End temporary bootstrap*/
         finishUpdate();
       }
       if(mqtt_en) setupMqtt();
@@ -240,11 +246,11 @@ void setup(){
   if(!wifiSTA){
     syslog("WiFi mode: access point", 1);
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(apSSID);
+    WiFi.softAP("p1dongle");
     dnsServer.start(53, "*", WiFi.softAPIP());
-    MDNS.begin("apSSID");
+    MDNS.begin("p1dongle");
     server.addHandler(new WebRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-    Serial.println("AP set up");
+    syslog("AP set up", 1);
     unitState = 3;
   }
   scanWifi();
@@ -263,10 +269,8 @@ void loop(){
     if(rebootInit){
       if(!clientSecureBusy){
         ESP.restart();
-      }
-      
+      } 
     }
-    //Serial.println(mqttclient.state());
     sinceRebootCheck = 0;
   }
   if(sinceMeterCheck > 60000){
