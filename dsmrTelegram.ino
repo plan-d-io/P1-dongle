@@ -144,6 +144,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
     serializeJson(doc, jsonOutput);
     jsonData += jsonOutput;
     jsonData += ",";
+    jsonOutput = "";
   }
   doc["entity"] = "utility_meter";
   String friendly_name = String(dsmrKeys[dsmrKey][2]);
@@ -156,7 +157,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   if(meterConfig[dsmrKey] == "1"){
     if(mqtt_en) {
       if(sinceLastUpload >= (upload_throttle * 1000)){
-       pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
+        pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
       }
     }
   }
@@ -187,6 +188,7 @@ void sumMeterTotals(){
         serializeJson(doc, jsonOutput);
         jsonData += jsonOutput;
         jsonData += ",";
+        jsonOutput = "";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total energy consumed";
         doc["metric"] = "GridElectricityImport";
@@ -201,6 +203,7 @@ void sumMeterTotals(){
         serializeJson(doc, jsonOutput);
         jsonData += jsonOutput;
         jsonData += ",";
+        jsonOutput = "";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total energy injected";
         doc["metric"] = "GridElectricityExport";
@@ -215,6 +218,7 @@ void sumMeterTotals(){
         serializeJson(doc, jsonOutput);
         jsonData += jsonOutput;
         jsonData += "]";
+        jsonOutput = "";
         doc["entity"] = "utility_meter";
         doc["friendly_name"] = "Utility meter total active power";
         doc["metric"] = "GridElectricityPower";
