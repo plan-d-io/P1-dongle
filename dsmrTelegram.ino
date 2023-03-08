@@ -123,7 +123,7 @@ void splitTelegram(String rawTelegram){
   String jsonOutputReadings;
   serializeJson(readings, jsonOutputReadings);
   if(mqtt_en){
-    if(sinceLastUpload >= (upload_throttle * 1000)){
+    if((sinceLastUpload >= upload_throttle * 1000 * 90 / 100) && (dm_time.tm_sec < 5)){
      pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
     }
   }
