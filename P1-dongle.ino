@@ -202,12 +202,14 @@ void setup(){
         if(!file) {
             syslog("Could not load cert bundle from SPIFFS", 2);
             bundleLoaded = false;
+            rebootInit = true;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
                 syslog("WiFiClientSecure: could not load cert bundle", 2);
                 bundleLoaded = false;
+                rebootInit = true;
             }
         }
         file.close();
@@ -285,7 +287,7 @@ void loop(){
     dnsServer.processNextRequest();
     if(!timeSet) setMeterTime();
     if(sinceWifiCheck >= 300000){
-      if(scanWifi()) setReboot();
+      if(scanWifi()) rebootInit = true;
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 3600){
