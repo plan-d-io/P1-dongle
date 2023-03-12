@@ -72,7 +72,6 @@ boolean startUpdate(){
         syslog("Found new firmware at "+ fileUrl, 0);
         if (https.begin(*client, fileUrl)) {  
           int httpCode = https.GET();
-          Serial.println(httpCode);
           if (httpCode > 0) {
             if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
               long contentLength = https.getSize();
@@ -186,7 +185,6 @@ boolean finishUpdate(){
     String fileUrl = baseUrl + "/bin/files";
     String payload;
     if (https.begin(*client, fileUrl)) {
-      Serial.println(fileUrl);
       int httpCode = https.GET();
       if (httpCode > 0) {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -198,7 +196,6 @@ boolean finishUpdate(){
       }
       https.end();
       Serial.println(payload);
-      //client->stop();
       unsigned long eof = payload.lastIndexOf('\n');
       if(eof > 0){
         syslog("Downloading static files", 2);
@@ -213,11 +210,8 @@ boolean finishUpdate(){
           fileUrl = baseUrl + "/data" + s;
           Serial.println(fileUrl);
           if (s) {
-            Serial.println(s);
             if (https.begin(*client, fileUrl)) {
-              Serial.println(fileUrl);
               int httpCode = https.GET();
-              Serial.println(httpCode);
               if (httpCode > 0) {
                 if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
                   SPIFFS.remove(s);
