@@ -137,16 +137,16 @@ void setup(){
   getHostname();
   Serial.println();
   syslog("Digital meter dongle booting", 0);
-  preferences.begin("cofy-config");
+  preferences.begin("cofy-config", true);
   delay(100);
   initConfig();
   delay(100);
   restoreConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);
-  if(!SPIFFS.begin(true)){
+  if(!SPIFFS.begin(false)){
     syslog("Could not mount SPIFFS", 3);
-    return;
+    rebootInit = true;
   }
   else{
     spiffsMounted = true;
@@ -220,16 +220,6 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
-        /*Temporary bootstrap*/
-        preferences.putBool("DM_AVDEM", true);
-        preferences.putBool("DM_MAXDEMM", true);
-        preferences.putBool("DM_POWIN", false);
-        preferences.putBool("DM_POWCON", false);
-        preferences.putBool("DM_TOTCONT1", false);
-        preferences.putBool("DM_TOTCONT2", false);
-        preferences.putBool("DM_TOTINT1", false);
-        preferences.putBool("DM_TOTINT2", false);
-        /*End temporary bootstrap*/
         finishUpdate();
       }
       if(mqtt_en) setupMqtt();

@@ -79,6 +79,8 @@ boolean restoreConfig() {
 }
 
 boolean saveConfig() {
+  preferences.end();
+  preferences.begin("cofy-config", false);
   preferences.putString("WIFI_SSID", wifi_ssid);
   preferences.putString("WIFI_PASSWD", wifi_password);
   if(wifiSave) preferences.putBool("WIFI_STA", true);
@@ -141,15 +143,23 @@ boolean saveConfig() {
   else preferences.putBool("DM_GAS", false);
   if (dmText == "1") preferences.putBool("DM_TXT", true);
   else preferences.putBool("DM_TXT", false);
+  preferences.end();
+  preferences.begin("cofy-config", true);
   return true;
 }
 
 boolean saveBoots(){
+  preferences.end();
+  preferences.begin("cofy-config", false);
   preferences.putUInt("reboots", bootcount);
+  preferences.end();
+  preferences.begin("cofy-config", true);
   return true;
 }
 
 boolean resetConfig() {
+  preferences.end();
+  preferences.begin("cofy-config", false);
   if(resetAll || resetWifi){
     Serial.print("Executing config reset");
     Serial.print("Executing wifi reset");
@@ -160,15 +170,17 @@ boolean resetConfig() {
     preferences.putBool("UPD_AUTO", true);
     preferences.putBool("UPD_AUTOCHK", true);
     preferences.putString("LAST_RESET", "Restarting for config reset");
-    preferences.end();
-    syslog("Restarting for config reset", 2);
-    delay(500);
-    ESP.restart();
-    return true;
   }
+  preferences.end();
+  syslog("Restarting for config reset", 2);
+  delay(500);
+  ESP.restart();
+  return true;
 }
 
 boolean initConfig() {
+  preferences.end();
+  preferences.begin("cofy-config", false);
   String tempMQTT = preferences.getString("MQTT_HOST");
   if(tempMQTT == ""){
     preferences.putBool("MQTT_EN", false);
@@ -215,5 +227,7 @@ boolean initConfig() {
     preferences.putUInt("MQTT_PORT", 1883);
     mqtt_port = 1883;
   }
+  preferences.end();
+  preferences.begin("cofy-config", true);
   return true;
 }
