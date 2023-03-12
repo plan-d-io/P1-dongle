@@ -20,7 +20,7 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 102;
+unsigned int fw_ver = 103;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -110,7 +110,7 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -137,16 +137,16 @@ void setup(){
   getHostname();
   Serial.println();
   syslog("Digital meter dongle booting", 0);
-  preferences.begin("cofy-config");
+  preferences.begin("cofy-config", true);
   delay(100);
   initConfig();
   delay(100);
   restoreConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);
-  if(!SPIFFS.begin(true)){
+  if(!SPIFFS.begin(false)){
     syslog("Could not mount SPIFFS", 3);
-    return;
+    rebootInit = true;
   }
   else{
     spiffsMounted = true;
@@ -195,19 +195,21 @@ void setup(){
       setClock(true);
       printLocalTime(true);
       if(client){
-        syslog("Setting up SSL client", 0);
+        syslog("Setting up TLS/SSL client", 0);
         client->setUseCertBundle(true);
         // Load certbundle from SPIFFS
         File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
         if(!file) {
             syslog("Could not load cert bundle from SPIFFS", 2);
             bundleLoaded = false;
+            rebootInit = true;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
                 syslog("WiFiClientSecure: could not load cert bundle", 2);
                 bundleLoaded = false;
+                rebootInit = true;
             }
         }
         file.close();
@@ -220,10 +222,6 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
-        /*Temporary bootstrap*/
-        preferences.putBool("DM_AVDEM", true);
-        preferences.putBool("DM_MAXDEMM", true);
-        /*End temporary bootstrap*/
         finishUpdate();
       }
       if(mqtt_en) setupMqtt();
@@ -265,6 +263,7 @@ void loop(){
   else{
     mqttclient.loop();
   }
+  if(wifiScan) scanWifi();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       if(!clientSecureBusy){
@@ -289,7 +288,7 @@ void loop(){
     dnsServer.processNextRequest();
     if(!timeSet) setMeterTime();
     if(sinceWifiCheck >= 300000){
-      if(scanWifi()) setReboot();
+      if(scanWifi()) rebootInit = true;
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 3600){

@@ -12,7 +12,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
-  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, rebootInit, 
+  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, wifiScan, configSaved, rebootReq, rebootInit, 
   mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
   update_autoCheck, update_auto, pls_en, pls_emu, beta_fleet;
   if(request->url() == "/"){
@@ -68,8 +68,10 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/wificn"){
     configSaved = false;
-    if(request->hasParam("rescan"))
-      scanWifi();
+    if(request->hasParam("rescan")){
+      //scanWifi();
+      wifiScan = true;
+    }
     request->send(SPIFFS, "/wifi.html", "text/html");
   }
   else if(request->url() == "/cloudcn"){

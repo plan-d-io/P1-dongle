@@ -26,6 +26,7 @@ boolean scanWifi(){
     ssidList += "</option>";
   }
   ssidList += buildSSIDlist;
+  wifiScan = false;
   return foundSavedSSID;
 }
 
