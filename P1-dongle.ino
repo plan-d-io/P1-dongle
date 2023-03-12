@@ -110,7 +110,7 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -195,7 +195,7 @@ void setup(){
       setClock(true);
       printLocalTime(true);
       if(client){
-        syslog("Setting up SSL client", 0);
+        syslog("Setting up TLS/SSL client", 0);
         client->setUseCertBundle(true);
         // Load certbundle from SPIFFS
         File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
@@ -263,6 +263,7 @@ void loop(){
   else{
     mqttclient.loop();
   }
+  if(wifiScan) scanWifi();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       if(!clientSecureBusy){
