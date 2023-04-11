@@ -120,17 +120,12 @@ void splitTelegram(String rawTelegram){
     }
   }
   // Send MQTT output in one JSON payload
-  String jsonOutputReadings;
   serializeJson(readings, jsonOutputReadings);
-  if(mqtt_en){
-    if((sinceLastUpload >= upload_throttle * 1000 * 90 / 100) && (dm_time.tm_sec < 5)){
-     pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
-    }
-  }
   if(!meterError) sumMeterTotals();
 }
 
 void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolean floatValue, String unit, unsigned long meterTime){
+  /* Re.alto doesn't need this, so lets exclude it for now
   if(dsmrKeys[dsmrKey][0] == "1-0:1.8.1") totConDay = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:1.8.2") totConNight = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.1") totInDay = fmeasurement;
@@ -161,9 +156,11 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
      pubMqtt("plan-d/" + String(apSSID) + dsmrKeys[dsmrKey][3], jsonOutput, false);
     }
   }
+  */
 }
 
 void sumMeterTotals(){
+  /* Re.alto doesn't need this, so lets exclude it for now
   totCon = (totConDay + totConNight)*1.0;
   totConToday = totCon - totConYesterday;
   totIn = (totInDay + totInNight)*1.0;
@@ -214,5 +211,5 @@ void sumMeterTotals(){
     if(sinceLastUpload >= (upload_throttle*1000)){
       sinceLastUpload = 0;
     }
-  }
+  }*/
 }

@@ -78,6 +78,9 @@ void IRAM_ATTR pulseCounter2() {
 //Global timing vars
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceEidUpload, sinceLastWebRequest, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 
+//Re.alto vars
+String jsonOutputReadings;
+
 //Global vars to store basic digital meter telegram values
 float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
@@ -269,8 +272,11 @@ void loop(){
     //Serial.println(mqttclient.state());
     sinceRebootCheck = 0;
   }
-  if(sinceMeterCheck > 60000){
+  if(sinceMeterCheck > 90000){
     syslog("Meter disconnected", 2);
+    /*Re.alto: nullify aggregate readings*/
+    jsonOutputReadings = "";
+    /*Re.alto end*/
     meterError = true;
     sinceMeterCheck = 0;
   }
@@ -296,6 +302,13 @@ void loop(){
     else unitState = 3;
   }
   else{
+    /*Re.alto: upload aggregate readings*/
+    if(mqtt_en){
+      if(sinceLastUpload >= upload_throttle * 1000){
+       pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
+      }
+    }
+    /*Re.alto end*/
     if(update_autoCheck && sinceUpdateCheck >= 86400000){
       updateAvailable = checkUpdate();
       if(updateAvailable) startUpdate();
