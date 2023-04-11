@@ -85,9 +85,8 @@ void restoreSPIFFS(){
   file.close();
   bundleLoaded = true;
   /*Download the other static files*/
-  //restore_finish = true;
+  restore_finish = true;
   saveConfig();
-  delay(500);
   preferences.end();
   SPIFFS.end();
   delay(500);
