@@ -17,6 +17,7 @@ boolean restoreConfig() {
   fw_new = preferences.getUInt("FW_NEW");
   update_start = preferences.getBool("UPD_START");
   update_finish = preferences.getBool("UPD_FINISH");
+  restore_finish = preferences.getBool("RST_FINISH");
   eid_en = preferences.getBool("EID_EN");
   eid_webhook = preferences.getString("EID_HOOK");
   ha_en = preferences.getBool("HA_EN");
@@ -100,6 +101,7 @@ boolean saveConfig() {
   preferences.putUInt("FW_NEW", onlineVersion);
   preferences.putBool("UPD_START", update_start);
   preferences.putBool("UPD_FINISH", update_finish);
+  preferences.putBool("RST_FINISH", restore_finish);
   preferences.putUInt("counter", counter);
   preferences.putUInt("reboots", bootcount);
   preferences.putBool("EID_EN", eidSave);

@@ -120,14 +120,14 @@ String mqtt_host, mqtt_id, mqtt_user, mqtt_pass;
 uint8_t prevButtonState = false;
 boolean configSaved, resetWifi, resetAll;
 boolean mqtt_en, mqtt_tls, mqtt_auth;
-boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, eid_en, ha_en, ha_metercreated;
+boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, restore_finish, eid_en, ha_en, ha_metercreated;
 unsigned int mqtt_port;
 unsigned long upload_throttle;
 String eid_webhook;
 
 void setup(){
   M5.begin(true, false, true);
-  delay(10);
+  delay(2000);
   pinMode(TRIGGER, OUTPUT);
   setBuff(0x00, 0xff, 0x00); //red
   M5.dis.displaybuff(DisBuff);
@@ -229,6 +229,9 @@ void setup(){
       }
       if(update_finish){
         finishUpdate(false);
+      }
+      if(restore_finish){
+        finishUpdate(true);
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;

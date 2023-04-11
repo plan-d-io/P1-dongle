@@ -261,6 +261,7 @@ boolean finishUpdate(bool restore){
     update_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
+    listDir(SPIFFS, "/", 0);
     saveConfig();
     preferences.end();
     SPIFFS.end();

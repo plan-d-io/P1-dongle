@@ -31,6 +31,12 @@ const char* github_root_ca= \
      "-----END CERTIFICATE-----\n";
 
 void restoreSPIFFS(){
+  listDir(SPIFFS, "/", 0);
+  /*Detach pulse interrupts as they interfere with SPIFFS writes*/
+  if(pls_en){
+    detachInterrupt(32);
+    detachInterrupt(26);
+  }
   /*Load the static cert into the https client*/
   if(client){
     syslog("Setting up fallback TLS/SSL client", 2);
@@ -79,5 +85,11 @@ void restoreSPIFFS(){
   file.close();
   bundleLoaded = true;
   /*Download the other static files*/
-  finishUpdate(true);
+  restore_finish = true;
+  saveConfig();
+  delay(500);
+  preferences.end();
+  SPIFFS.end();
+  delay(500);
+  ESP.restart();
 }
