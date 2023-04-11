@@ -1,7 +1,6 @@
 #include "rom/rtc.h"
 #include "M5Atom.h"
 #include <WiFi.h>
-#include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <DNSServer.h>
@@ -14,7 +13,6 @@
 #include "WebRequestHandler.h"
 #include <PubSubClient.h>
 #include "time.h"
-#include "tls.hpp"
 #include "FS.h"
 #include <Update.h>
 #include "ArduinoJson.h"
@@ -30,7 +28,7 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 bool bundleLoaded = true;
-bool clientSecureBusy;
+bool clientSecureBusy, mqttPaused;
 
 #define HWSERIAL Serial1 //Use hardware UART for communication with digital meter
 #define TRIGGER 25 //Pin to trigger meter telegram request
@@ -85,7 +83,7 @@ String jsonOutputReadings;
 float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
-bool pls_en, pls_emu;
+boolean pls_en, pls_emu;
 int pls_mind1, pls_mind2, pls_multi1, pls_multi2, pls_type1, pls_type2, pls_emuchan;
 String pls_unit1, pls_unit2;
 //Meter telegram timestamp vars
@@ -112,9 +110,9 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
 String dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
-String meterConfig[15];
+String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
 boolean timeSet, mTimeFound, spiffsMounted;
 String wifi_ssid, wifi_password, email;
@@ -129,7 +127,7 @@ String eid_webhook;
 
 void setup(){
   M5.begin(true, false, true);
-  delay(10);
+  delay(2000);
   pinMode(TRIGGER, OUTPUT);
   setBuff(0x00, 0xff, 0x00); //red
   M5.dis.displaybuff(DisBuff);
@@ -148,7 +146,7 @@ void setup(){
   syslog("Mounting SPIFFS... ", 0);
   if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
-    rebootInit = true;
+    //rebootInit = true;
   }
   else{
     spiffsMounted = true;
@@ -196,11 +194,11 @@ void setup(){
       setClock(true);
       printLocalTime(true);
       if(client){
-        syslog("Setting up SSL client", 0);
+        syslog("Setting up TLS/SSL client", 0);
         client->setUseCertBundle(true);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
-        if(!file) {
+        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
+        if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 2);
             bundleLoaded = false;
         }
@@ -212,7 +210,8 @@ void setup(){
             }
         }
         file.close();
-      } else {
+      }
+      else {
         syslog("Unable to create SSL client", 2);
         unitState = 5;
         httpsError = true;
@@ -229,7 +228,7 @@ void setup(){
       server.addHandler(new WebRequestHandler());
       update_autoCheck = true;
       if(update_autoCheck) {
-        sinceUpdateCheck = 86400000-60000;
+        //sinceUpdateCheck = 86400000-60000;
       }
       if(eid_en) sinceEidUpload = 15*60*900000;
       syslog("Local IP: " + WiFi.localIP().toString(), 0);
@@ -262,6 +261,7 @@ void loop(){
   else{
     mqttclient.loop();
   }
+  if(wifiScan) scanWifi();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       if(!clientSecureBusy){
@@ -305,7 +305,9 @@ void loop(){
     /*Re.alto: upload aggregate readings*/
     if(mqtt_en){
       if(sinceLastUpload >= upload_throttle * 1000){
-       pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
+        Serial.println(jsonOutputReadings);
+        pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
+        sinceLastUpload = 0;
       }
     }
     /*Re.alto end*/

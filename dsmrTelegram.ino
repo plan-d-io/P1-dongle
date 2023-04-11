@@ -120,6 +120,7 @@ void splitTelegram(String rawTelegram){
     }
   }
   // Send MQTT output in one JSON payload
+  jsonOutputReadings = "";
   serializeJson(readings, jsonOutputReadings);
   if(!meterError) sumMeterTotals();
 }

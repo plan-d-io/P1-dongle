@@ -140,6 +140,9 @@ boolean resetConfig() {
     preferences.putBool("WIFI_STA", false);
     preferences.putBool("UPD_AUTO", true);
     preferences.putBool("UPD_AUTOCHK", true);
+    preferences.putBool("WIFI_STA", false);
+    preferences.putBool("HA_EN", false);
+    preferences.putULong("UPL_THROTTLE", 60);
     preferences.putString("LAST_RESET", "Restarting for config reset");
     preferences.end();
     syslog("Restarting for config reset", 2);

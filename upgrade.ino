@@ -1,10 +1,9 @@
 boolean checkUpdate(){
   if(update_autoCheck){
     clientSecureBusy = true;
-    boolean needUpdate = false;
-    boolean mqttPaused;
+    bool needUpdate = false;
     if(mqttclientSecure.connected()){
-      syslog("Disconnecting TLS MQTT connection", 0);
+      syslog("Disconnecting TLS MQTT connection to perform firmware version check", 0);
       String mqtt_topic = "plan-d/" + String(apSSID);
       mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
       mqttclientSecure.disconnect();
@@ -15,8 +14,7 @@ boolean checkUpdate(){
       String checkUrl = "https://raw.githubusercontent.com/realto-energy/connect-p1dongle-firmware/";
       if(beta_fleet) checkUrl += "develop/version";
       else checkUrl += "main/version";
-      Serial.print("Connecting to ");
-      Serial.println(checkUrl);
+      syslog("Connecting to " + checkUrl, 0);
       if (https.begin(*client, checkUrl)) {  
         int httpCode = https.GET();
         if (httpCode > 0) {
@@ -27,11 +25,11 @@ boolean checkUpdate(){
             onlineVersion = atoi(payload.c_str());
           }
         } else {
-          syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          syslog("Could not connect to update repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
         }
         https.end();
       } else {
-        syslog("Unable to connect to repository", 2);
+        syslog("Unable to connect to update repository", 2);
       }
     }
     client->stop();
@@ -43,7 +41,7 @@ boolean checkUpdate(){
     syslog("Current firmware: " + String(fw_ver/100.0) + ", online version: " + String(onlineVersion/100.0), 0);
     if(onlineVersion > fw_ver){
       needUpdate = true;
-      syslog("Firmware update available", 2);
+      syslog("Firmware update available", 1);
     }
     else syslog("No firmware update available", 0);
     return needUpdate;
@@ -74,7 +72,6 @@ boolean startUpdate(){
         syslog("Found new firmware at "+ fileUrl, 0);
         if (https.begin(*client, fileUrl)) {  
           int httpCode = https.GET();
-          Serial.println(httpCode);
           if (httpCode > 0) {
             if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
               long contentLength = https.getSize();
