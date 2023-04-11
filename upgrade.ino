@@ -259,6 +259,7 @@ boolean finishUpdate(bool restore){
   update_finish = false;
   if(filesUpdated){
     update_finish = false;
+    if(restore_finish) restore_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     listDir(SPIFFS, "/", 0);

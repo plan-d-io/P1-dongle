@@ -150,6 +150,7 @@ void setup(){
   else{
     spiffsMounted = true;
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
+    listDir(SPIFFS, "/", 0);
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
