@@ -177,6 +177,7 @@ void setup(){
   wifiSTA = true;
   wifi_ssid = "Aether";
   wifi_password = "RaidillondelEauRouge0x03";
+  beta_fleet = true;
   /*ENDTEMP*/
   if(wifiSTA){
     syslog("WiFi mode: station", 1);
