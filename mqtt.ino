@@ -3,7 +3,7 @@ void setupMqtt() {
   if (mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
-  syslog(mqttinfo, 01);
+  syslog(mqttinfo, 1);
   if(mqtt_tls){
     mqttclientSecure.setClient(*client);
     if(upload_throttle > 10){

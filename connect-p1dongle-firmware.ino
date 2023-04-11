@@ -228,7 +228,7 @@ void setup(){
       server.addHandler(new WebRequestHandler());
       update_autoCheck = true;
       if(update_autoCheck) {
-        //sinceUpdateCheck = 86400000-60000;
+        sinceUpdateCheck = 86400000-60000;
       }
       if(eid_en) sinceEidUpload = 15*60*900000;
       syslog("Local IP: " + WiFi.localIP().toString(), 0);
@@ -305,7 +305,7 @@ void loop(){
     /*Re.alto: upload aggregate readings*/
     if(mqtt_en){
       if(sinceLastUpload >= upload_throttle * 1000){
-        Serial.println(jsonOutputReadings);
+        //Serial.println(jsonOutputReadings);
         pubMqtt("plan-d/" + String(apSSID) + "/data/readings", jsonOutputReadings, false);
         sinceLastUpload = 0;
       }
