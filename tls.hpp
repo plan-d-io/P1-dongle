@@ -1,4 +1,4 @@
-#include <Arduino.h>
+/*#include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiMulti.h>
 
@@ -10,4 +10,4 @@ extern const uint8_t x509_crt_bundle_end[] asm("_binary_src_x509_crt_bundle_end"
 
 WiFiMulti WiFiMulti;
 
-void setClock(void);
+void setClock(void);*/

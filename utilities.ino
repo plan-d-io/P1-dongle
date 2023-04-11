@@ -122,6 +122,8 @@ void setReboot(){
   haAutoDiscovery(3);
   syslog("Saving configuration", 0);
   saveConfig();
+  preferences.end();
+  SPIFFS.end();
   rebootInit = true;
   sinceRebootCheck = 0;
   syslog("Rebooting", 2);

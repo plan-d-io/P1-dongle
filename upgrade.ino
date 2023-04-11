@@ -100,6 +100,8 @@ boolean startUpdate(){
                     update_start = false;
                     update_finish = true;
                     saveConfig();
+                    preferences.end();
+                    SPIFFS.end();
                     delay(500);
                     ESP.restart();
                   } else {
@@ -164,7 +166,7 @@ boolean startUpdate(){
   }
 }
 
-boolean finishUpdate(){
+boolean finishUpdate(bool restore){
   if(pls_en){
     detachInterrupt(32);
     detachInterrupt(26);
@@ -182,7 +184,9 @@ boolean finishUpdate(){
     String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
     if(beta_fleet) baseUrl += "develop";
     else baseUrl += "main";
-    String fileUrl = baseUrl + "/bin/files";
+    String fileUrl = baseUrl + "/bin/";
+    if(restore) fileUrl += "restore";
+    else fileUrl += "files";
     String payload;
     if (https.begin(*client, fileUrl)) {
       int httpCode = https.GET();
@@ -258,6 +262,8 @@ boolean finishUpdate(){
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     saveConfig();
+    preferences.end();
+    SPIFFS.end();
     delay(500);
     ESP.restart();
   }

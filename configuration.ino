@@ -173,6 +173,7 @@ boolean resetConfig() {
   }
   preferences.end();
   syslog("Restarting for config reset", 2);
+  SPIFFS.end();
   delay(500);
   ESP.restart();
   return true;

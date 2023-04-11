@@ -14,7 +14,7 @@
 #include "WebRequestHandler.h"
 #include <PubSubClient.h>
 #include "time.h"
-#include "tls.hpp"
+//#include "tls.hpp"
 #include "FS.h"
 #include <Update.h>
 #include "ArduinoJson.h"
@@ -144,9 +144,8 @@ void setup(){
   restoreConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);
-  if(!SPIFFS.begin(false)){
+  if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
-    rebootInit = true;
   }
   else{
     spiffsMounted = true;
@@ -174,6 +173,11 @@ void setup(){
   }
   delay(100);
   //your other setup stuff...
+  /*TEMP*/
+  wifiSTA = true;
+  wifi_ssid = "Aether";
+  wifi_password = "RaidillondelEauRouge0x03";
+  /*ENDTEMP*/
   if(wifiSTA){
     syslog("WiFi mode: station", 1);
     WiFi.mode(WIFI_STA);
@@ -198,22 +202,23 @@ void setup(){
         syslog("Setting up TLS/SSL client", 0);
         client->setUseCertBundle(true);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
-        if(!file) {
+        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
+        if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 2);
             bundleLoaded = false;
-            rebootInit = true;
+            //rebootInit = true;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
                 syslog("WiFiClientSecure: could not load cert bundle", 2);
                 bundleLoaded = false;
-                rebootInit = true;
+                //rebootInit = true;
             }
         }
         file.close();
-      } else {
+      } 
+      else {
         syslog("Unable to create SSL client", 2);
         unitState = 5;
         httpsError = true;
@@ -222,7 +227,7 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
-        finishUpdate();
+        finishUpdate(false);
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;
@@ -257,6 +262,7 @@ void setup(){
 
 void loop(){
   blinkLed();
+  if(!bundleLoaded) restoreSPIFFS();
   if(mqtt_tls){
     mqttclientSecure.loop();
   }
@@ -358,4 +364,51 @@ void loop(){
     }
     splitTelegram(s);
   }
+}
+
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+    Serial.printf("Listing directory: %s\r\n", dirname);
+
+    File root = fs.open(dirname);
+    if(!root){
+        Serial.println("- failed to open directory");
+        return;
+    }
+    if(!root.isDirectory()){
+        Serial.println(" - not a directory");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while(file){
+        if(file.isDirectory()){
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+            if(levels){
+                listDir(fs, file.path(), levels -1);
+            }
+        } else {
+            Serial.print("  FILE: ");
+            Serial.print(file.name());
+            Serial.print("\tSIZE: ");
+            Serial.println(file.size());
+        }
+        file = root.openNextFile();
+    }
+}
+
+void readFile(fs::FS &fs, const char * path){
+    Serial.printf("Reading file: %s\r\n", path);
+
+    File file = fs.open(path);
+    if(!file || file.isDirectory()){
+        Serial.println("- failed to open file for reading");
+        return;
+    }
+
+    Serial.println("- read from file:");
+    while(file.available()){
+        Serial.write(file.read());
+    }
+    file.close();
 }
