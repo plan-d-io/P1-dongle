@@ -136,7 +136,7 @@ void setup(){
   getHostname();
   Serial.println();
   syslog("Digital meter dongle booting", 0);
-  preferences.begin("cofy-config");
+  preferences.begin("cofy-config", true);
   delay(100);
   initConfig();
   delay(100);
@@ -145,7 +145,7 @@ void setup(){
   syslog("Mounting SPIFFS... ", 0);
   if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
-    return;
+    rebootInit = true;
   }
   else{
     spiffsMounted = true;

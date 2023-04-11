@@ -119,8 +119,14 @@ void checkConnection(){
 }
 
 void setReboot(){
+  sinceConnCheck = 0;
+  syslog("Saving configuration", 0);
+  saveConfig();
+  preferences.end();
+  SPIFFS.end();
   rebootInit = true;
   sinceRebootCheck = 0;
+  syslog("Rebooting", 2);
 }
 
 void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)

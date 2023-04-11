@@ -103,6 +103,8 @@ boolean startUpdate(){
                     update_start = false;
                     update_finish = true;
                     saveConfig();
+                    preferences.end();
+                    SPIFFS.end();
                     delay(500);
                     ESP.restart();
                   } else {
@@ -253,6 +255,8 @@ boolean finishUpdate(){
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     saveConfig();
+    preferences.end();
+    SPIFFS.end();
     delay(500);
     ESP.restart();
   }
