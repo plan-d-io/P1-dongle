@@ -52,6 +52,7 @@ void restoreSPIFFS(){
   else baseUrl += "main";
   String fileUrl = baseUrl + "/data/cert/x509_crt_bundle.bin";
   String s = "/cert/x509_crt_bundle.bin";
+  Serial.println(fileUrl);
   if (https.begin(*client, fileUrl)) {
     int httpCode = https.GET();
     if (httpCode > 0) {
