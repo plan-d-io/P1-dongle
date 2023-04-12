@@ -80,7 +80,7 @@ elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload
 String jsonOutputReadings;
 
 //Global vars to store basic digital meter telegram values
-float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3;
+float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
 boolean pls_en, pls_emu;
@@ -111,7 +111,7 @@ boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
 boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
-String dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText;
+String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
 boolean timeSet, mTimeFound, spiffsMounted;
@@ -120,7 +120,7 @@ String mqtt_host, mqtt_id, mqtt_user, mqtt_pass;
 uint8_t prevButtonState = false;
 boolean configSaved, resetWifi, resetAll;
 boolean mqtt_en, mqtt_tls, mqtt_auth;
-boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, eid_en, ha_en, ha_metercreated;
+boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, restore_finish, eid_en, ha_en, ha_metercreated;
 unsigned int mqtt_port;
 unsigned long upload_throttle;
 String eid_webhook;
@@ -146,12 +146,12 @@ void setup(){
   syslog("Mounting SPIFFS... ", 0);
   if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
-    //rebootInit = true;
   }
   else{
     spiffsMounted = true;
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
   }
+  listDir(SPIFFS, "/", 0);
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io and re.alto", 1);
   if(beta_fleet) syslog("Using development firmware", 2);
@@ -190,6 +190,7 @@ void setup(){
       syslog("Connected to the WiFi network " + wifi_ssid, 1);
       MDNS.begin("apSSID");
       unitState = 5;
+      MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
       printLocalTime(true);
@@ -220,7 +221,10 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
-        finishUpdate();
+        finishUpdate(false);
+      }
+      if(restore_finish){
+        finishUpdate(true);
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;
@@ -246,7 +250,7 @@ void setup(){
     dnsServer.start(53, "*", WiFi.softAPIP());
     MDNS.begin("apSSID");
     server.addHandler(new WebRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-    Serial.println("AP set up");
+    syslog("AP set up", 1);
     unitState = 3;
   }
   scanWifi();
@@ -291,7 +295,7 @@ void loop(){
     dnsServer.processNextRequest();
     if(!timeSet) setMeterTime();
     if(sinceWifiCheck >= 300000){
-      if(scanWifi()) setReboot();
+      if(scanWifi()) rebootInit = true;
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 3600){

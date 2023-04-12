@@ -113,8 +113,8 @@ void checkConnection(){
   if(WiFi.status() == WL_CONNECTED){
     if(mqtt_en){
       connectMqtt();
-      if(ha_en && !ha_metercreated) haAutoDiscovery(true);
-      else if(ha_en && ha_metercreated) haAutoDiscovery(false);
+      if(ha_en && !ha_metercreated) haAutoDiscovery(1);
+      else if(ha_en && ha_metercreated) haAutoDiscovery(0);
     }
   }
 }

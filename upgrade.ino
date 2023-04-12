@@ -166,7 +166,7 @@ boolean startUpdate(){
   }
 }
 
-boolean finishUpdate(){
+boolean finishUpdate(bool restore){
   if(pls_en){
     detachInterrupt(32);
     detachInterrupt(26);
@@ -184,7 +184,9 @@ boolean finishUpdate(){
     String baseUrl = "https://raw.githubusercontent.com/realto-energy/connect-p1dongle-firmware/";
     if(beta_fleet) baseUrl += "develop";
     else baseUrl += "main";
-    String fileUrl = baseUrl + "/bin/files";
+    String fileUrl = baseUrl + "/bin/";
+    if(restore) fileUrl += "restore";
+    else fileUrl += "files";
     String payload;
     if (https.begin(*client, fileUrl)) {  
       int httpCode = https.GET();
@@ -206,17 +208,17 @@ boolean finishUpdate(){
         unsigned long delimEnd = 0;
         while(delimEnd < eof){
           delimEnd = payload.indexOf('\n', delimStart);
-          String s = "/" + payload.substring(delimStart, delimEnd);
+          String s = "/" + payload.substring(delimStart, delimEnd-1);
           delimStart = delimEnd+1;
           fileUrl = baseUrl + "/data" + s;
           Serial.println(fileUrl);
-          File f = SPIFFS.open(s, FILE_WRITE);
-          Serial.println(s);
-          if (f) {
+          if (s) {
             if (https.begin(*client, fileUrl)) {
               int httpCode = https.GET();
               if (httpCode > 0) {
                 if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                  SPIFFS.remove(s);
+                  File f = SPIFFS.open(s, FILE_WRITE);
                   long contentLength = https.getSize();
                   Serial.print("File size: ");
                   Serial.println(contentLength);
@@ -226,12 +228,19 @@ boolean finishUpdate(){
                     Serial.println("Written : " + String(written) + " successfully");
                     filesUpdated = true;
                   }
+                  f.close();
+                }
+                else{
+                  syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
                 }
               } 
               else {
                 syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
               }
               https.end();
+            }
+            else {
+              syslog("Could not establish connection", 2);
             }
           }
           else{
@@ -249,6 +258,7 @@ boolean finishUpdate(){
   update_finish = false;
   if(filesUpdated){
     update_finish = false;
+    if(restore_finish) restore_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     saveConfig();

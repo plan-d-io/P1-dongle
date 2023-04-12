@@ -7,13 +7,15 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
  *  4: float with unit
  *  5: timestamped Mbus message
  */
-{ "1-0:1.8.1", "4", "Total consumption day", "/data/total_consumption_day", "GridElectricityImport", "cumulative", "energy" },
-{ "1-0:1.8.2", "4", "Total consumption night", "/data/total_consumption_night", "GridElectricityImport", "cumulative", "energy" },
-{ "1-0:2.8.1", "4", "Total injection day", "/data/total_injection_day", "GridElectricityExport", "cumulative", "energy" }, 
-{ "1-0:2.8.2", "4", "Total injection night", "/data/total_injection_night", "GridElectricityExport", "cumulative", "energy" },
+{ "1-0:1.8.1", "4", "Total consumption T1", "/data/total_consumption_t1", "GridElectricityImport", "cumulative", "energy" },
+{ "1-0:1.8.2", "4", "Total consumption T2", "/data/total_consumption_t2", "GridElectricityImport", "cumulative", "energy" },
+{ "1-0:2.8.1", "4", "Total injection T1", "/data/total_injection_t1", "GridElectricityExport", "cumulative", "energy" }, 
+{ "1-0:2.8.2", "4", "Total injection T2", "/data/total_injection_t2", "GridElectricityExport", "cumulative", "energy" },
 { "0-0:96.14.0", "1", "Active tariff period", "/data/active_tariff_period", "", "gauge", "" },  
 { "1-0:1.7.0", "4", "Active power consumption", "/data/active_power_consumption", "GridElectricityPower", "gauge", "power" },
 { "1-0:2.7.0", "4", "Active power injection", "/data/active_power_injection", "GridElectricityPower", "gauge", "power" },
+{ "1-0:1.4.0", "4", "Current average demand", "data/current_average_demand", "", "gauge", "power" },
+{ "1-0:1.6.0", "5", "Maximum demand current month", "data/maximum_demand_current_month", "", "gauge", "power" },
 { "1-0:32.7.0", "4", "Voltage phase 1", "/data/voltage_phase_1", "GridElectricityVoltage", "gauge", "voltage"  },
 { "1-0:52.7.0", "4", "Voltage phase 2", "/data/voltage_phase_2", "GridElectricityVoltage", "gauge", "voltage" },
 { "1-0:72.7.0", "4", "Voltage phase 3", "/data/voltage_phase_3", "GridElectricityVoltage", "gauge", "voltage" },
@@ -25,19 +27,21 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
 };
 
 void configMeter(){
-  meterConfig[0] = "1";
-  meterConfig[1] = "1";
-  meterConfig[2] = "1";
-  meterConfig[3] = "1";
+  meterConfig[0] = dmTotCont1;
+  meterConfig[1] = dmTotCont2;
+  meterConfig[2] = dmTotInt1;
+  meterConfig[3] = dmTotInt2;
   meterConfig[4] = dmActiveTariff;
-  meterConfig[5] = "1";
-  meterConfig[6] = "1";
-  meterConfig[7] = dmVoltagel1;
-  meterConfig[8] = dmVoltagel2;
-  meterConfig[9] = dmVoltagel3;
-  meterConfig[10] = dmCurrentl1;
-  meterConfig[11] = dmCurrentl2;
-  meterConfig[12] = dmCurrentl3;
-  meterConfig[13] = dmGas;
-  meterConfig[14] = dmText;
+  meterConfig[5] = dmPowCon;
+  meterConfig[6] = dmPowIn;
+  meterConfig[7] = dmAvDem;
+  meterConfig[8] = dmMaxDemM;
+  meterConfig[9] = dmVoltagel1;
+  meterConfig[10] = dmVoltagel2;
+  meterConfig[11] = dmVoltagel3;
+  meterConfig[12] = dmCurrentl1;
+  meterConfig[13] = dmCurrentl2;
+  meterConfig[14] = dmCurrentl3;
+  meterConfig[15] = dmGas;
+  meterConfig[16] = dmText;
 }
