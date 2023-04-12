@@ -113,6 +113,8 @@ void splitTelegram(String rawTelegram){
             float value = valuetext.toFloat();
             String unit = sub.substring(units+1);
             if(unit == "m3") unit = "m³";
+            readings[key]["value"] = value;
+            readings[key]["unit"] = unit;
             processMeterValue(i, 0, value, true, unit, mb1_timestamp);
           }
         }
