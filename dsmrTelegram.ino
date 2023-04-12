@@ -126,7 +126,6 @@ void splitTelegram(String rawTelegram){
 }
 
 void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolean floatValue, String unit, unsigned long meterTime){
-  /* Re.alto doesn't need this, so lets exclude it for now
   if(dsmrKeys[dsmrKey][0] == "1-0:1.8.1") totConDay = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:1.8.2") totConNight = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.1") totInDay = fmeasurement;
@@ -137,6 +136,7 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
   else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
   else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement;
+  /* Re.alto doesn't need this, so lets exclude it for now
   DynamicJsonDocument doc(1024);
   doc["entity"] = apSSID;
   //doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
@@ -161,7 +161,6 @@ void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolea
 }
 
 void sumMeterTotals(){
-  /* Re.alto doesn't need this, so lets exclude it for now
   totCon = (totConDay + totConNight)*1.0;
   totConToday = totCon - totConYesterday;
   totIn = (totInDay + totInNight)*1.0;
@@ -172,6 +171,7 @@ void sumMeterTotals(){
     gasConYesterday = totGasCon;
     prevDay = dm_time.tm_mday ;
   }
+  /* Re.alto doesn't need this, so lets exclude it for now
   if(mqtt_en){
     for(int i = 0; i < 3; i++){
       String totalsTopic = "";

@@ -81,6 +81,7 @@ String jsonOutputReadings;
 
 //Global vars to store basic digital meter telegram values
 float totConDay, totConNight, totCon, totInDay, totInNight, totIn, totPowCon, totPowIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
+String jsonData;
 RTC_NOINIT_ATTR float totConToday, totConYesterday, gasConToday, gasConYesterday;
 //Pulse input vars
 boolean pls_en, pls_emu;
@@ -148,10 +149,15 @@ void setup(){
     syslog("Could not mount SPIFFS", 3);
   }
   else{
-    spiffsMounted = true;
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
+    listDir(SPIFFS, "/", 0);
+    File file = SPIFFS.open("/index.html");
+    if(!file || file.isDirectory() || file.size() == 0) {
+        syslog("Could not load files from SPIFFS", 3);
+    }
+    else spiffsMounted = true;
+    file.close();
   }
-  listDir(SPIFFS, "/", 0);
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io and re.alto", 1);
   if(beta_fleet) syslog("Using development firmware", 2);
@@ -200,13 +206,13 @@ void setup(){
         // Load certbundle from SPIFFS
         File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
         if(!file || file.isDirectory()) {
-            syslog("Could not load cert bundle from SPIFFS", 2);
+            syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 2);
+                syslog("WiFiClientSecure: could not load cert bundle", 3);
                 bundleLoaded = false;
             }
         }
@@ -228,7 +234,6 @@ void setup(){
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;
-      //if(update_finish) finishUpdate();
       server.addHandler(new WebRequestHandler());
       update_autoCheck = true;
       if(update_autoCheck) {
@@ -259,6 +264,7 @@ void setup(){
 
 void loop(){
   blinkLed();
+  if(!bundleLoaded) restoreSPIFFS();
   if(mqtt_tls){
     mqttclientSecure.loop();
   }
@@ -333,7 +339,7 @@ void loop(){
       if(eidUpload()) sinceEidUpload = 0;
       else sinceEidUpload = (15*60*900000)-(5*60*1000);
     }
-    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError) unitState = 5;
+    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError || !spiffsMounted) unitState = 5;
     else unitState = 4;
     if(reconncount > 30){
       last_reset = "Rebooting to try fix connections";

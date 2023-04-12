@@ -7,19 +7,24 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request)
 
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
 {
-  extern String ssidList, wifi_ssid, wifi_password, email, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2;
+  extern String jsonData, ssidList, wifi_ssid, wifi_password, email, mqtt_host, mqtt_id, mqtt_user, mqtt_pass, eid_webhook, last_reset, pls_unit1, pls_unit2, 
+  dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
-  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, configSaved, rebootReq, rebootInit, 
+  const char fallback_html[] PROGMEM = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/><title>Digital meter - WiFi settings</title><style>html {  font-family: Helvetica;  display: inline-block;  margin: 0px auto;  text-align: center;}div,fieldset,input,select {padding: 5px;font-size: 1em;}p {margin: 0.5em 0;}input {width: 100%;box-sizing: border-box;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;background: #dddddd;color: #000000;}select {width: 100%;background: #dddddd;color: #000000;}body {text-align: center;font-family: verdana, sans-serif;background: #252525;}td {padding: 0px;}button {border: 0;border-radius: 0.3rem;background: #1fa3ec;color: #faffff;line-height: 2.4rem;font-size: 1.2rem;width: 100%;-webkit-transition-duration: 0.4s;transition-duration: 0.4s;cursor: pointer;}button:hover {background: #0e70a4;}.bred {background: #d43535;}.bred:hover {background: #931f1f;}.bgrn {background: #47c266;}.bgrn:hover {background: #5aaf6f;}a {color: #1fa3ec;text-decoration: none;}.p {float: left;text-align: left;}.q {float: right;text-align: right;}.r {border-radius: 0.3em;padding: 2px;margin: 6px 2px;}</style></head><script>function start(){    getSSIDlist();}function getSSIDlist() {  var xhttp = new XMLHttpRequest();  xhttp.onload = function() {    if (this.status == 200) {      document.getElementById(\"StateValue\").innerHTML =      this.responseText;    }  };  xhttp.open(\"GET\", \"ssidlist\", true);  xhttp.send();}function mouseoverPass(obj) {  var obj = document.getElementById('myPassword');  obj.type = \"text\";}function mouseoutPass(obj) {  var obj = document.getElementById('myPassword');  obj.type = \"password\";}function getSaveState() {  var xhttp = new XMLHttpRequest();  xhttp.onload = function() {    if (this.status == 200) {      document.getElementById(\"SaveMessage\").innerHTML =      this.responseText;    }  };  xhttp.open(\"GET\", \"settingssaved\", true);  xhttp.send();}</script><body onload=\"start()\"><div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'><div style='text-align:center;color:#eaeaea;'><noscript>To use the digital meter dongle, please enable JavaScript<br></noscript><h2>Digital meter dongle</h2><h3>Wifi and Email configuration</h3></div><p><form method=\"get\" action=\"setap\"><label>SSID:</label></p><p id = \"StateValue\">STATE</p><p>Password:</p><p style=\"vertical-align: middle;\"><input name=\"pass\" length=64 type=\"password\" id=\"myPassword\" style=\"width:88%\"></p><p style=\"vertical-align: middle;\"><span title=\"eye\" onmouseover=\"mouseoverPass();\" onmouseout=\"mouseoutPass();\"><u>Show password</u></span></p><p>Email:</p><p style=\"vertical-align: middle;\"><input name=\"email\" type=\"email\" id=\"email\"/></p><p><input type=\"submit\" class='button bgrn'></form></p><p><div style='text-align:center;color:green;' id = \"SaveMessage\" class=\"save\"><h3></h3></div></p><p><form action='/wificn' method='get'><input type=\"hidden\" name=\"rescan\" value=\"true\" /> <button>Rescan wifi</button></form></p><p><div></div></p><div style='text-align:right;font-size:11px;'><hr/><a id=\"footer\" href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle by plan-d.io & realto.io</a></div></div></body></html>";
+  extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, wifiScan, configSaved, rebootReq, rebootInit, 
   mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
-  update_autoCheck, update_auto, pls_en, pls_emu, beta_fleet;
+  update_autoCheck, update_auto, pls_en, pls_emu, beta_fleet, spiffsMounted;
   if(request->url() == "/"){
-    counter++;
-    request->send(SPIFFS, "/index.html", "text/html");
+    if(spiffsMounted) request->send(SPIFFS, "/index.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/hostname"){
     request->send(200, "text/plain", apSSID);
+  }
+  else if(request->url() == "/data"){
+    request->send(200, "application/json", jsonData);
   }
   else if(request->url() == "/wifi"){
     if(WiFi.status() == WL_CONNECTED){
@@ -47,6 +52,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     else request->send(SPIFFS, "/counter-off.png", "image/png");
     
   }
+  else if(request->url() == "/cs"){
+    request->send(SPIFFS, "/syslog.html", "text/html");
+  }
   else if(request->url() == "/sensor"){
     request->send(SPIFFS, "/connection-off.png", "image/png");
   }
@@ -61,9 +69,12 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   }
   else if(request->url() == "/wificn"){
     configSaved = false;
-    if(request->hasParam("rescan"))
-      scanWifi();
-    request->send(SPIFFS, "/wifi.html", "text/html");
+    if(request->hasParam("rescan")){
+      //scanWifi();
+      wifiScan = true;
+    }
+    if(spiffsMounted) request->send(SPIFFS, "/wifi.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/cloudcn"){
     configSaved = false;
@@ -96,10 +107,16 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
         Serial.println("Saved wifi settings");
         configSaved = true;
         rebootReq = true;
+        if(!spiffsMounted){
+          request->send_P(200, "text/html", fallback_html);
+          delay(200);
+          ESP.restart();
+        }
       }
       //scanWifi();    
     }
-    request->send(SPIFFS, "/wifi.html", "text/html");
+    if(spiffsMounted) request->send(SPIFFS, "/wifi.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/setcloud"){
     configSaved = false;
@@ -261,16 +278,19 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       if(p->value() == "true") update_autoCheck = true;
       else update_autoCheck = false;
     }
+    else update_autoCheck = false;
     if(request->hasParam("update_auto")){
       AsyncWebParameter* p = request->getParam("update_auto");
       if(p->value() == "true") update_auto = true;
       else update_auto = false;
     }
+    else update_auto = false;
     if(request->hasParam("beta_fleet")){
       AsyncWebParameter* p = request->getParam("beta_fleet");
       if(p->value() == "true") beta_fleet = true;
       else beta_fleet = false;
     }
+    else beta_fleet = false;
     if(saveConfig()){
       configSaved = true;
       rebootReq = true;
@@ -285,15 +305,116 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       if(p->value() == "interval") trigger_type = 1;
       else if(p->value() == "external") trigger_type = 2;
       else trigger_type = 0;
-      Serial.println(trigger_type);
     }
     if(request->hasParam("trigger_interval")){
       AsyncWebParameter* p = request->getParam("trigger_interval");
       trigger_interval = p->value().toInt();
     }
+    if(request->hasParam("dmAvDem")){
+      AsyncWebParameter* p = request->getParam("dmAvDem");
+      if(p->value() == "true") dmAvDem = "1";
+      else dmAvDem = "0";
+    }
+    else dmAvDem = "0";
+    if(request->hasParam("dmMaxDemM")){
+      AsyncWebParameter* p = request->getParam("dmMaxDemM");
+      if(p->value() == "true") dmMaxDemM = "1";
+      else dmMaxDemM = "0";
+    }
+    else dmMaxDemM = "0";
+    if(request->hasParam("dmPowCon")){
+      AsyncWebParameter* p = request->getParam("dmPowCon");
+      if(p->value() == "true") dmPowCon = "1";
+      else dmPowCon = "0";
+    }
+    else dmPowCon = "0";
+    if(request->hasParam("dmPowIn")){
+      AsyncWebParameter* p = request->getParam("dmPowIn");
+      if(p->value() == "true") dmPowIn = "1";
+      else dmPowIn = "0";
+    }
+    else dmPowIn = "0";
+    if(request->hasParam("dmTotCont1")){
+      AsyncWebParameter* p = request->getParam("dmTotCont1");
+      if(p->value() == "true") dmTotCont1 = "1";
+      else dmTotCont1 = "0";
+    }
+    else dmTotCont1 = "0";
+    if(request->hasParam("dmTotCont2")){
+      AsyncWebParameter* p = request->getParam("dmTotCont2");
+      if(p->value() == "true") dmTotCont2 = "1";
+      else dmTotCont2 = "0";
+    }
+    else dmTotCont2 = "0";
+    if(request->hasParam("dmTotInt1")){
+      AsyncWebParameter* p = request->getParam("dmTotInt1");
+      if(p->value() == "true") dmTotInt1 = "1";
+      else dmTotInt1 = "0";
+    }
+    else dmTotInt1 = "0";
+    if(request->hasParam("dmTotInt2")){
+      AsyncWebParameter* p = request->getParam("dmTotInt2");
+      if(p->value() == "true") dmTotInt2 = "1";
+      else dmTotInt2 = "0";
+    }
+    else dmTotInt2 = "0";
+    if(request->hasParam("dmActiveTariff")){
+      AsyncWebParameter* p = request->getParam("dmActiveTariff");
+      if(p->value() == "true") dmActiveTariff = "1";
+      else dmActiveTariff = "0";
+    }
+    else dmActiveTariff = "0";
+    if(request->hasParam("dmVoltagel1")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel1");
+      if(p->value() == "true") dmVoltagel1 = "1";
+      else dmVoltagel1 = "0";
+    }
+    else dmVoltagel1 = "0";
+    if(request->hasParam("dmVoltagel2")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel2");
+      if(p->value() == "true") dmVoltagel2 = "1";
+      else dmVoltagel2 = "0";
+    }
+    else dmVoltagel2 = "0";
+    if(request->hasParam("dmVoltagel3")){
+      AsyncWebParameter* p = request->getParam("dmVoltagel3");
+      if(p->value() == "true") dmVoltagel3 = "1";
+      else dmVoltagel3 = "0";
+    }
+    else dmVoltagel3 = "0";
+    if(request->hasParam("dmCurrentl1")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl1");
+      if(p->value() == "true") dmCurrentl1 = "1";
+      else dmCurrentl1 = "0";
+    }
+    else dmCurrentl1 = "0";
+    if(request->hasParam("dmCurrentl2")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl2");
+      if(p->value() == "true") dmCurrentl2 = "1";
+      else dmCurrentl2 = "0";
+    }
+    else dmCurrentl2 = "0";
+    if(request->hasParam("dmCurrentl3")){
+      AsyncWebParameter* p = request->getParam("dmCurrentl3");
+      if(p->value() == "true") dmCurrentl3 = "1";
+      else dmCurrentl3 = "0";
+    }
+    else dmCurrentl3 = "0";
+    if(request->hasParam("dmGas")){
+      AsyncWebParameter* p = request->getParam("dmGas");
+      if(p->value() == "true") dmGas = "1";
+      else dmGas = "0";
+    }
+    else dmGas = "0";
+    if(request->hasParam("dmText")){
+      AsyncWebParameter* p = request->getParam("dmText");
+      if(p->value() == "true") dmText = "1";
+      else dmText = "0";
+    }
+    else dmText = "0";
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      //Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
     if(saveConfig()){
       configSaved = true;
@@ -302,7 +423,6 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/dm.html", "text/html");
   }
   else if(request->url() == "/setio"){
-    Serial.println("Got setIO");
     configSaved = false;
     int params = request->params();
     if(request->hasParam("pls_en")){
@@ -357,7 +477,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     }
     for(int i=0;i<params;i++){
       AsyncWebParameter* p = request->getParam(i);
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      //Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
     if(saveConfig()){
       configSaved = true;
@@ -366,7 +486,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/io.html", "text/html");
   }
   else{
-    request->send(SPIFFS, "/index.html", "text/html");
-    counter++;
-  }
+    if(spiffsMounted) request->send(SPIFFS, "/index.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
+  }  
 }
