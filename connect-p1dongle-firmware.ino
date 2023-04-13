@@ -111,7 +111,7 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, alpha_fleet, dev_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -160,7 +160,8 @@ void setup(){
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io and re.alto", 1);
-  if(beta_fleet) syslog("Using development firmware", 2);
+  if(dev_fleet) syslog("Using experimental (development) firmware", 2);
+  if(alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
   syslog("Checking if internal clock is set", 0);
   printLocalTime(true);
   bootcount = bootcount + 1;

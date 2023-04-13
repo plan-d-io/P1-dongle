@@ -84,7 +84,8 @@ String getUnit() {
   StaticJsonDocument<128> unitData;
   unitData["innerChecks"]["update_auto"]["value"] = update_auto;
   unitData["innerChecks"]["update_autoCheck"]["value"] = update_autoCheck;
-  unitData["innerChecks"]["beta_fleet"]["value"] = beta_fleet;
+  unitData["innerChecks"]["beta_fleet"]["value"] = dev_fleet;
+  unitData["innerChecks"]["alpha_fleet"]["value"] = alpha_fleet;
   String output;
   serializeJson(unitData, output);
   return output;
