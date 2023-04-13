@@ -211,7 +211,7 @@ boolean finishUpdate(bool restore){
         unsigned long delimEnd = 0;
         while(delimEnd < eof){
           delimEnd = payload.indexOf('\n', delimStart);
-          String s = "/" + payload.substring(delimStart, delimEnd);
+          String s = "/" + payload.substring(delimStart, delimEnd-1);
           delimStart = delimEnd+1;
           fileUrl = baseUrl + "/data" + s;
           Serial.println(fileUrl);
