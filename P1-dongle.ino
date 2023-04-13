@@ -18,7 +18,7 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 103;
+unsigned int fw_ver = 104;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -138,6 +138,11 @@ void setup(){
   preferences.begin("cofy-config", true);
   delay(100);
   initConfig();
+  /*TEMPORARY BOOTSTRAP*/
+  ha_en = true;
+  dmAvDem = "1";
+  dmMaxDemM = "1";
+  saveConfig();
   delay(100);
   restoreConfig();
   // Initialize SPIFFS
