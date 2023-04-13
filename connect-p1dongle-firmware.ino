@@ -18,7 +18,7 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 103;
+unsigned int fw_ver = 104;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -341,7 +341,7 @@ void loop(){
     }
     if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError || !spiffsMounted) unitState = 5;
     else unitState = 4;
-    if(reconncount > 30){
+    if(reconncount > 15){
       last_reset = "Rebooting to try fix connections";
       if(saveConfig()){
         syslog("Rebooting to try fix connections", 2);
