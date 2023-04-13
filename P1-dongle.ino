@@ -139,6 +139,7 @@ void setup(){
   delay(100);
   initConfig();
   /*TEMPORARY BOOTSTRAP*/
+  restoreConfig();
   ha_en = true;
   dmAvDem = "1";
   dmMaxDemM = "1";
