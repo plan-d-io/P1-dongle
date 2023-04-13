@@ -47,7 +47,11 @@ void restoreSPIFFS(){
   }
   /*Next, store a file to SPIFFS*/
   syslog("Downloading cert bundle", 0);
-  String fileUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/data/cert/x509_crt_bundle.bin";
+  String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+  if(dev_fleet) baseUrl += "develop";
+  if(alpha_fleet) baseUrl += "alpha";
+  else baseUrl += "main";
+  String fileUrl = baseUrl + "/data/cert/x509_crt_bundle.bin";
   String s = "/cert/x509_crt_bundle.bin";
   if (https.begin(*client, fileUrl)) {
     int httpCode = https.GET();

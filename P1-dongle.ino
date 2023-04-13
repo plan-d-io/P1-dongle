@@ -108,7 +108,7 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, alpha_fleet, dev_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -146,13 +146,19 @@ void setup(){
     syslog("Could not mount SPIFFS", 3);
   }
   else{
-    spiffsMounted = true;
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
     listDir(SPIFFS, "/", 0);
+    File file = SPIFFS.open("/index.html");
+    if(!file || file.isDirectory() || file.size() == 0) {
+        syslog("Could not load files from SPIFFS", 3);
+    }
+    else spiffsMounted = true;
+    file.close();
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
-  if(beta_fleet) syslog("Using development firmware", 2);
+  if(dev_fleet) syslog("Using experimental (development) firmware", 2);
+  if(alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
   syslog("Checking if internal clock is set", 0);
   printLocalTime(true);
   bootcount = bootcount + 1;
@@ -198,16 +204,14 @@ void setup(){
         // Load certbundle from SPIFFS
         File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
         if(!file || file.isDirectory()) {
-            syslog("Could not load cert bundle from SPIFFS", 2);
+            syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
-            //rebootInit = true;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 2);
+                syslog("WiFiClientSecure: could not load cert bundle", 3);
                 bundleLoaded = false;
-                //rebootInit = true;
             }
         }
         file.close();
@@ -228,7 +232,6 @@ void setup(){
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;
-      //if(update_finish) finishUpdate();
       server.addHandler(new WebRequestHandler());
       update_autoCheck = true;
       if(update_autoCheck) {
@@ -320,7 +323,7 @@ void loop(){
       if(eidUpload()) sinceEidUpload = 0;
       else sinceEidUpload = (15*60*900000)-(5*60*1000);
     }
-    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError) unitState = 5;
+    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError || !spiffsMounted) unitState = 5;
     else unitState = 4;
     if(reconncount > 30){
       last_reset = "Rebooting to try fix connections";

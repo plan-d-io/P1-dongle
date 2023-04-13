@@ -32,7 +32,7 @@ void getHeapDebug(){
 void pushDebugValues(){
   time_t now;
   unsigned long dtimestamp = time(&now);
-  for(int i = 0; i < 8; i++){
+  for(int i = 0; i < 9; i++){
     String chanName = "";
     String dtopic = "";
     DynamicJsonDocument doc(1024);
@@ -78,6 +78,13 @@ void pushDebugValues(){
       chanName = "firmware";
       doc["friendly_name"] = "Firmware";
       doc["value"] =  fw_ver/100.0;
+    }
+    else if(i == 8){
+      chanName = "release_channel";
+      doc["friendly_name"] = "Release channel";
+      if(alpha_fleet) doc["value"] = "alpha";
+      else if(dev_fleet) doc["value"] = "development";
+      else doc["value"] = "main";
     }
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;

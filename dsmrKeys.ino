@@ -26,6 +26,8 @@ static const String dsmrKeys[][ 8 ] PROGMEM = {
 { "0-0:96.13.0", "0", "Text message", "data/devices/utility_meter/text_message", "", "gauge", "" }
 };
 
+
+
 void configMeter(){
   meterConfig[0] = dmTotCont1;
   meterConfig[1] = dmTotCont2;
