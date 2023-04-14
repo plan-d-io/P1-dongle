@@ -203,6 +203,7 @@ boolean initConfig() {
     preferences.putBool("UPD_AUTO", true); 
     preferences.putBool("UPD_AUTOCHK", true);
     preferences.putBool("BETA_FLT", false);
+    preferences.putBool("ALPHA_FLT", false);
     preferences.putUInt("DM_DSMRV", 0);
     preferences.putBool("DM_AVDEM", true);
     preferences.putBool("DM_MAXDEMM", true);

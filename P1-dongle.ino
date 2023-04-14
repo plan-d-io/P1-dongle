@@ -143,6 +143,7 @@ void setup(){
   ha_en = true;
   dmAvDem = "1";
   dmMaxDemM = "1";
+  alpha_fleet = false;
   saveConfig();
   delay(100);
   restoreConfig();
