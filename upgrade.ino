@@ -238,7 +238,7 @@ boolean finishUpdate(bool restore){
                 }
                 else{
                   syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
-                  if(httpCode == 400){
+                  if(httpCode == 400){ //temp fix till we can figure out the issue with non-deterministic behaviour of line-endings (github encoding?)
                     https.end();
                     s = "/";
                     s += temp;
