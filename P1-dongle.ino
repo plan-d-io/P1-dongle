@@ -138,15 +138,14 @@ void setup(){
   preferences.begin("cofy-config", true);
   delay(100);
   initConfig();
-  /*TEMPORARY BOOTSTRAP*/
+  delay(100);
   restoreConfig();
+  /*TEMPORARY BOOTSTRAP*/
   ha_en = true;
   dmAvDem = "1";
   dmMaxDemM = "1";
   alpha_fleet = false;
   saveConfig();
-  delay(100);
-  restoreConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);
   if(!SPIFFS.begin(true)){
