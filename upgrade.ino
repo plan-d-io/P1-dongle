@@ -212,6 +212,7 @@ boolean finishUpdate(bool restore){
         while(delimEnd < eof){
           delimEnd = payload.indexOf('\n', delimStart);
           String s = "/";
+          String temp = payload.substring(delimStart, delimEnd-1);
           if(restore) s += payload.substring(delimStart, delimEnd-1);
           else s += payload.substring(delimStart, delimEnd);
           delimStart = delimEnd+1;
@@ -238,8 +239,9 @@ boolean finishUpdate(bool restore){
                 else{
                   syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
                   if(httpCode == 400){
+                    https.end();
                     s = "/";
-                    s += payload.substring(delimStart, delimEnd-1);
+                    s += temp;
                     delimStart = delimEnd+1;
                     fileUrl = baseUrl + "/data" + s;
                     Serial.println(fileUrl);
