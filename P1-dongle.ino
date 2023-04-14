@@ -1,7 +1,6 @@
 #include "rom/rtc.h"
 #include "M5Atom.h"
 #include <WiFi.h>
-#include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <DNSServer.h>
@@ -14,13 +13,12 @@
 #include "WebRequestHandler.h"
 #include <PubSubClient.h>
 #include "time.h"
-#include "tls.hpp"
 #include "FS.h"
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 103;
+unsigned int fw_ver = 104;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -110,7 +108,7 @@ byte mac[6];
 boolean wifiSTA = false;
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, beta_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, alpha_fleet, dev_fleet;
 String dmPowIn, dmPowCon, dmTotCont1, dmTotCont2, dmTotInt1, dmTotInt2, dmActiveTariff, dmVoltagel1, dmVoltagel2, dmVoltagel3, dmCurrentl1, dmCurrentl2, dmCurrentl3, dmGas, dmText, dmAvDem, dmMaxDemM;
 String meterConfig[17];
 int dsmrVersion, trigger_type, trigger_interval;
@@ -120,14 +118,14 @@ String mqtt_host, mqtt_id, mqtt_user, mqtt_pass;
 uint8_t prevButtonState = false;
 boolean configSaved, resetWifi, resetAll;
 boolean mqtt_en, mqtt_tls, mqtt_auth;
-boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, eid_en, ha_en, ha_metercreated;
+boolean update_autoCheck, update_auto, updateAvailable, update_start, update_finish, restore_finish, eid_en, ha_en, ha_metercreated;
 unsigned int mqtt_port;
 unsigned long upload_throttle;
 String eid_webhook;
 
 void setup(){
   M5.begin(true, false, true);
-  delay(10);
+  delay(2000);
   pinMode(TRIGGER, OUTPUT);
   setBuff(0x00, 0xff, 0x00); //red
   M5.dis.displaybuff(DisBuff);
@@ -142,19 +140,31 @@ void setup(){
   initConfig();
   delay(100);
   restoreConfig();
+  /*TEMPORARY BOOTSTRAP*/
+  ha_en = true;
+  dmAvDem = "1";
+  dmMaxDemM = "1";
+  alpha_fleet = false;
+  saveConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);
-  if(!SPIFFS.begin(false)){
+  if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
-    rebootInit = true;
   }
   else{
-    spiffsMounted = true;
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
+    listDir(SPIFFS, "/", 0);
+    File file = SPIFFS.open("/index.html");
+    if(!file || file.isDirectory() || file.size() == 0) {
+        syslog("Could not load files from SPIFFS", 3);
+    }
+    else spiffsMounted = true;
+    file.close();
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
-  if(beta_fleet) syslog("Using development firmware", 2);
+  if(dev_fleet) syslog("Using experimental (development) firmware", 2);
+  if(alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
   syslog("Checking if internal clock is set", 0);
   printLocalTime(true);
   bootcount = bootcount + 1;
@@ -198,22 +208,21 @@ void setup(){
         syslog("Setting up TLS/SSL client", 0);
         client->setUseCertBundle(true);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
-        if(!file) {
-            syslog("Could not load cert bundle from SPIFFS", 2);
+        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
+        if(!file || file.isDirectory()) {
+            syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
-            rebootInit = true;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 2);
+                syslog("WiFiClientSecure: could not load cert bundle", 3);
                 bundleLoaded = false;
-                rebootInit = true;
             }
         }
         file.close();
-      } else {
+      } 
+      else {
         syslog("Unable to create SSL client", 2);
         unitState = 5;
         httpsError = true;
@@ -222,11 +231,13 @@ void setup(){
         startUpdate();
       }
       if(update_finish){
-        finishUpdate();
+        finishUpdate(false);
+      }
+      if(restore_finish){
+        finishUpdate(true);
       }
       if(mqtt_en) setupMqtt();
       sinceConnCheck = 60000;
-      //if(update_finish) finishUpdate();
       server.addHandler(new WebRequestHandler());
       update_autoCheck = true;
       if(update_autoCheck) {
@@ -257,6 +268,7 @@ void setup(){
 
 void loop(){
   blinkLed();
+  if(!bundleLoaded) restoreSPIFFS();
   if(mqtt_tls){
     mqttclientSecure.loop();
   }
@@ -317,7 +329,7 @@ void loop(){
       if(eidUpload()) sinceEidUpload = 0;
       else sinceEidUpload = (15*60*900000)-(5*60*1000);
     }
-    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError) unitState = 5;
+    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || eidError || !spiffsMounted) unitState = 5;
     else unitState = 4;
     if(reconncount > 30){
       last_reset = "Rebooting to try fix connections";

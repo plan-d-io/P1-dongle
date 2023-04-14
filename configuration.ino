@@ -13,10 +13,12 @@ boolean restoreConfig() {
   upload_throttle = preferences.getULong("UPL_THROTTLE");
   update_auto = preferences.getBool("UPD_AUTO");
   update_autoCheck = preferences.getBool("UPD_AUTOCHK");
-  beta_fleet = preferences.getBool("BETA_FLT");
+  dev_fleet = preferences.getBool("BETA_FLT");
+  alpha_fleet = preferences.getBool("ALPHA_FLT");
   fw_new = preferences.getUInt("FW_NEW");
   update_start = preferences.getBool("UPD_START");
   update_finish = preferences.getBool("UPD_FINISH");
+  restore_finish = preferences.getBool("RST_FINISH");
   eid_en = preferences.getBool("EID_EN");
   eid_webhook = preferences.getString("EID_HOOK");
   ha_en = preferences.getBool("HA_EN");
@@ -96,10 +98,12 @@ boolean saveConfig() {
   preferences.putULong("UPL_THROTTLE", upload_throttle);
   preferences.putBool("UPD_AUTO", update_auto);
   preferences.putBool("UPD_AUTOCHK", update_autoCheck);
-  preferences.putBool("BETA_FLT", beta_fleet);
+  preferences.putBool("ALPHA_FLT", alpha_fleet);
+  preferences.putBool("BETA_FLT", dev_fleet);
   preferences.putUInt("FW_NEW", onlineVersion);
   preferences.putBool("UPD_START", update_start);
   preferences.putBool("UPD_FINISH", update_finish);
+  preferences.putBool("RST_FINISH", restore_finish);
   preferences.putUInt("counter", counter);
   preferences.putUInt("reboots", bootcount);
   preferences.putBool("EID_EN", eidSave);
@@ -173,6 +177,7 @@ boolean resetConfig() {
   }
   preferences.end();
   syslog("Restarting for config reset", 2);
+  SPIFFS.end();
   delay(500);
   ESP.restart();
   return true;
@@ -198,6 +203,7 @@ boolean initConfig() {
     preferences.putBool("UPD_AUTO", true); 
     preferences.putBool("UPD_AUTOCHK", true);
     preferences.putBool("BETA_FLT", false);
+    preferences.putBool("ALPHA_FLT", false);
     preferences.putUInt("DM_DSMRV", 0);
     preferences.putBool("DM_AVDEM", true);
     preferences.putBool("DM_MAXDEMM", true);

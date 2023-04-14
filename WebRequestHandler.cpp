@@ -12,12 +12,13 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
   extern int counter, mqtt_port, trigger_type, trigger_interval, pls_type1, pls_type2, pls_multi1, pls_multi2, pls_mind1, pls_mind2, pls_emuchan;
   extern unsigned long upload_throttle;
   extern char apSSID[];
+  const char fallback_html[] PROGMEM = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/><title>Digital meter - WiFi settings</title><style>html {  font-family: Helvetica;  display: inline-block;  margin: 0px auto;  text-align: center;}div,fieldset,input,select {padding: 5px;font-size: 1em;}p {margin: 0.5em 0;}input {width: 100%;box-sizing: border-box;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;background: #dddddd;color: #000000;}select {width: 100%;background: #dddddd;color: #000000;}body {text-align: center;font-family: verdana, sans-serif;background: #252525;}td {padding: 0px;}button {border: 0;border-radius: 0.3rem;background: #1fa3ec;color: #faffff;line-height: 2.4rem;font-size: 1.2rem;width: 100%;-webkit-transition-duration: 0.4s;transition-duration: 0.4s;cursor: pointer;}button:hover {background: #0e70a4;}.bred {background: #d43535;}.bred:hover {background: #931f1f;}.bgrn {background: #47c266;}.bgrn:hover {background: #5aaf6f;}a {color: #1fa3ec;text-decoration: none;}.p {float: left;text-align: left;}.q {float: right;text-align: right;}.r {border-radius: 0.3em;padding: 2px;margin: 6px 2px;}</style></head><script>setTimeout(function() {  getSaveState();  getInfoMessage();}, 500); function start(){    getSSIDlist();}function getSSIDlist() {  var xhttp = new XMLHttpRequest();  xhttp.onload = function() {    if (this.status == 200) {      document.getElementById(\"StateValue\").innerHTML =      this.responseText;    }  };  xhttp.open(\"GET\", \"ssidlist\", true);  xhttp.send();}function mouseoverPass(obj) {  var obj = document.getElementById('myPassword');  obj.type = \"text\";}function mouseoutPass(obj) {  var obj = document.getElementById('myPassword');  obj.type = \"password\";}function getSaveState() {  var xhttp = new XMLHttpRequest();  xhttp.onload = function() {    if (this.status == 200) {      document.getElementById(\"SaveMessage\").innerHTML =      this.responseText;    }  };  xhttp.open(\"GET\", \"settingssaved\", true);  xhttp.send();}function getInfoMessage() {  var xhttp = new XMLHttpRequest();  xhttp.onload = function() {    if (this.status == 200) {      document.getElementById(\"InfoMessage\").innerHTML =      this.responseText;    }  };  xhttp.open(\"GET\", \"info\", true);  xhttp.send();}</script><body onload=\"start()\"><div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'><div style='text-align:center;color:#eaeaea;'><noscript>To use the digital meter dongle, please enable JavaScript<br></noscript><h2>Digital meter dongle</h2><h3>Wifi configuration</h3><h3><span id=\"InfoMessage\" style='text-align:center;color:red;' ></span></h3></div><p><form method=\"get\" action=\"setap\"><label>SSID:</label></p><p id = \"StateValue\">STATE</p><p>Password:</p><p style=\"vertical-align: middle;\"><input name=\"pass\" length=64 type=\"password\" id=\"myPassword\" style=\"width:88%\"></p><p style=\"vertical-align: middle;\"><span title=\"eye\" onmouseover=\"mouseoverPass();\" onmouseout=\"mouseoutPass();\"><u>Show password</u></span></p><p><input type=\"submit\" class='button bgrn'></form></p><p><div style='text-align:center;color:green;' id = \"SaveMessage\" class=\"save\"><h3></h3></div></p><p><form action='/wificn' method='get'><input type=\"hidden\" name=\"rescan\" value=\"true\" /> <button>Rescan wifi</button></form></p><p><div></div></p><div style='text-align:right;font-size:11px;'><hr/><a id=\"footer\" href='https://plan-d.io' target='_blank' style='color:#aaa;'>Digital meter dongle by plan-d.io</a></div></div></body></html>";
   extern boolean wifiError, mqttHostError, mqttClientError, httpsError, wifiSTA, wifiSave, wifiScan, configSaved, rebootReq, rebootInit, 
   mqttSave, mqtt_en, mqtt_auth, mqtt_tls, updateAvailable, update_start, mTimeFound, meterError, eid_en, eidSave, eidError, ha_en, haSave,
-  update_autoCheck, update_auto, pls_en, pls_emu, beta_fleet;
+  update_autoCheck, update_auto, pls_en, pls_emu, dev_fleet, alpha_fleet, spiffsMounted;
   if(request->url() == "/"){
-    counter++;
-    request->send(SPIFFS, "/index.html", "text/html");
+    if(spiffsMounted) request->send(SPIFFS, "/index.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/hostname"){
     request->send(200, "text/plain", apSSID);
@@ -72,7 +73,8 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       //scanWifi();
       wifiScan = true;
     }
-    request->send(SPIFFS, "/wifi.html", "text/html");
+    if(spiffsMounted) request->send(SPIFFS, "/wifi.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/cloudcn"){
     configSaved = false;
@@ -105,7 +107,8 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       }
       //scanWifi();    
     }
-    request->send(SPIFFS, "/wifi.html", "text/html");
+    if(spiffsMounted) request->send(SPIFFS, "/wifi.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
   }
   else if(request->url() == "/setcloud"){
     configSaved = false;
@@ -271,12 +274,22 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
       else update_auto = false;
     }
     else update_auto = false;
+    if(request->hasParam("alpha_fleet")){
+      AsyncWebParameter* p = request->getParam("alpha_fleet");
+      if(p->value() == "true") alpha_fleet = true;
+      else alpha_fleet = false;
+    }
+    else alpha_fleet = false;
     if(request->hasParam("beta_fleet")){
       AsyncWebParameter* p = request->getParam("beta_fleet");
-      if(p->value() == "true") beta_fleet = true;
-      else beta_fleet = false;
+      if(p->value() == "true") dev_fleet = true;
+      else dev_fleet = false;
     }
-    else beta_fleet = false;
+    else dev_fleet = false;
+    if(dev_fleet && alpha_fleet){ //make sure you cant subscribe to two channels
+      dev_fleet = false;
+      alpha_fleet = true;
+    }
     if(saveConfig()){
       configSaved = true;
       rebootReq = true;
@@ -472,7 +485,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/io.html", "text/html");
   }
   else{
-    request->send(SPIFFS, "/index.html", "text/html");
-    counter++;
-  }
+    if(spiffsMounted) request->send(SPIFFS, "/index.html", "text/html");
+    else request->send_P(200, "text/html", fallback_html);
+  }  
 }
