@@ -145,6 +145,7 @@ void setup(){
   dmAvDem = "1";
   dmMaxDemM = "1";
   alpha_fleet = false;
+  dev_fleet = true;
   saveConfig();
   // Initialize SPIFFS
   syslog("Mounting SPIFFS... ", 0);

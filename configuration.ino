@@ -186,7 +186,6 @@ boolean resetConfig() {
 boolean initConfig() {
   preferences.end();
   preferences.begin("cofy-config", false);
-  Serial.println("Populating nvs");
   String tempMQTT = preferences.getString("MQTT_HOST");
   if(tempMQTT == ""){
     preferences.putBool("MQTT_EN", false);
@@ -236,8 +235,5 @@ boolean initConfig() {
   }
   preferences.end();
   preferences.begin("cofy-config", true);
-  boolean testbool = preferences.getBool("UPD_AUTO");
-  if(testbool) Serial.println("true");
-  else Serial.println("false");
   return true;
 }
