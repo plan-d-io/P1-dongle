@@ -237,6 +237,35 @@ boolean finishUpdate(bool restore){
                 }
                 else{
                   syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
+                  if(httpCode == 400){
+                    s = "/";
+                    s += payload.substring(delimStart, delimEnd-1);
+                    delimStart = delimEnd+1;
+                    fileUrl = baseUrl + "/data" + s;
+                    Serial.println(fileUrl);
+                    if (s) {
+                      if (https.begin(*client, fileUrl)) {
+                        httpCode = https.GET();
+                        if (httpCode > 0) {
+                          if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                            SPIFFS.remove(s);
+                            File f = SPIFFS.open(s, FILE_WRITE);
+                            long contentLength = https.getSize();
+                            Serial.print("File size: ");
+                            Serial.println(contentLength);
+                            Serial.println("Begin download");
+                            size_t written = https.writeToStream(&f);
+                            if (written == contentLength) {
+                              Serial.println("Written : " + String(written) + " successfully");
+                              filesUpdated = true;
+                            }
+                            f.close();
+                          }
+                        }
+                      }
+                    }
+                    
+                  }
                 }
               } 
               else {
