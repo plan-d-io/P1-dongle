@@ -1,18 +1,25 @@
-// Copyright 2015-2021 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+  WiFiClientSecure.cpp - Client Secure class for ESP32
+  Copyright (c) 2016 Hristo Gochkov  All right reserved.
+  Additions Copyright (C) 2017 Evandro Luis Copercini.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 
 #include "WiFiClientSecure.h"
+#include "esp_crt_bundle.h"
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <errno.h>
@@ -25,26 +32,28 @@
 WiFiClientSecure::WiFiClientSecure()
 {
     _connected = false;
+    _timeout = 30000; // Same default as ssl_client
 
     sslclient = new sslclient_context;
     ssl_init(sslclient);
     sslclient->socket = -1;
     sslclient->handshake_timeout = 120000;
     _use_insecure = false;
-    _use_cert_bundle = false;
     _CA_cert = NULL;
     _cert = NULL;
     _private_key = NULL;
     _pskIdent = NULL;
     _psKey = NULL;
     next = NULL;
+    _alpn_protos = NULL;
+    _use_ca_bundle = false;
 }
 
 
 WiFiClientSecure::WiFiClientSecure(int sock)
 {
     _connected = false;
-    _timeout = 0;
+    _timeout = 30000; // Same default as ssl_client
 
     sslclient = new sslclient_context;
     ssl_init(sslclient);
@@ -61,6 +70,7 @@ WiFiClientSecure::WiFiClientSecure(int sock)
     _pskIdent = NULL;
     _psKey = NULL;
     next = NULL;
+    _alpn_protos = NULL;
 }
 
 WiFiClientSecure::~WiFiClientSecure()
@@ -104,8 +114,6 @@ int WiFiClientSecure::connect(const char *host, uint16_t port)
 {
     if (_pskIdent && _psKey)
         return connect(host, port, _pskIdent, _psKey);
-    if (_use_cert_bundle)
-        return connect(host, port, true);
     return connect(host, port, _CA_cert, _cert, _private_key);
 }
 
@@ -116,15 +124,21 @@ int WiFiClientSecure::connect(const char *host, uint16_t port, int32_t timeout){
 
 int WiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *CA_cert, const char *cert, const char *private_key)
 {
-    return connect(ip.toString().c_str(), port, CA_cert, cert, private_key);
+    return connect(ip, port, NULL, CA_cert, cert, private_key);
 }
 
 int WiFiClientSecure::connect(const char *host, uint16_t port, const char *CA_cert, const char *cert, const char *private_key)
 {
-    if(_timeout > 0){
-        sslclient->handshake_timeout = _timeout;
-    }
-    int ret = start_ssl_client(sslclient, host, port, _timeout, CA_cert, cert, private_key, NULL, NULL, _use_insecure, false);
+    IPAddress address;
+    if (!WiFi.hostByName(host, address))
+        return 0;
+
+    return connect(address, port, host, CA_cert, cert, private_key);
+}
+
+int WiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *host, const char *CA_cert, const char *cert, const char *private_key)
+{
+    int ret = start_ssl_client(sslclient, ip, port, host, _timeout, CA_cert, _use_ca_bundle, cert, private_key, NULL, NULL, _use_insecure, _alpn_protos);
     _lastError = ret;
     if (ret < 0) {
         log_e("start_ssl_client: %d", ret);
@@ -139,27 +153,14 @@ int WiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *pskIdent,
     return connect(ip.toString().c_str(), port, pskIdent, psKey);
 }
 
-int WiFiClientSecure::connect(const char *host, uint16_t port, bool use_bundled) {
-    if(_timeout > 0){
-        sslclient->handshake_timeout = _timeout;
-    }
-    int ret = start_ssl_client(sslclient, host, port, _timeout, NULL, NULL, NULL, NULL, NULL, false, _use_cert_bundle);
-    _lastError = ret;
-    if (ret < 0) {
-        log_e("start_ssl_client: %d", ret);
-        stop();
-        return 0;
-    }
-    _connected = true;
-    return 1;
-}
-
 int WiFiClientSecure::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey) {
     log_v("start_ssl_client with PSK");
-    if(_timeout > 0){
-        sslclient->handshake_timeout = _timeout;
-    }
-    int ret = start_ssl_client(sslclient, host, port, _timeout, NULL, NULL, NULL, pskIdent, psKey, _use_insecure, false);
+
+    IPAddress address;
+    if (!WiFi.hostByName(host, address))
+        return 0;
+
+    int ret = start_ssl_client(sslclient, address, port, host, _timeout, NULL, false, NULL, NULL, pskIdent, psKey, _use_insecure, _alpn_protos);
     _lastError = ret;
     if (ret < 0) {
         log_e("start_ssl_client: %d", ret);
@@ -273,9 +274,21 @@ void WiFiClientSecure::setCACert (const char *rootCA)
     _CA_cert = rootCA;
 }
 
-void WiFiClientSecure::setUseCertBundle (bool use_cert_bundle)
+ void WiFiClientSecure::setCACertBundle(const uint8_t * bundle)
+ {
+    if (bundle != NULL)
+    {
+        arduino_esp_crt_bundle_set(bundle);
+        _use_ca_bundle = true;
+    } else {
+        arduino_esp_crt_bundle_detach(NULL);
+        _use_ca_bundle = false;
+    }
+ }
+ 
+ void WiFiClientSecure::setUseCertBundle (bool use_cert_bundle)
 {
-    _use_cert_bundle = use_cert_bundle;
+    _use_ca_bundle = true;
 }
 
 void WiFiClientSecure::setCertificate (const char *client_ca)
@@ -316,6 +329,7 @@ char *WiFiClientSecure::_streamLoad(Stream& stream, size_t size) {
 }
 
 bool WiFiClientSecure::loadCACert(Stream& stream, size_t size) {
+  if (_CA_cert != NULL) free(const_cast<char*>(_CA_cert));
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -326,6 +340,7 @@ bool WiFiClientSecure::loadCACert(Stream& stream, size_t size) {
 }
 
 bool WiFiClientSecure::loadCertificate(Stream& stream, size_t size) {
+  if (_cert != NULL) free(const_cast<char*>(_cert));
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -336,6 +351,7 @@ bool WiFiClientSecure::loadCertificate(Stream& stream, size_t size) {
 }
 
 bool WiFiClientSecure::loadPrivateKey(Stream& stream, size_t size) {
+  if (_private_key != NULL) free(const_cast<char*>(_private_key));
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -348,7 +364,6 @@ bool WiFiClientSecure::loadPrivateKey(Stream& stream, size_t size) {
 bool WiFiClientSecure::loadCertBundle(Stream& stream, size_t size) {
   // esp_crt_bundle_set expects a uint8_t * so we cannot reuse 
   // the char *_streamLoad(stream, size); without modifying it.
-
   uint8_t *dest = (uint8_t*)malloc(size+1);
   if (!dest) {
     return false;
@@ -358,10 +373,9 @@ bool WiFiClientSecure::loadCertBundle(Stream& stream, size_t size) {
     return false;
   }
   dest[size] = '\0';
-
   bool ret = false;
   if (dest) {
-    esp_crt_bundle_set(dest);
+    arduino_esp_crt_bundle_set(dest);
     ret = true;
   }
   return ret;
@@ -380,3 +394,30 @@ void WiFiClientSecure::setHandshakeTimeout(unsigned long handshake_timeout)
 {
     sslclient->handshake_timeout = handshake_timeout * 1000;
 }
+
+void WiFiClientSecure::setAlpnProtocols(const char **alpn_protos)
+{
+    _alpn_protos = alpn_protos;
+}
+int WiFiClientSecure::setTimeout(uint32_t seconds)
+{
+    _timeout = seconds * 1000;
+    if (sslclient->socket >= 0) {
+        struct timeval tv;
+        tv.tv_sec = seconds;
+        tv.tv_usec = 0;
+        if(setSocketOption(SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0) {
+            return -1;
+        }
+        return setSocketOption(SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+    }
+    else {
+        return 0;
+    }
+}
+
+int WiFiClientSecure::fd() const
+{
+    return sslclient->socket;
+}
+
