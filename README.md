@@ -25,5 +25,7 @@ These features are partially implemented or planned to be implemented.
 This is a non-commercial development, we do not provide any timelines nor guarantees for any functionality. You are however free to contribute yourself!
 
 ### Project sponsors
-Elia Innovation
+**Elia Innovation**
+
 ![](https://raw.githubusercontent.com/wiki/plan-d-io/P1-dongle/images/eliagroup.png)
+  
