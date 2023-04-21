@@ -19,6 +19,7 @@ Please see the [wiki](https://github.com/plan-d-io/P1-dongle/wiki) for extended 
 These features are partially implemented or planned to be implemented.
 - ~~P1-port passthrough (to daisy chain another P1 dongle)~~
 - ~~Connection for up to 2 pulse inputs (e.g. gas or water meter)~~
+- RESTful API
 - Multiple HTTP(S) endpoints
 - Configurable data payload
 
