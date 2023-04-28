@@ -212,7 +212,7 @@ boolean finishUpdate(bool restore){
         while(delimEnd < eof){
           delimEnd = payload.indexOf('\n', delimStart);
           String s = "/";
-          String temp = payload.substring(delimStart, delimEnd-1);
+          String temp = payload.substring(delimStart, delimEnd);
           if(restore) s += payload.substring(delimStart, delimEnd-1);
           else s += payload.substring(delimStart, delimEnd);
           delimStart = delimEnd+1;
@@ -238,7 +238,7 @@ boolean finishUpdate(bool restore){
                 }
                 else{
                   syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
-                  if(httpCode == 400){ //temp fix till we can figure out the issue with non-deterministic behaviour of line-endings (github encoding?)
+                  if(httpCode == 400 || httpCode == 404){ //temp fix till we can figure out the issue with non-deterministic behaviour of line-endings (github encoding?)
                     https.end();
                     s = "/";
                     s += temp;
