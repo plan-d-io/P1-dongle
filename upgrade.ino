@@ -239,6 +239,7 @@ boolean finishUpdate(bool restore){
                 else{
                   syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
                   if(httpCode == 400 || httpCode == 404){ //temp fix till we can figure out the issue with non-deterministic behaviour of line-endings (github encoding?)
+                    Serial.println("retrying");
                     https.end();
                     s = "/";
                     s += temp;
@@ -248,6 +249,7 @@ boolean finishUpdate(bool restore){
                     if (s) {
                       if (https.begin(*client, fileUrl)) {
                         httpCode = https.GET();
+                        Serial.println(httpCode);
                         if (httpCode > 0) {
                           if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
                             SPIFFS.remove(s);
@@ -265,8 +267,14 @@ boolean finishUpdate(bool restore){
                           }
                         }
                       }
+                      else{
+                        Serial.println("could not start client");
+                      }
                     }
-                    
+                    else {
+                      Serial.print("No s: ");
+                      Serial.println(s);
+                    }                    
                   }
                 }
               } 
