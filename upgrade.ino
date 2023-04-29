@@ -243,7 +243,7 @@ boolean finishUpdate(bool restore){
                     https.end();
                     s = "/";
                     s += temp;
-                    delimStart = delimEnd+1;
+                    delimStart = delimEnd-1;
                     fileUrl = baseUrl + "/data" + s;
                     Serial.println(fileUrl);
                     if (s) {
