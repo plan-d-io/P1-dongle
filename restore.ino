@@ -37,6 +37,15 @@ void restoreSPIFFS(){
     detachInterrupt(32);
     detachInterrupt(26);
   }
+  /*Reformat the SPIFFS*/
+  syslog("Formatting", 0);
+  bool formatted = SPIFFS.format();
+  if(formatted){
+    syslog("Success formatting", 0);
+  }
+  else{
+    syslog("Error formatting", 3);
+  }
   /*Load the static cert into the https client*/
   if(client){
     syslog("Setting up fallback TLS/SSL client", 2);
