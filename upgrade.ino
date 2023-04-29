@@ -214,7 +214,7 @@ boolean finishUpdate(bool restore){
           String s = "/";
           String temp = payload.substring(delimStart, delimEnd);
           if(restore) s += payload.substring(delimStart, delimEnd-1);
-          else s += payload.substring(delimStart, delimEnd);
+          else s += payload.substring(delimStart, delimEnd-1);
           delimStart = delimEnd+1;
           fileUrl = baseUrl + "/data" + s;
           Serial.println(fileUrl);
@@ -243,7 +243,7 @@ boolean finishUpdate(bool restore){
                     https.end();
                     s = "/";
                     s += temp;
-                    delimStart = delimEnd-1;
+                    delimStart = delimEnd+1;
                     fileUrl = baseUrl + "/data" + s;
                     Serial.println(fileUrl);
                     if (s) {
