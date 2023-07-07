@@ -82,8 +82,8 @@ void pushDebugValues(){
     else if(i == 8){
       chanName = "release_channel";
       doc["friendly_name"] = "Release channel";
-      if(alpha_fleet) doc["value"] = "alpha";
-      else if(dev_fleet) doc["value"] = "development";
+      if(_alpha_fleet) doc["value"] = "alpha";
+      else if(_dev_fleet) doc["value"] = "development";
       else doc["value"] = "main";
     }
     doc["entity"] = apSSID;

@@ -23,7 +23,7 @@
 #include "configStore.h"
 #include "webHelp.h"
 
-boolean _resetWifi, _factoryReset; 
+boolean resetWifi, factoryReset; 
 Preferences preferences; //
 AsyncWebServer server(80); //
 #define HWSERIAL Serial1 //
@@ -89,7 +89,7 @@ bool updateAvailable;
 
 #define TRIGGER 25 //Pin to trigger meter telegram request
 //Global timing vars
-elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceLastWebRequest, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
+elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 //LED state machine vars
 uint8_t DisBuff[2 + 5 * 5 * 3];
 elapsedMillis ledTime;
@@ -97,7 +97,7 @@ boolean ledState = true;
 byte unitState = 0;
 
 //General housekeeping vars
-unsigned int counter, refbootcount, reconncount, remotehostcount;
+unsigned int reconncount, remotehostcount;
 String resetReason, last_reset_verbose;
 float freeHeap, minFreeHeap, maxAllocHeap;
 String ssidList;
@@ -105,7 +105,7 @@ char apSSID[] = "COFY0000";
 byte mac[6];
 boolean rebootReq = false;
 boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured, firstDebugPush, alpha_fleet, dev_fleet;
+boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured;
 
 
 boolean timeSet, mTimeFound, spiffsMounted;
@@ -119,7 +119,7 @@ void setup(){
   M5.begin(true, false, true);
   delay(2000);
   pinMode(TRIGGER, OUTPUT);
-  setBuff(0x00, 0xff, 0x00); //red
+  setBuff(0x00, 0xff, 0x00); //red 
   M5.dis.displaybuff(DisBuff);
   Serial.begin(115200);
   HWSERIAL.begin(115200, SERIAL_8N1, 21, 22);
@@ -128,24 +128,8 @@ void setup(){
   Serial.println();
   syslog("Digital meter dongle booting", 0);
   restoreConfig();
-  // Initialize SPIFFS
-  syslog("Mounting SPIFFS... ", 0);
-  if(!SPIFFS.begin(true)){
-    syslog("Could not mount SPIFFS", 3);
-  }
-  else{
-    syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
-    listDir(SPIFFS, "/", 0);
-    File file = SPIFFS.open("/index.html");
-    if(!file || file.isDirectory() || file.size() == 0) {
-        syslog("Could not load files from SPIFFS", 3);
-    }
-    else spiffsMounted = true;
-    file.close();
-  }
-  syslog("----------------------------", 1);
-  syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
-  if(_dev_fleet) syslog("Using experimental (development) firmware", 2);
+  initSPIFFS();
+  if(_dev_fleet) syslog("Using experimental (development) firmware", 2); //change this to one variable, but keep legacy compatibility intact
   if(_alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
   syslog("Checking if internal clock is set", 0);
   printLocalTime(true);
@@ -156,81 +140,7 @@ void setup(){
   syslog("Last reset reason: " + resetReason, 1);
   syslog("Last reset reason (verbose): " + last_reset_verbose, 1);
   debugInfo = true;
-  if(_wifi_STA){
-    syslog("WiFi mode: station", 1);
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(_wifi_ssid.c_str(), _wifi_password.c_str());
-    WiFi.setHostname("p1dongle");
-    elapsedMillis startAttemptTime;
-    syslog("Attempting connection to WiFi network " + _wifi_ssid, 0);
-    while (WiFi.status() != WL_CONNECTED && startAttemptTime < 20000) {
-      delay(200);
-      Serial.print(".");
-    }
-    Serial.println("");
-    if(WiFi.status() == WL_CONNECTED){
-      syslog("Connected to the WiFi network " + _wifi_ssid, 1);
-      MDNS.begin("p1dongle");
-      unitState = 5;
-      MDNS.addService("http", "tcp", 80);
-      /*Start NTP time sync*/
-      setClock(true);
-      printLocalTime(true);
-      if(client){
-        syslog("Setting up TLS/SSL client", 0);
-        client->setUseCertBundle(true);
-        // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
-        if(!file || file.isDirectory()) {
-            syslog("Could not load cert bundle from SPIFFS", 3);
-            bundleLoaded = false;
-        }
-        // Load loadCertBundle into WiFiClientSecure
-        if(file && file.size() > 0) {
-            if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 3);
-                bundleLoaded = false;
-            }
-        }
-        file.close();
-      } 
-      else {
-        syslog("Unable to create SSL client", 2);
-        unitState = 5;
-        httpsError = true;
-      }
-      if(_update_start){
-        startUpdate();
-      }
-      if(_update_finish){
-        finishUpdate(false);
-      }
-      if(_restore_finish || !spiffsMounted){
-        finishUpdate(true);
-      }
-      if(_mqtt_en) setupMqtt();
-      sinceConnCheck = 60000;
-      _update_autoCheck = true;
-      if(_update_autoCheck) {
-        sinceUpdateCheck = 86400000-60000;
-      }
-      syslog("Local IP: " + WiFi.localIP().toString(), 0);
-    }
-    else{
-      syslog("Could not connect to the WiFi network", 2);
-      wifiError = true;
-      _wifi_STA = false;
-    }
-  }
-  if(!_wifi_STA){
-    syslog("WiFi mode: access point", 1);
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP("p1dongle");
-    dnsServer.start(53, "*", WiFi.softAPIP());
-    MDNS.begin("p1dongle");
-    syslog("AP set up", 1);
-    unitState = 3;
-  }
+  initWifi();
   scanWifi();
   server.addHandler(new WebRequestHandler());
   server.begin();
@@ -238,13 +148,6 @@ void setup(){
 
 void loop(){
   blinkLed();
-  if(!bundleLoaded) restoreSPIFFS();
-  if(_mqtt_tls){
-    mqttclientSecure.loop();
-  }
-  else{
-    mqttclient.loop();
-  }
   if(wifiScan) scanWifi();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
@@ -280,6 +183,13 @@ void loop(){
     else unitState = 3;
   }
   else{
+    if(!bundleLoaded) restoreSPIFFS();
+    if(_mqtt_tls){
+      mqttclientSecure.loop();
+    }
+    else{
+      mqttclient.loop();
+    }
     if(_update_autoCheck && sinceUpdateCheck >= 86400000){
       updateAvailable = checkUpdate();
       if(updateAvailable) startUpdate();
@@ -307,14 +217,14 @@ void loop(){
   }
   M5.update();
   if (M5.Btn.pressedFor(2000)) {
-    _resetWifi = true;
+    resetWifi = true;
   }
   if (M5.Btn.pressedFor(5000)) {
-    _factoryReset = true;
+    factoryReset = true;
   }
   if (prevButtonState != M5.Btn.isPressed()) {
     if(!M5.Btn.isPressed()){
-      if(_factoryReset || _resetWifi){
+      if(factoryReset || resetWifi){
         resetConfig();
       }
     }

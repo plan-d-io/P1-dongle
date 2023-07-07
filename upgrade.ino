@@ -176,8 +176,8 @@ boolean finishUpdate(bool restore){
   if(bundleLoaded){
     syslog("Finishing upgrade. Preparing to download static files.", 1);
     String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
-    if(dev_fleet) baseUrl += "develop";
-    else if(alpha_fleet) baseUrl += "alpha";
+    if(_dev_fleet) baseUrl += "develop";
+    else if(_alpha_fleet) baseUrl += "alpha";
     else baseUrl += "main";
     String fileUrl = baseUrl + "/bin/";
     if(restore) fileUrl += "restore";

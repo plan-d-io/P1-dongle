@@ -1,3 +1,4 @@
+/*The webserver client and its handlers live here*/
 #include "SPIFFS.h"
 extern bool findInConfig(String, int&, int&), processConfigJson(String, String&, bool), processConfigString(String, String&, bool), storeConfigVar(String, int, int);
 extern String returnConfigVar(String, int, int, bool), returnConfig(), returnSvg();

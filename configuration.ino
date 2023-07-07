@@ -76,13 +76,13 @@ boolean resetConfig() {
    * or completely erase the NVS to perform a factory reset.
    */
   preferences.begin("cofy-config", false);
-  if(_resetWifi){
+  if(resetWifi){
     preferences.remove("WIFI_SSID");
     preferences.remove("WIFI_PASSWD");
     preferences.remove("WIFI_STA");
     preferences.putString("LAST_RESET", "<timestamp>Restarting for config reset");
   }
-  else if(_factoryReset){
+  else if(factoryReset){
     preferences.clear();
   }
   preferences.end();
