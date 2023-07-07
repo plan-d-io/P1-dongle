@@ -26,7 +26,7 @@ void getHeapDebug(){
   freeHeap = ESP.getFreeHeap()/1000.0;
   minFreeHeap = ESP.getMinFreeHeap()/1000.0;
   maxAllocHeap = ESP.getMaxAllocHeap()/1000.0;
-  if(mqtt_en && debugInfo) pushDebugValues();
+  if(_mqtt_en && debugInfo) pushDebugValues();
 }
 
 void pushDebugValues(){
@@ -39,7 +39,7 @@ void pushDebugValues(){
     if(i == 0){
       chanName = "reboots";
       doc["friendly_name"] = "Reboots";
-      doc["value"] = bootcount;
+      doc["value"] = _bootcount;
     }
     else if(i == 1){
       chanName = "last_reset_reason";
@@ -92,8 +92,8 @@ void pushDebugValues(){
     dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
     String jsonOutput;
     serializeJson(doc, jsonOutput);
-    if(mqtt_en){
-      if(sinceLastUpload >= upload_throttle){
+    if(_mqtt_en){
+      if(sinceLastUpload >= _upload_throttle){
        pubMqtt(dtopic, jsonOutput, false);
       }
     }

@@ -1,241 +1,481 @@
-boolean restoreConfig() {
-  wifi_ssid = preferences.getString("WIFI_SSID");
-  wifi_password = preferences.getString("WIFI_PASSWD"); 
-  wifiSTA = preferences.getBool("WIFI_STA");
-  mqtt_en = preferences.getBool("MQTT_EN");
-  mqtt_tls = preferences.getBool("MQTT_TLS");
-  mqtt_host = preferences.getString("MQTT_HOST");
-  mqtt_id = preferences.getString("MQTT_ID");
-  mqtt_auth = preferences.getBool("MQTT_AUTH");
-  mqtt_user = preferences.getString("MQTT_USER");
-  mqtt_pass = preferences.getString("MQTT_PASS");
-  mqtt_port = preferences.getUInt("MQTT_PORT");
-  upload_throttle = preferences.getULong("UPL_THROTTLE");
-  update_auto = preferences.getBool("UPD_AUTO");
-  update_autoCheck = preferences.getBool("UPD_AUTOCHK");
-  dev_fleet = preferences.getBool("BETA_FLT");
-  alpha_fleet = preferences.getBool("ALPHA_FLT");
-  fw_new = preferences.getUInt("FW_NEW");
-  update_start = preferences.getBool("UPD_START");
-  update_finish = preferences.getBool("UPD_FINISH");
-  restore_finish = preferences.getBool("RST_FINISH");
-  eid_en = preferences.getBool("EID_EN");
-  eid_webhook = preferences.getString("EID_HOOK");
-  ha_en = preferences.getBool("HA_EN");
-  counter = preferences.getUInt("counter", 0);
-  bootcount = preferences.getUInt("reboots", 0);
-  refbootcount = preferences.getUInt("refboots", 0);
-  last_reset = preferences.getString("LAST_RESET");
-  dsmrVersion = preferences.getUInt("DM_DSMRV");
-  trigger_interval = preferences.getUInt("TRG_INT");
-  trigger_type = preferences.getUInt("TRG_TYPE");
-  pls_en = preferences.getBool("PLS_EN");
-  pls_mind1 = preferences.getInt("PLS_MIND1");
-  pls_mind2 = preferences.getInt("PLS_MIND2");
-  pls_multi1 = preferences.getInt("PLS_MULTI1");
-  pls_multi2 = preferences.getInt("PLS_MULTI2");
-  pls_type1 = preferences.getInt("PLS_TYPE1");
-  pls_type2 = preferences.getInt("PLS_TYPE2");
-  pls_unit1 = preferences.getString("PLS_UNT1");
-  pls_unit2 = preferences.getString("PLS_UNT2");
-  pls_off1 = preferences.getUInt("PLS_OFF1");
-  pls_off2 = preferences.getUInt("PLS_OFF2");
-  if(preferences.getBool("DM_AVDEM") == true) dmAvDem = "1";
-  else dmAvDem = "0";
-  if(preferences.getBool("DM_MAXDEMM") == true) dmMaxDemM = "1";
-  else dmMaxDemM = "0";
-  if(preferences.getBool("DM_POWIN") == true) dmPowIn = "1";
-  else dmPowIn = "0";
-  if(preferences.getBool("DM_POWCON") == true) dmPowCon = "1";
-  else dmPowCon = "0";
-  if(preferences.getBool("DM_TOTCONT1") == true) dmTotCont1 = "1";
-  else dmTotCont1 = "0";
-  if(preferences.getBool("DM_TOTCONT2") == true) dmTotCont2 = "1";
-  else dmTotCont2 = "0";
-  if(preferences.getBool("DM_TOTINT1") == true) dmTotInt1 = "1";
-  else dmTotInt1 = "0";
-  if(preferences.getBool("DM_TOTINT2") == true) dmTotInt2 = "1";
-  else dmTotInt2 = "0";
-  if(preferences.getBool("DM_ACTTAR") == true) dmActiveTariff = "1";
-  else dmActiveTariff = "0";
-  if(preferences.getBool("DM_VOLT1") == true) dmVoltagel1 = "1";
-  else dmVoltagel1 = "0";
-  if(preferences.getBool("DM_VOLT2") == true) dmVoltagel2 = "1";
-  else dmVoltagel2 = "0";
-  if(preferences.getBool("DM_VOLT3") == true) dmVoltagel3 = "1";
-  else dmVoltagel3 = "0";
-  if(preferences.getBool("DM_CUR1") == true) dmCurrentl1 = "1";
-  else dmCurrentl1 = "0";
-  if(preferences.getBool("DM_CUR2") == true) dmCurrentl2 = "1";
-  else dmCurrentl2 = "0";
-  if(preferences.getBool("DM_CUR3") == true) dmCurrentl3 = "1";
-  else dmCurrentl3 = "0";
-  if(preferences.getBool("DM_GAS") == true) dmGas = "1";
-  else dmGas = "0";
-  if(preferences.getBool("DM_TXT") == true) dmText = "1";
-  else dmText = "0";
-  configMeter();
-  if(mqtt_en) mqttSave = true;
-  if(eid_en) eidSave = true;
-  if(ha_en) haSave = true;
+/*The configuration module stores and retrieves key,value pairs from non-volatile (NVS) storage,
+  processes configuration strings/JSON coming in through the API or MQTT, and generates JSON response strings.*/
+  
+boolean restoreConfig(){
+  /*Open the NVS in read-only mode, then loop through all the configuration data stores, checking if the configured NVS key name
+   * is present in the NVS. If so, load the associated value from NVS and assign it to configured variable through its pointer.
+   * When all stores have been checked, close the NVS again to prevent corruption.
+   */
+  preferences.begin("cofy-config", true);
+  for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
+    if(preferences.isKey(configBool[i].configName.c_str())) *configBool[i].var = preferences.getBool(configBool[i].configName.c_str());
+    else *configBool[i].var = configBool[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configInt)/sizeof(configInt[0]); i++){
+    if(preferences.isKey(configInt[i].configName.c_str())) *configInt[i].var = preferences.getInt(configInt[i].configName.c_str());
+    else *configInt[i].var = configInt[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configUInt)/sizeof(configUInt[0]); i++){
+    if(preferences.isKey(configUInt[i].configName.c_str())) *configUInt[i].var = preferences.getUInt(configUInt[i].configName.c_str());
+    else *configUInt[i].var = configUInt[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configULong)/sizeof(configULong[0]); i++){
+    if(preferences.isKey(configULong[i].configName.c_str())) *configULong[i].var = preferences.getULong(configULong[i].configName.c_str());
+    else *configULong[i].var = configULong[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configString)/sizeof(configString[0]); i++){
+    if(preferences.isKey(configString[i].configName.c_str())) *configString[i].var = preferences.getString(configString[i].configName.c_str());
+    else *configString[i].var = configString[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
+    if(preferences.isKey(configPass[i].configName.c_str())) *configPass[i].var = preferences.getString(configPass[i].configName.c_str());
+    else *configPass[i].var = configPass[i].defaultValue;
+  }
+  preferences.end();
   return true;
 }
 
-boolean saveConfig() {
-  preferences.end();
+boolean saveConfig(){
+  /*Open the NVS in read/write mode, then loop through all the configuration data stores. Write every configured variable to NVS
+   * using its configured key name. If the key,value pair is already present, it will be overwritten, if not, it will be created.
+   * Close the NVS when done.
+   */
   preferences.begin("cofy-config", false);
-  preferences.putString("WIFI_SSID", wifi_ssid);
-  preferences.putString("WIFI_PASSWD", wifi_password);
-  if(wifiSave) preferences.putBool("WIFI_STA", true);
-  else preferences.putBool("WIFI_STA", wifiSTA);
-  preferences.putBool("MQTT_EN", mqttSave);
-  preferences.putBool("MQTT_TLS", mqtt_tls); 
-  preferences.putString("MQTT_HOST", mqtt_host);
-  preferences.putString("MQTT_ID", mqtt_id);
-  preferences.putBool("MQTT_AUTH", mqtt_auth); 
-  preferences.putString("MQTT_USER", mqtt_user);
-  preferences.putString("MQTT_PASS", mqtt_pass);
-  preferences.putUInt("MQTT_PORT", mqtt_port);
-  preferences.putULong("UPL_THROTTLE", upload_throttle);
-  preferences.putBool("UPD_AUTO", update_auto);
-  preferences.putBool("UPD_AUTOCHK", update_autoCheck);
-  preferences.putBool("ALPHA_FLT", alpha_fleet);
-  preferences.putBool("BETA_FLT", dev_fleet);
-  preferences.putUInt("FW_NEW", onlineVersion);
-  preferences.putBool("UPD_START", update_start);
-  preferences.putBool("UPD_FINISH", update_finish);
-  preferences.putBool("RST_FINISH", restore_finish);
-  preferences.putUInt("counter", counter);
-  preferences.putUInt("reboots", bootcount);
-  preferences.putBool("EID_EN", eidSave);
-  preferences.putString("EID_HOOK", eid_webhook);
-  preferences.putString("LAST_RESET", last_reset);
-  preferences.putBool("HA_EN", haSave);
-  preferences.putUInt("DM_DSMRV", dsmrVersion);
-  preferences.putUInt("TRG_INT", trigger_interval);
-  preferences.putUInt("TRG_TYPE", trigger_type);
-  if (dmAvDem == "1") preferences.putBool("DM_AVDEM", true);
-  else preferences.putBool("DM_AVDEM", false);
-  if (dmMaxDemM == "1") preferences.putBool("DM_MAXDEMM", true);
-  else preferences.putBool("DM_MAXDEMM", false);
-  if (dmPowIn == "1") preferences.putBool("DM_POWIN", true);
-  else preferences.putBool("DM_POWIN", false);
-  if (dmPowCon == "1") preferences.putBool("DM_POWCON", true);
-  else preferences.putBool("DM_POWCON", false);
-  if (dmTotCont1 == "1") preferences.putBool("DM_TOTCONT1", true);
-  else preferences.putBool("DM_TOTCONT1", false);
-  if (dmTotCont2 == "1") preferences.putBool("DM_TOTCONT2", true);
-  else preferences.putBool("DM_TOTCONT2", false);
-  if (dmTotInt1 == "1") preferences.putBool("DM_TOTINT1", true);
-  else preferences.putBool("DM_TOTINT1", false);
-  if (dmTotInt2 == "1") preferences.putBool("DM_TOTINT2", true);
-  else preferences.putBool("DM_TOTINT2", false);
-  if (dmActiveTariff == "1") preferences.putBool("DM_ACTTAR", true);
-  else preferences.putBool("DM_ACTTAR", false);
-  if (dmVoltagel1 == "1") preferences.putBool("DM_VOLT1", true);
-  else preferences.putBool("DM_VOLT1", false);
-  if (dmVoltagel2 == "1") preferences.putBool("DM_VOLT2", true);
-  else preferences.putBool("DM_VOLT2", false);
-  if (dmVoltagel3 == "1") preferences.putBool("DM_VOLT3", true);
-  else preferences.putBool("DM_VOLT3", false);
-  if (dmCurrentl1 == "1") preferences.putBool("DM_CUR1", true);
-  else preferences.putBool("DM_CUR1", false);
-  if (dmCurrentl2 == "1") preferences.putBool("DM_CUR2", true);
-  else preferences.putBool("DM_CUR2", false);
-  if (dmCurrentl3 == "1") preferences.putBool("DM_CUR3", true);
-  else preferences.putBool("DM_CUR3", false);
-  if (dmGas == "1") preferences.putBool("DM_GAS", true);
-  else preferences.putBool("DM_GAS", false);
-  if (dmText == "1") preferences.putBool("DM_TXT", true);
-  else preferences.putBool("DM_TXT", false);
+  for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
+    preferences.putBool(configBool[i].configName.c_str(), *configBool[i].var);
+  }
+  for(int i = 0; i < sizeof(configInt)/sizeof(configInt[0]); i++){
+    preferences.putInt(configInt[i].configName.c_str(), *configInt[i].var);
+  }
+  for(int i = 0; i < sizeof(configUInt)/sizeof(configUInt[0]); i++){
+    preferences.putUInt(configUInt[i].configName.c_str(), *configUInt[i].var);
+  }
+  for(int i = 0; i < sizeof(configULong)/sizeof(configULong[0]); i++){
+    preferences.putULong(configULong[i].configName.c_str(), *configULong[i].var);
+  }
+  for(int i = 0; i < sizeof(configString)/sizeof(configString[0]); i++){
+    preferences.putString(configString[i].configName.c_str(), *configString[i].var);
+  }
+  for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
+    preferences.putString(configPass[i].configName.c_str(), *configPass[i].var);
+  }
   preferences.end();
-  preferences.begin("cofy-config", true);
   return true;
 }
 
 boolean saveBoots(){
-  preferences.end();
+  /*A lightweight function to store the bootcounter early on in the boot process, to debug bootloops.*/
   preferences.begin("cofy-config", false);
-  preferences.putUInt("reboots", bootcount);
-  preferences.putUInt("refboots", bootcount);
+  preferences.putUInt("reboots", _bootcount);
   preferences.end();
-  preferences.begin("cofy-config", true);
   return true;
 }
 
 boolean resetConfig() {
-  preferences.end();
+  /*Erase the wifi configuration and put the dongle back into AP mode on next boot, 
+   * or completely erase the NVS to perform a factory reset.
+   */
   preferences.begin("cofy-config", false);
-  if(resetAll || resetWifi){
-    Serial.print("Executing config reset");
-    Serial.print("Executing wifi reset");
+  if(_resetWifi){
     preferences.remove("WIFI_SSID");
     preferences.remove("WIFI_PASSWD");
-    preferences.remove("MQTT_HOST");
-    preferences.putBool("WIFI_STA", false);
-    preferences.putBool("UPD_AUTO", true);
-    preferences.putBool("UPD_AUTOCHK", true);
-    preferences.putString("LAST_RESET", "Restarting for config reset");
+    preferences.remove("WIFI_STA");
+    preferences.putString("LAST_RESET", "<timestamp>Restarting for config reset");
+  }
+  else if(_factoryReset){
+    preferences.clear();
   }
   preferences.end();
-  syslog("Restarting for config reset", 2);
-  SPIFFS.end();
-  delay(500);
-  ESP.restart();
   return true;
 }
 
-boolean initConfig() {
-  preferences.end();
-  preferences.begin("cofy-config", false);
-  String tempMQTT = preferences.getString("MQTT_HOST");
-  if(tempMQTT == ""){
-    preferences.putBool("MQTT_EN", false);
-    preferences.putString("MQTT_HOST", "10.42.0.1");
-    mqtt_host = "10.42.0.1";
-    preferences.putUInt("MQTT_PORT", 1883);
-    mqtt_port = 1883;
-    tempMQTT = preferences.getString("MQTT_ID");
-    if(tempMQTT == ""){
-      preferences.putString("MQTT_ID", apSSID);
-      mqtt_id = apSSID;
-      preferences.putBool("HA_EN", true);
-      ha_en = true;
+bool findInConfig(String param, int &varType, int &varNum){
+  /*Function to check if a key name (param) exists in the configuration stores. Returns true if so.
+   * Passes the type of variable (varType) and location within its respective data store (varNum) by reference back to the calling function.
+   * varTypes:
+   *  0: bool
+   *  1: signed int
+   *  2: unsigned int
+   *  3: unsigned long
+   *  4: String
+   *  5: password (String)
+   */
+  boolean found = false;
+  for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
+    if(configBool[i].configName == param){
+      found = true;
+      varType = 0;
+      varNum = i;
     }
-    preferences.putBool("UPD_AUTO", true); 
-    preferences.putBool("UPD_AUTOCHK", true);
-    preferences.putBool("BETA_FLT", false);
-    preferences.putBool("ALPHA_FLT", false);
-    preferences.putUInt("DM_DSMRV", 0);
-    preferences.putBool("DM_AVDEM", true);
-    preferences.putBool("DM_MAXDEMM", true);
-    preferences.putBool("DM_ACTTAR", true);
-    preferences.putBool("DM_VOLT1", true);
-    preferences.putBool("DM_VOLT2", false);
-    preferences.putBool("DM_VOLT3", false);
-    preferences.putBool("DM_CUR1", false);
-    preferences.putBool("DM_CUR2", false);
-    preferences.putBool("DM_CUR3", false);
-    preferences.putBool("DM_GAS", true);
-    preferences.putBool("DM_TXT", false);
-    preferences.putInt("TRG_INT", 10);
-    preferences.putInt("TRG_TYPE", 0);
-    preferences.putBool("PLS_EN", false);
-    preferences.putInt("PLS_MIND1", 20);
-    preferences.putInt("PLS_MIND2", 20);
-    preferences.putInt("PLS_MULTI1", 1000);
-    preferences.putInt("PLS_MULTI2", 1000);
-    preferences.putInt("PLS_TYPE1", 0);
-    preferences.putInt("PLS_TYPE2", 1);
-    preferences.putString("PLS_UNT1", "kWh");
-    preferences.putString("PLS_UNT2", "m³");
   }
-  unsigned int tempMQTTint = preferences.getUInt("MQTT_PORT");
-  if(tempMQTTint == 0){
-    preferences.putUInt("MQTT_PORT", 1883);
-    mqtt_port = 1883;
+  if(!found){ //do this check to avoid looping through all stores if the variable has already been located
+    for(int i = 0; i < sizeof(configInt)/sizeof(configInt[0]); i++){
+      if(configInt[i].configName == param){
+        found = true;
+        varType = 1;
+        varNum = i;
+      }
+    }
   }
-  preferences.end();
-  preferences.begin("cofy-config", true);
+  if(!found){
+    for(int i = 0; i < sizeof(configUInt)/sizeof(configUInt[0]); i++){
+      if(configUInt[i].configName == param){
+        found = true;
+        varType = 2;
+        varNum = i;
+      }
+    }
+  }
+  if(!found){
+    for(int i = 0; i < sizeof(configULong)/sizeof(configULong[0]); i++){
+      if(configULong[i].configName == param){
+        found = true;
+        varType = 3;
+        varNum = i;
+      }
+    }
+  }
+  if(!found){
+    for(int i = 0; i < sizeof(configString)/sizeof(configString[0]); i++){
+      if(configString[i].configName == param){
+        found = true;
+        varType = 4;
+        varNum = i;
+      }
+    }
+  }
+  if(!found){
+    for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
+      if(configPass[i].configName == param){
+        found = true;
+        varType = 5;
+        varNum = i;
+      }
+    }
+  }
+  return found;
+}
+
+String returnConfigVar(String varName, int varType, int varNum, bool returnExtended){
+  /*Return a specific configuration variable based on its type (varType) and location (varNum) within its specific data type store.
+   * The variable is encapsulated in a JSON string, to be used as a response to the HTTP API or MQTT reply.
+   * It's possible to add custom JSON fields to the response, see webHelp.h
+   */
+  String jsonOutput;
+  DynamicJsonDocument doc(1024);
+  JsonObject configVar  = doc.createNestedObject(varName);
+  if(varType == 0){
+    configVar["varName"] = configBool[varNum].varName;
+    configVar["type"] = "bool";
+    configVar["value"] = *configBool[varNum].var;
+    configVar["defaultValue"] = configBool[varNum].defaultValue;
+  }
+  else if(varType == 1){
+    configVar["varName"] = configInt[varNum].varName;
+    configVar["type"] = "int32";
+    configVar["value"] = *configInt[varNum].var;
+    configVar["defaultValue"] = configInt[varNum].defaultValue;
+  }
+  else if(varType == 2){
+    configVar["varName"] = configUInt[varNum].varName;
+    configVar["type"] = "uint32";
+    configVar["value"] = *configUInt[varNum].var;
+    configVar["defaultValue"] = configUInt[varNum].defaultValue;
+  }
+  else if(varType == 3){
+    configVar["varName"] = configULong[varNum].varName;
+    configVar["type"] = "uint64";
+    configVar["value"] = *configULong[varNum].var;
+    configVar["defaultValue"] = configULong[varNum].defaultValue;
+  }
+  else if(varType == 4){
+    configVar["varName"] = configString[varNum].varName;
+    configVar["type"] = "string";
+    configVar["value"] = *configString[varNum].var;
+    configVar["defaultValue"] = configString[varNum].defaultValue;
+  }
+  else if(varType == 5){
+    /*Passwords do not display values in the JSON response*/
+    configVar["varName"] = configPass[varNum].varName;
+    configVar["type"] = "password";
+  }
+  serializeJson(doc, jsonOutput);
+  if(returnExtended){
+    /*Add additional JSON fields through  addJson[] matrix in webHelp.h*/
+    for(int i = 0; i < sizeof(addJson)/sizeof(addJson[0]); i++){
+      if(addJson[i][0] == varName){
+        DynamicJsonDocument addJsonFields(256);
+        if(deserializeJson(addJsonFields, addJson[i][1].c_str())){
+          jsonOutput = jsonOutput.substring(0, jsonOutput.length()-2);
+          jsonOutput += ",";
+          jsonOutput += addJson[i][1].substring(1);
+          jsonOutput += "}";
+        }
+      }
+    }
+  }
+  return jsonOutput;
+}
+
+boolean storeConfigVar(String keyValue, int varType, int varNum){
+  long retLong;
+  unsigned long retULong;
+  float retFloat;
+  /*As the values are all Strings, we need to perform our own data type checks here*/
+  if(varType == 0){
+    if(keyValue == "true" || keyValue == "True" || keyValue == "1"){
+      bool testVar = true;
+      *configBool[varNum].var = testVar;
+    }
+    else if(keyValue == "false" || keyValue == "False" || keyValue == "0"){
+      bool testVar = false;
+      *configBool[varNum].var = testVar;
+    }
+  }
+  else if(varType == 1){
+    if(isNumeric(keyValue, retLong, retULong, retFloat)){
+      if(retLong > -2146569506){
+        int testVar = (int)retLong;
+        *configInt[varNum].var = testVar;
+      }
+    }
+  }
+  else if(varType == 2){
+    if(isNumeric(keyValue, retLong, retULong, retFloat)){
+      if(retULong < 1073549248){
+        unsigned int testVar = (unsigned int)retULong;
+        *configUInt[varNum].var = testVar;
+      }
+    }
+  }
+  else if(varType == 3){
+    if(isNumeric(keyValue, retLong, retULong, retFloat)){
+      if(retULong < 1073549264){
+        unsigned long testVar = retULong;
+        *configULong[varNum].var = testVar;
+      }
+    }
+  }
+  else if(varType == 4){
+    *configString[varNum].var = keyValue;
+  }
+  else if(varType == 5){
+    *configPass[varNum].var = keyValue;
+  }
+  saveConfig();
   return true;
+}
+
+
+boolean processConfigJson(String jsonString, String &response, bool updateConfig){
+  /*Process a JSON string containing configuration variables coming in through the HTTP API or MQTT, 
+   * and prepare a JSON response reflecting the updated value of the configuration variables.
+   * The JSON string should be formatted as {"NVS key name":value}. You can chain multiple configuration variables in one string.
+   * E.g. {"WIFI_STA": true,"WIFI_SSID": "test"} 
+   */
+  boolean isJson = false;
+  DynamicJsonDocument jsonDoc(1024);
+  if(DeserializationError::Ok == deserializeJson(jsonDoc, jsonString)){
+    /*First check if the string is valid JSON.
+     * Note that ArduinoJSON DeserializationError detection is not very robust, and malformed JSON strings might still be flagged valid.
+     * The additional checks further on should however catch any invalid configuration settings.
+     */
+    isJson = true;
+    String foundInConfig;
+    JsonObject obj = jsonDoc.as<JsonObject>();
+    JsonObject documentRoot = jsonDoc.as<JsonObject>();
+    for (JsonPair keyValue : documentRoot) {
+      /*Loop over every JSON key:value pair and check if the key name exists in one of the data stores through findInConfig().
+       * This also returns the data type and location in its respective data store.
+       */
+      int retVarType, retVarNum;
+      if(findInConfig(keyValue.key().c_str(), retVarType, retVarNum)){
+        if(updateConfig){
+          /*If updateConfig is false, just return the current value of the key. If true, update the value.
+           * ArduinoJSON type detection is used to doublecheck the validity of the new configuration value.
+           */
+          if(retVarType == 0){
+            if (keyValue.value().is<bool>()){
+              bool testVar = keyValue.value().as<bool>();
+              *configBool[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 1){
+            if (keyValue.value().is<signed int>()){
+              int testVar = keyValue.value().as<signed int>();
+              *configInt[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 2){
+            if (keyValue.value().is<unsigned int>()){
+              unsigned int testVar = keyValue.value().as<unsigned int>();
+              *configUInt[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 3){
+            if (keyValue.value().is<unsigned long>()){
+              unsigned long testVar = keyValue.value().as<unsigned long>();
+              *configULong[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 4){
+            if (keyValue.value().is<const char*>()){
+              String testVar = keyValue.value().as<const char*>();
+              *configString[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 5){
+            if (keyValue.value().is<const char*>()){
+              String testVar = keyValue.value().as<const char*>();
+              *configPass[retVarNum].var = testVar;
+            }
+          }
+          saveConfig();
+        }
+        /*Build a JSON response containing the new value for every updated key, concatenate if there are multiple*/
+        foundInConfig = returnConfigVar(keyValue.key().c_str(), retVarType, retVarNum, false);
+        if(foundInConfig != ""){
+          response += foundInConfig.substring(1, foundInConfig.length()-1);
+          response += ",";
+        }
+      }
+    }
+    /*Tidy up the concatenation. The response is passed by reference.*/
+    if(response != ""){
+      response = response.substring(0, response.length()-1);
+      response = "{" + response;
+      response += "}";
+    }
+  }
+  return isJson;
+}
+
+boolean processConfigString(String confString, String &response, bool updateConfig){
+  /*Process a string containing configuration variables coming in through the HTTP API (or MQTT), 
+   * and prepare a JSON response reflecting the updated value of the configuration variables.
+   * The string should be formatted as WIFI_STA=true&WIFI_SSID=test
+   * This function is mainly intended for HTTP forms returning input data over POST.
+    */
+  String foundInConfig;
+  int prevsep, separator;
+  while(separator > -1){
+    separator = confString.indexOf('&');
+    /*Extract individual key=value pairs*/
+    String subString = confString.substring(0, separator);
+    if(subString != ""){
+      /*Split each pair into its key name and key value*/
+      int kvsep = subString.indexOf('=');
+      String key = subString.substring(0, kvsep);
+      String keyValue = subString.substring(kvsep+1);
+      int retVarType, retVarNum;
+      if(findInConfig(key, retVarType, retVarNum)){
+        /*check if the key name exists in one of the data stores through findInConfig()*/
+        if(updateConfig){
+          storeConfigVar(keyValue.c_str(), retVarType, retVarNum);
+        }
+        foundInConfig = returnConfigVar(key, retVarType, retVarNum, false);
+        if(foundInConfig != ""){
+          response += foundInConfig.substring(1, foundInConfig.length()-1);
+          response += ",";
+        }
+      }
+    }
+    confString = confString.substring(separator+1);
+    prevsep = separator;
+  }
+  if(response != ""){
+    response = response.substring(0, response.length()-1);
+    response = "{" + response;
+    response += "}";
+  }
+  return true;
+}
+
+boolean isNumeric(String &varValue, long &longValue, unsigned long &ulongValue, float &floatValue){
+  /*Helper function to determine if a String contains a numeric value, and if it is signed, unsigned or float.
+   * The values are passed by reference.
+   */
+  unsigned int len = varValue.length()+1;
+  bool isNumeric;
+  if(len < 16){ //prevent overflows
+    char buf[len];
+    varValue.toCharArray(buf, len); //copy String to char array
+    bool isInt = true;
+    bool isFloat = false, foundDecimal = false, isSigned = false;
+    for (int i = 0; i < len-1; i++){
+      /*Loop through char array, check if every char is a digit or not*/
+      if (!isDigit(buf[i])){
+        /*If it is not a digit, check if it is a - (negative value) or a decimal point*/
+        if(buf[i] == '-' && i == 0) isSigned = true;
+        else if(buf[i] == '.' && !foundDecimal){ //there can only be one decimal point
+          foundDecimal = true;
+          isFloat = true;
+          isInt = false;
+        }
+        else{
+          isFloat = false;
+          isInt = false;
+        }
+      }
+    }
+    isNumeric = isInt || isFloat;
+    if(isInt) {
+      if(isSigned) longValue = varValue.toInt();
+      else {
+        ulongValue = strtoul((const char*) buf, NULL, 10);
+        longValue = varValue.toInt();
+      }
+    }
+    else if(isFloat) floatValue = varValue.toFloat();
+  }
+  return isNumeric;
+}
+
+String returnConfig(){
+  /*Return the entire NVS configuration as one single JSON string*/
+  String jsonOutput;
+  DynamicJsonDocument doc(4096);
+  for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configBool[i].configName);
+    configVar["varName"] = configBool[i].varName;
+    configVar["type"] = "bool";
+    configVar["value"] = *configBool[i].var;
+    configVar["defaultValue"] = configBool[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configInt)/sizeof(configInt[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configInt[i].configName);
+    configVar["varName"] = configInt[i].varName;
+    configVar["type"] = "int32";
+    configVar["value"] = *configInt[i].var;
+    configVar["defaultValue"] = configInt[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configUInt)/sizeof(configUInt[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configUInt[i].configName);
+    configVar["varName"] = configUInt[i].varName;
+    configVar["type"] = "uint32";
+    configVar["value"] = *configUInt[i].var;
+    configVar["defaultValue"] = configUInt[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configULong)/sizeof(configULong[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configULong[i].configName);
+    configVar["varName"] = configULong[i].varName;
+    configVar["type"] = "uint64";
+    configVar["value"] = *configULong[i].var;
+    configVar["defaultValue"] = configULong[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configString)/sizeof(configString[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configString[i].configName);
+    configVar["varName"] = configString[i].varName;
+    configVar["type"] = "string";
+    configVar["value"] = *configString[i].var;
+    configVar["defaultValue"] = configString[i].defaultValue;
+  }
+  for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configPass[i].configName);
+    configVar["varName"] = configPass[i].varName;
+    configVar["type"] = "password";
+    if(*configString[i].var != "") configVar["filled"] = true;
+  }
+  serializeJson(doc, jsonOutput);
+  return jsonOutput;
 }

@@ -1,7 +1,7 @@
 boolean scanWifi(){
   syslog("Performing wifi scan", 0);
   int16_t n = WiFi.scanNetworks();
-  String savedSSID = wifi_ssid;
+  String savedSSID = _wifi_ssid;
   boolean foundSavedSSID = false;
   String buildSSIDlist = "";
   for (int i = 0; i < n; ++i) {
@@ -83,7 +83,7 @@ void setClock(boolean firstSync)
 void setMeterTime(){
   if(mTimeFound){
     if(!timeSet) syslog("Syncing to to metertime", 0);
-    localtime(&dm_timestamp);
+    localtime(&dm_timestamp); //CHECK THIS NOT IMPLEMENTED IN dsmrTelegram YET
     timeSet = true;
   }
 }
@@ -105,13 +105,13 @@ void checkConnection(){
   if(wifiError && WiFi.status() == WL_CONNECTED){
     wifiError = false;
     syslog("Reconnected to the WiFi network", 0);
-    if(!mqtt_en) reconncount = 0;
+    if(!_mqtt_en) reconncount = 0;
   }
   if(WiFi.status() == WL_CONNECTED){
-    if(mqtt_en){
+    if(_mqtt_en){
       connectMqtt();
-      if(ha_en && !ha_metercreated) haAutoDiscovery(1);
-      else if(ha_en && ha_metercreated) haAutoDiscovery(0);
+      //if(_ha_en && !ha_metercreated) haAutoDiscovery(1); CHECK THIS
+      //else if(_ha_en && ha_metercreated) haAutoDiscovery(0);
     }
   }
 }
@@ -119,7 +119,7 @@ void checkConnection(){
 void setReboot(){
   sinceConnCheck = 0;
   syslog("Removing Home Assistant entities", 0);
-  haAutoDiscovery(3);
+  //haAutoDiscovery(3); CHECKTHIS
   syslog("Saving configuration", 0);
   saveConfig();
   preferences.end();

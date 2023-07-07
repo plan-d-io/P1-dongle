@@ -1,5 +1,5 @@
 boolean checkUpdate(){
-  if(update_autoCheck){
+  if(_update_autoCheck){
     clientSecureBusy = true;
     bool needUpdate = false;
     if(mqttclientSecure.connected()){
@@ -12,8 +12,8 @@ boolean checkUpdate(){
     if(bundleLoaded){
       syslog("Checking repository for firmware update... ", 0);
       String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
-      if(dev_fleet) checkUrl += "develop/version";
-      else if(alpha_fleet) checkUrl += "alpha/version";
+      if(_dev_fleet) checkUrl += "develop/version";
+      else if(_alpha_fleet) checkUrl += "alpha/version";
       else checkUrl += "main/version";
       syslog("Connecting to " + checkUrl, 0);
       if (https.begin(*client, checkUrl)) {  
@@ -50,15 +50,11 @@ boolean checkUpdate(){
 }
 
 boolean startUpdate(){
-  if(pls_en){
-    detachInterrupt(32);
-    detachInterrupt(26);
-  }
-  if(update_auto){
-    if(fw_ver < onlineVersion || update_start){
+  if(_update_auto){
+    if(fw_ver < onlineVersion || _update_start){
       syslog("Preparing firmware upgrade", 1);
       clientSecureBusy = true;
-      boolean mqttPaused; //,needUpdate
+      boolean mqttPaused;
       if(mqttclientSecure.connected()){
         syslog("Disconnecting TLS MQTT connection to fetch firmware upgrade", 2);
         mqttclientSecure.disconnect();
@@ -66,8 +62,8 @@ boolean startUpdate(){
       }
       if(bundleLoaded){
         String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
-        if(dev_fleet) baseUrl += "develop/bin/P1-dongle";
-        else if(alpha_fleet) baseUrl += "alpha/bin/P1-dongle";
+        if(_dev_fleet) baseUrl += "develop/bin/P1-dongle";
+        else if(_alpha_fleet) baseUrl += "alpha/bin/P1-dongle";
         else baseUrl += "main/bin/P1-dongle";
         String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
         syslog("Getting new firmware over HTTPS/TLS", 0);
@@ -92,15 +88,15 @@ boolean startUpdate(){
                   syslog("Written : " + String(written) + " successfully", 0);
                 } else {
                   syslog("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?", 3);
-                  update_start = false;
+                  _update_start = false;
                 }
                 if (Update.end()) {
                   if (Update.isFinished()) {
                     syslog("Firmware upgrade successfully completed. Rebooting to finish update.", 1);
                     last_reset = "Firmware upgrade successfully completed. Rebooting to finish update";
                     fw_ver = onlineVersion;
-                    update_start = false;
-                    update_finish = true;
+                    _update_start = false;
+                    _update_finish = true;
                     saveConfig();
                     preferences.end();
                     SPIFFS.end();
@@ -108,17 +104,17 @@ boolean startUpdate(){
                     ESP.restart();
                   } else {
                     syslog("Firmware upgrade not finished? Something went wrong!", 3);
-                    update_start = false;
+                    _update_start = false;
                   }
                 } else {
                   syslog("Firmware upgrade error occurred. Error #: " + String(Update.getError()), 3);
-                  update_start = false;
+                  _update_start = false;
                 }
               } 
               else {
                 // Not enough space to begin OTA
                 syslog("Not enough space to begin OTA upgrade", 3);
-                update_start = false;
+                _update_start = false;
                 client->flush();
               }
               while (client->available()) {
@@ -130,20 +126,20 @@ boolean startUpdate(){
             }
             else{
               syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
-              update_start = false;
+              _update_start = false;
               unitState = 4;
             }
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
-            update_start = false;
+            _update_start = false;
             unitState = 4;
           }
           https.end(); 
         } 
         else {
           Serial.print("Unable to connect");
-          update_start = false;
+          _update_start = false;
           unitState = 4;
         }
       }
@@ -152,16 +148,16 @@ boolean startUpdate(){
       if(mqttPaused){
         sinceConnCheck = 10000;
       }
-      update_start = false;
+      _update_start = false;
       return true;
     }
     else{
       syslog("No firmware upgrade available", 0);
-      update_start = false;
+      _update_start = false;
       unitState = 4;
       return false;
     }
-    update_start = false;
+    _update_start = false;
     saveConfig();
     delay(500);
     return true;
@@ -169,10 +165,6 @@ boolean startUpdate(){
 }
 
 boolean finishUpdate(bool restore){
-  if(pls_en){
-    detachInterrupt(32);
-    detachInterrupt(26);
-  }
   clientSecureBusy = true;
   boolean mqttPaused;
   boolean filesUpdated = false;
@@ -299,14 +291,13 @@ boolean finishUpdate(bool restore){
   }
   client->stop();
   clientSecureBusy = false;
-  update_finish = false;
+  _update_finish = false;
   if(filesUpdated){
-    update_finish = false;
-    if(restore_finish) restore_finish = false;
+    _update_finish = false;
+    if(_restore_finish) _restore_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     saveConfig();
-    preferences.end();
     SPIFFS.end();
     delay(500);
     ESP.restart();

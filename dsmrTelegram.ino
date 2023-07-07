@@ -1,237 +1,503 @@
-void splitTelegram(String rawTelegram){
-  sinceMeterCheck = 0;
-  jsonData = "[";
-  mTimeFound = false;
-  meterError = true;
+/*Process the meter telegram and configure its options*/
+
+static const keyConfig dsmrKeys[] PROGMEM = {
+  /*The list of all possible DSMR keys and how to parse them.
+   * { "DSMR key code", key type, "HA device type", "user-readable name", "mqtt topic", retain }
+   * Key types:
+   *  0: other
+   *  1: numeric without unit, e.g. 0-0:96.14.0(0002)
+   *  2: numeric with unit, e.g. 1-0:1.4.0(02.351*kW)
+   *  3: timestamped (Mbus) message, e.g. 0-1:24.2.3(200512134558S)(00112.384*m3)
+   *  4: string, e.g. 0-0:96.13.0(3031323334353)
+   *  The key type determines how the associated value will be parsed.
+   * Home Assistant device types: see https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes
+   *  Examples: "" (none), power, energy, voltage, current, natural gas, water, heat.
+   *  The device type determines how the value will be registered and represented in Home Assistant. You can leave this to "" (none) if you don't use HA.
+   * Mqtt topic:
+   *  The MQTT topic to post the measurement to. Will be prefixed by mqtt_prefix (standard: data/devices/utility_meter/).
+   *  If left empty, the firmware will use the user readable name cast to lowercase with spaces replaced by _
+   * Retain:
+   *  If the MQTT payload should be sent with the retain flag.
+   * IMPORTANT
+   *  DSMR keys are adressed in the firmware by their order in this array. DO NOT rearrange keys.
+   *  If you want to add new keys, add them to the bottom of the array.
+   */
+    { "1-0:1.8.1", 2, "energy", "Total consumption T1",  "",  false},
+    { "1-0:1.8.2", 2, "energy", "Total consumption T2",  "",  false},
+    { "1-0:2.8.1", 2, "energy", "Total injection T1",  "",  false},
+    { "1-0:2.8.2", 2, "energy", "Total injection T2",  "",  false},
+    { "0-0:96.14.0", 1, "", "Active tariff period",  "",  false},
+    { "1-0:1.7.0", 2, "power", "Active power consumption",  "",  false},
+    { "1-0:2.7.0", 2, "power", "Active power injection",  "",  false},
+    { "1-0:1.4.0", 2, "power", "Current average demand",  "",  false},
+    { "1-0:1.6.0", 3, "power", "Maximum demand current month",  "",  false},
+    { "1-0:32.7.0", 2, "voltage", "Voltage phase 1", "",  false},
+    { "1-0:52.7.0", 2, "voltage", "Voltage phase 2", "",  false},
+    { "1-0:72.7.0", 2, "voltage", "Voltage phase 3", "",  false},
+    { "1-0:31.7.0", 2, "current", "Current phase 1", "",  false},
+    { "1-0:51.7.0", 2, "current", "Current phase 2", "",  false},
+    { "1-0:71.7.0", 2, "current", "Current phase 3", "",  false},
+    { "0-0:96.13.0", 4, "", "Text message", "",  false}
+};
+
+static const mbusConfig mbusKeys[] PROGMEM = {
+  /*The availability and id of M-bus meters (water, gas, heat, ...) is dependent on your type of installation, so you can't set the Mbus OBIS keys to be extracted
+   * from the telegram beforehand.
+   * The dongle will automatically detect the type and id of connected M-bus meter and process the data according to the fields in this list (e.g. MQTT topic).
+   * If the M-bus meter reports both temperature (base) and non-temperature corrected values, the temperature corrected value will be used.
+   * If you want to extract a specific M-bus key, add it to the dsmrKeys list above.
+   * Format: { Mbus meter type, HA device type, "user-readable name", "mqtt topic", retain }
+   * Mqtt topic: see note in dsmrKeys above
+   * Mbus meter types:
+   *  3: natural gas
+   *  4: heat/cold
+   *  7: water
+   */
+    { 3, "gas", "Natural gas consumption", "",  false},
+    { 4, "", "Heat", "",  false},
+    { 7, "water", "Water consumption", "",  false}
+};
+
+void processMeterTelegram(String rawTelegram){
+  /*The meter telegram consists of multiple lines with a key(value) pair, e.g. 1-0:2.7.0(01.100*kW) etc.
+  /* Every key starts on a newline. First we split up the meter telegram per line into its key(value) pairs.*/
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
-  //Serial.println(rawTelegram);
+  if(extendedTelegramDebug) Serial.println(rawTelegram);
+  if(pushFullTelegram) {}//something to push raw telegram here
+  DynamicJsonDocument realtoReadings(1024);
+  int pass = 0;
   while(delimEnd < eof){
-    delimEnd = rawTelegram.indexOf('\n', delimStart);
-    String s = rawTelegram.substring(delimStart, delimEnd);
-    delimStart = delimEnd+1;
-    byte starts = s.indexOf('(');
-    String key = s.substring(0, starts);
-    if(key == "0-0:1.0.0"){
-      byte ends = s.indexOf(')');  
-      String sub = s.substring(starts+1, ends);
-      int yeari = 2000 + sub.substring(0, 2).toInt();
-      int monthi = sub.substring(2, 4).toInt();
-      int dayi = sub.substring(4, 6).toInt();
-      int houri = sub.substring(6, 8).toInt();
-      int minutei = sub.substring(8, 10).toInt();
-      int secondi = sub.substring(10, 12).toInt();
-      String DST = sub.substring(12);
-      dm_time.tm_sec = secondi;
-      dm_time.tm_hour = houri;
-      dm_time.tm_min = minutei;
-      dm_time.tm_mday = dayi;
-      dm_time.tm_mon = monthi - 1;      // months start from 0, so deduct 1
-      dm_time.tm_year = yeari - 1900; // years since 1900, so deduct 1900
-      dm_timestamp =  mktime(&dm_time);
-      if(DST == "S"){
-        dm_timestamp = dm_timestamp-(2*3600);
-      }
-      else{
-        dm_timestamp = dm_timestamp-(3600);
-      }
-      mTimeFound = true;
-      if(!wifiSTA) unitState = 2;
-      else unitState = 4;
-      meterError = false;
+    pass = pass + 1;
+    delimEnd = rawTelegram.indexOf('\n', delimStart);       //Get the location of the newline char at the end of the line
+    String s = rawTelegram.substring(delimStart, delimEnd); //Extract one line from the telegram
+    delimStart = delimEnd+1;                                //Set the start of the next line (for the next iteration)
+    /*Every line contains a key(value) pair, e.g. 1-0:2.7.0(01.100*kW)*/
+    byte valueStart = s.indexOf('(');                       //The key is the part before the first bracket, e.g. 1-0:2.7.0
+    String key = s.substring(0, valueStart);
+    byte valueEnd = s.lastIndexOf(')');                     //The value is the part between the brackets, e.g. 01.100*kW
+    String value = s.substring(valueStart+1, valueEnd);
+    /*We now have every key(value) pair, so lets do something with them*/
+    float splitValue;
+    String splitUnit, splitString;
+    struct tm splitTime;
+    time_t splitTimestamp;
+    if(telegramDebug){
+      Serial.print(key);
+      Serial.print(": ");
+      Serial.print(value);
     }
-    else{
-      //Serial.println(key);
-      for(int i = 0; i < sizeof(dsmrKeys) / sizeof(dsmrKeys[0]); i++){
-        if(key == dsmrKeys[i][0]){
-          if(dsmrKeys[i][1] == "0"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
+    /* First, we extract the base keys we always need (hardcoded) and which should always be present in any type of DSMR telegram
+     * These keys are needed for dongle operation (e.g. metertime) or to calculate values displayed in the webmin
+     * We don't do any other processing, like MQTT push, in this part */
+    /*Flemish DSMR*/
+    if(key == "0-0:96.1.4"){
+      if(telegramDebug){
+        Serial.print(": Found Belgian DSMR version");
+      }
+    }
+    /*Dutch DSMR*/
+    if(key == "1-3:0.2.8"){ 
+      if(telegramDebug){
+        Serial.print(": Found Dutch DSMR version");
+      }
+    }
+    /*Metertime*/
+    if(key == "0-0:1.0.0"){
+      splitMeterTime(value, splitTime, splitTimestamp);
+      meterTimestamp = splitTimestamp;
+      if(realto) realtoReadings["timestamp"] = meterTimestamp;
+      if(telegramDebug){
+        Serial.print(": Meter time: ");
+        Serial.print(splitTimestamp);
+        char timeStringBuff[30];
+        strftime(timeStringBuff, sizeof(timeStringBuff), " %Y/%m/%d %H:%M:%S", &splitTime);
+        Serial.print(timeStringBuff);
+      }
+    }
+    /*Consumed energy tariff 1*/
+    if(key == "1-0:1.8.1"){
+      splitWithUnit(value, splitValue, splitUnit);
+      totConT1 = splitValue;
+    }
+    /*Consumed energy tariff 2*/
+    if(key == "1-0:1.8.2"){      
+      splitWithUnit(value, splitValue, splitUnit);
+      totConT2 = splitValue;
+    }
+    /*Injected energy tariff 1*/
+    if(key == "1-0:2.8.1"){      
+      splitWithUnit(value, splitValue, splitUnit);
+      totInT1 = splitValue;
+    }
+    /*Injected energy tariff 2*/
+    if(key == "1-0:2.8.2"){    
+      splitWithUnit(value, splitValue, splitUnit);
+      totInT2 = splitValue;
+    }
+    /*Actual power consumption*/
+    if(key == "1-0:1.7.0"){      
+      splitWithUnit(value, splitValue, splitUnit);
+      powCon = splitValue;
+    }
+    /*Actual power injection*/
+    if(key == "1-0:2.7.0"){      
+      splitWithUnit(value, splitValue, splitUnit);
+      powIn = splitValue;
+    }
+    /*Process basic readings*/
+    totCon = totConT1 + totConT2;
+    pushDSMRValue(key, totCon, "kWh", meterTimestamp, "energy", "Total energy consumed", "", "");
+    totIn = totInT1 + totInT2;
+    pushDSMRValue(key, totIn, "kWh", meterTimestamp, "energy", "Total energy injected", "", "");
+    netPowCon = powCon - powIn;
+    pushDSMRValue(key, netPowCon, "kW", meterTimestamp, "power", "Total active power", "", "");
+    /*Next, we check if the keys are int the dsmrKeys[] list so we know if and how to process them*/
+    for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){ 
+      if(key == dsmrKeys[i].dsmrKey){
+        if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
+          /*"Other" or "string" values (currently handled the same) just get their raw value forwarded, so no need to do any processing.
+          Might change in the future.*/
+        }
+        else if(dsmrKeys[i].keyType == 1){
+          /*Numeric value with no unit*/
+          splitNoUnit(value, splitValue);
+        }
+        else if(dsmrKeys[i].keyType == 2){
+          /*Numeric value with unit*/
+          splitWithUnit(value, splitValue, splitUnit);
+        }
+        else if(dsmrKeys[i].keyType == 3){
+          /*timestamped (Mbus) message*/
+          splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
+        }
+        else{
+          //No need for any processing
+        }  
+        /*Check if the key,value pair needs to be pushed
+         * The unsigned long keyPushList contains 32 bits indicating if the value needs to be pushed (1) or not (0)
+         * E.g. if keyPushList is 329, its binary representation is 00000000000000000000000101001001
+         * The LSB (at the rightmost side) represents dsmrKeys[0], the bit to the left of it dsmrKeys[1] etc.
+         * We boolean AND the keyPushList with a binary mask 1, which is shifted to the left according to which key in dsmrKeys[] we are comparing
+         * If the result is 1, this means the key,value pair must be pushed
+         * E.g. if keyPushList is 329, dsmrKeys[0] must be pushed, dsmrKeys[1] not, dsmrKeys[2] not, dsmrKeys[3] must, etc.
+         * Sounds complicated, but this way we only need one variable in NVS to store up to 32 options.
+         */
+        unsigned long mask = 1;
+        mask <<= i;
+        unsigned long test = keyPushList & mask;
+        if(test > 0){
+          if(telegramDebug){
+            Serial.print(" - ");
+            Serial.print(dsmrKeys[i].keyName);
+            Serial.print(": ");
           }
-          else if(dsmrKeys[i][1] == "1"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            int value = sub.toInt();
-            processMeterValue(i, value, 0, false, "", dm_timestamp);
+          if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
+            /*Other or string value (currently handled the same)*/
+            pushDSMRValue(key, 0, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, value);
           }
-          else if(dsmrKeys[i][1] == "2"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            float value = sub.toFloat();
-            processMeterValue(i, 0, value, true, "", dm_timestamp);
+          else if(dsmrKeys[i].keyType == 1){
+            /*Numeric value with no unit*/
+            pushDSMRValue(key, splitValue, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
           }
-          else if(dsmrKeys[i][1] == "3"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            int value = valuetext.toInt();
-            String unit = sub.substring(units+1);
-            processMeterValue(i, value, 0, false, unit, dm_timestamp);
+          else if(dsmrKeys[i].keyType == 2){
+            /*Numeric value with unit*/
+            pushDSMRValue(key, splitValue, splitUnit, meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
           }
-          else if(dsmrKeys[i][1] == "4"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            float value = valuetext.toFloat();
-            String unit = sub.substring(units+1);
-            processMeterValue(i, 0, value, true, unit, dm_timestamp);
+          else if(dsmrKeys[i].keyType == 3){
+            /*timestamped (Mbus) message*/
+            pushDSMRValue(key, splitValue, splitUnit, splitTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
           }
-          else if(dsmrKeys[i][1] == "5"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            int yeari = 2000 + sub.substring(0, 2).toInt();
-            int monthi = sub.substring(2, 4).toInt();
-            int dayi = sub.substring(4, 6).toInt();
-            int houri = sub.substring(6, 8).toInt();
-            int minutei = sub.substring(8, 10).toInt();
-            int secondi = sub.substring(10, 12).toInt();
-            String DST = sub.substring(12);
-            mb1_time.tm_sec = secondi;
-            mb1_time.tm_hour = houri;
-            mb1_time.tm_min = minutei;
-            mb1_time.tm_mday = dayi;
-            mb1_time.tm_mon = monthi;      // months start from 0, so deduct 1
-            mb1_time.tm_year = yeari - 1900; // years since 1970, so deduct 1970
-            mb1_timestamp =  mktime(&mb1_time);
-            if(DST == "S"){
-              mb1_timestamp = mb1_timestamp-(2*3600);
+          else{
+            if(telegramDebug) Serial.print("undef");
+          }
+          if(telegramDebug){
+            if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
+              Serial.print(value);
             }
             else{
-              mb1_timestamp = mb1_timestamp-(3600);
+              if(fmodf(splitValue, 1.0) == 0) Serial.print(int(splitValue));
+              else Serial.print(round2(splitValue));
+              Serial.print(" ");
+              if(dsmrKeys[i].keyType == 2 || dsmrKeys[i].keyType == 3) Serial.print(splitUnit);
+              if(dsmrKeys[i].keyType == 3){
+                Serial.print(" (");
+                Serial.print(splitTimestamp);
+                Serial.print(")");
+              }
             }
-            sub = s.substring(ends+2);
-            ends = sub.indexOf(')');
-            sub = sub.substring(0, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            float value = valuetext.toFloat();
-            String unit = sub.substring(units+1);
-            if(unit == "m3") unit = "m³";
-            processMeterValue(i, 0, value, true, unit, mb1_timestamp);
+            String tempTopic = mqttPrefix;
+            if(dsmrKeys[i].keyTopic == ""){           //Use key_name as mqtt topic if keyTopic left empty
+              tempTopic += dsmrKeys[i].keyName;
+              tempTopic.replace(" ", "_");
+              tempTopic.toLowerCase();
+            }
+            else{
+              tempTopic += dsmrKeys[i].keyTopic;
+              tempTopic.replace(" ", "_");
+              tempTopic.toLowerCase();
+            }
+            if(telegramDebug){
+              Serial.print(", ");
+              Serial.print(tempTopic);
+            }
+          }
+          if(telegramCount == 2 && haMakeAutoDiscovery) haAutoDiscovery(key, splitUnit, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic);
+        }
+      }
+      if(realto){
+        for(int j = 0; j < sizeof(realtoKeys)/sizeof(realtoKeys[0]); j++){
+          if(key == realtoKeys[j]){
+            if(fmodf(splitValue, 1.0) == 0) realtoReadings[key]["value"] = int(splitValue);
+            else realtoReadings[key]["value"] = round2(splitValue);
+            if(splitUnit != "") realtoReadings[key]["unit"] = splitUnit;
           }
         }
-      } 
+      }
     }
+    /*Check if M-Bus meters are present. If so, register them into the mbusMeter array.
+     * We only do this check during startup (first 2 telegrams), as M-bus meters do not change during operation
+     */
+    if(telegramCount < 2){
+      registerMbusMeter(key, value);
+    }
+    else{
+      /*Parse the Mbus OBIS key,value pairs according to the parameters set for each detected Mbus meter in the mbusMeter array */
+      for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+        if(key == mbusMeter[i].mbusKey){  //check if the key matches a key stored in the mbusMeter array
+          for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){  //if so, process the key according the parameters set for that key
+            if(mbusMeter[i].type == mbusKeys[j].keyType){
+              splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
+              if(mbusMeter[i].enabled == true) {
+                if(telegramCount == 2){
+                  if(haMakeAutoDiscovery) haAutoDiscovery(key, splitUnit, mbusKeys[j].deviceType, mbusKeys[j].keyName, mbusKeys[j].keyTopic);                   
+                }
+                pushDSMRValue(key, splitValue, splitUnit, splitTimestamp, mbusKeys[j].deviceType, mbusKeys[j].keyName, mbusKeys[j].keyTopic, "");
+              }
+              if(realto){
+                for(int k = 0; k < sizeof(realtoKeys)/sizeof(realtoKeys[0]); k++){
+                  if(key == realtoKeys[k]){
+                    if(fmodf(splitValue, 1.0) == 0) realtoReadings[key]["value"] = int(splitValue);
+                    else realtoReadings[key]["value"] = round2(splitValue);
+                    if(splitUnit != "") realtoReadings[key]["unit"] = splitUnit;
+                  }
+                }
+              }
+              if(telegramDebug){
+                String tempTopic = mqttPrefix;
+                if(mbusKeys[j].keyTopic == ""){
+                  tempTopic += mbusKeys[j].keyName;
+                  tempTopic.replace(" ", "_");
+                  tempTopic.toLowerCase();
+                }
+                else{
+                  tempTopic += mbusKeys[j].keyTopic;
+                  tempTopic.replace(" ", "_");
+                  tempTopic.toLowerCase();
+                }
+                Serial.print(" - ");
+                Serial.print(mbusKeys[j].keyName);
+                Serial.print(": ");
+                if(fmodf(splitValue, 1.0) == 0) Serial.print(int(splitValue));
+                else Serial.print(round2(splitValue));
+                Serial.print(" ");
+                Serial.print(splitUnit);
+                Serial.print(" (");
+                Serial.print(splitTimestamp);
+                //Hier iets oplossen: timestamp klopt niet!
+                Serial.print("), ");
+                Serial.print(tempTopic);
+              }
+            }
+          }
+        }
+      }
+    }
+    if(telegramDebug) Serial.println("");
   }
-  if(!meterError) sumMeterTotals();
+  if(realto) serializeJson(realtoReadings, Serial);
+  if(extendedTelegramDebug) Serial.println("finished telegram");
 }
 
-void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolean floatValue, String unit, unsigned long meterTime){
-  //fmeasurement = round2(fmeasurement);
-  if(dsmrKeys[dsmrKey][0] == "1-0:1.8.1") totConDay = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.8.2") totConNight = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.1") totInDay = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.2") totInNight = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.7.0") totPowCon = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.7.0") totPowIn = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "0-1:24.2.3") totGasCon = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement; 
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.4.0") avgDem = fmeasurement;  
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.6.0") maxDemM = fmeasurement;  
-  String jsonOutput;
-  DynamicJsonDocument doc(1024);
-  doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
-  if(floatValue) doc["value"] = round2(fmeasurement);
-  else doc["value"] = imeasurement;
-  if(unit != "") doc["unit"] = unit;
-  doc["timestamp"] = meterTime;
-  if(meterConfig[dsmrKey] == "1"){
-    serializeJson(doc, jsonOutput);
-    jsonData += jsonOutput;
-    jsonData += ",";
-    jsonOutput = "";
+/*The following helper functions split the value part of each key,value pair according to the type of value*/
+void splitToString(String &value, String &splitString){
+  //Nothing to see here (yet)
+}
+
+void splitWithUnit(String &value, float &splitValue, String &splitUnit){
+  /*Split a value containing a unit*/
+  int unitStart = value.indexOf('*');
+  splitValue = value.substring(0, unitStart).toFloat();
+  splitUnit = value.substring(unitStart+1);
+}
+
+void splitNoUnit(String &value, float &splitValue){
+  /*Split a value containing no unit*/
+  splitValue = value.toFloat();
+}
+
+void splitMeterTime(String &value, struct tm &splitTime, time_t &splitTimestamp){
+  /*Split a timestamp, returning a tm struct and a time_t object*/
+  splitTime.tm_year = (2000 + value.substring(0, 2).toInt()) - 1900; //Time.h years since 1900, so deduct 1900
+  splitTime.tm_mon = (value.substring(2, 4).toInt()) - 1; //Time.h months start from 0, so deduct 1
+  splitTime.tm_mday = value.substring(4, 6).toInt();
+  splitTime.tm_hour = value.substring(6, 8).toInt();
+  splitTime.tm_min = value.substring(8, 10).toInt();
+  splitTime.tm_sec = value.substring(10, 12).toInt();
+  splitTimestamp =  mktime(&splitTime);
+  /*Metertime is in local time. DST shows the difference in hours to UTC*/
+  if(value.substring(12) == "S"){
+    splitTime.tm_isdst = 1;
+    splitTimestamp = splitTimestamp - (2*3600);
   }
-  doc["entity"] = "utility_meter";
-  String friendly_name = String(dsmrKeys[dsmrKey][2]);
-  friendly_name.toLowerCase();
-  friendly_name = "Utility meter " + friendly_name;
-  doc["friendly_name"] = friendly_name;
-  if(dsmrKeys[dsmrKey][4] != "") doc["metric"] = dsmrKeys[dsmrKey][4];
-  doc["metricKind"] = dsmrKeys[dsmrKey][5];
-  serializeJson(doc, jsonOutput);
-  if(meterConfig[dsmrKey] == "1"){
-    if(mqtt_en) {
-      if(sinceLastUpload >= (upload_throttle * 1000)){
-        pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
+  else if(value.substring(12) == "W"){
+    splitTime.tm_isdst = 0;
+    splitTimestamp = splitTimestamp - (1*3600);
+  }
+  else splitTime.tm_isdst = -1;
+}
+
+void splitWithTimeAndUnit(String &value, float &splitValue, String &splitUnit, struct tm &splitTime, time_t &splitTimestamp){
+  /*Split a timestamped value containing a unit (e.g. Mbus value)*/
+  String buf = value;
+  int timeEnd = value.indexOf(')');
+  int valueStart = value.indexOf('(')+1;
+  value = buf.substring(0, timeEnd);
+  splitMeterTime(value, splitTime, splitTimestamp);
+  value = buf.substring(valueStart);
+  splitWithUnit(value, splitValue, splitUnit);
+}
+
+void registerMbusMeter(String &key, String &value){
+  /*The number and type of connected Mbus meters, as well as their Mbus ID and value type they report (standard or non-temperature compensated)
+   * can only be determined during runtime by parsing the meter telegram. This function does just that. It scans the telegram for Mbus
+   * OBIS codes. The detected meters and their parameters are then stored in the mbusMeter array.
+   * During telegram processing, the mbusMeter array is cross referenced with the mbusConfig array to determine how the value should be pushed
+   * to the data broker.
+   */
+  for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+    String tempMbusKey = "0-" + String(i+1) + ":24.1.0";
+    if(key == tempMbusKey){
+      mbusMeter[i].type = value.toInt();
+      /*Check if the Mbus key,value pair needs to be pushed.
+       * This uses the same method as the regular DSMR keys, but with a 16-bit integer instead of a 32-bit long
+       */
+      if(mbusMeter[i].type >=0 && mbusMeter[i].type <= 16){
+        unsigned int mask = 1;
+        mask <<= mbusMeter[i].type;
+        unsigned long test = mbusPushList & mask;
+        if(test > 0){
+          mbusMeter[i].enabled = true;
+        }
       }
+      if(telegramCount == 1 && telegramDebug){
+        Serial.print(" Found ");
+        Serial.print(tempMbusKey);
+        Serial.print(", meter of type ");
+        Serial.print(mbusMeter[i].type);
+        if(mbusMeter[i].type == 3) Serial.print(" (gas)");
+        else if(mbusMeter[i].type == 7) Serial.print(" (water)");
+        else Serial.print(" (other)");
+        Serial.print(", registering");
+        if (mbusMeter[i].enabled == true) Serial.print(" and enabling");
+      }
+    }
+    /*Meter ID can be reported in regular (Dutch) or DIN43863-5 (Fluvius) format*/
+    tempMbusKey = "0-" + String(i+1) + ":96.1.0";
+    if(key == tempMbusKey){ //regular
+      mbusMeter[i].id = value;
+    }
+    tempMbusKey = "0-" + String(i+1) + ":96.1.1";
+    if(key == tempMbusKey){ //DIN43863-5
+      mbusMeter[i].id = value;
+    }
+    /*Value can be reported in base or non-temperature compensated format. Priority to base*/
+    tempMbusKey = "0-" + String(i+1) + ":24.2.3";
+    if(key == tempMbusKey){ //non-temperature compensated
+      if(mbusMeter[i].measurementType != 1){
+        mbusMeter[i].measurementType = 3;
+        mbusMeter[i].mbusKey = tempMbusKey;
+      }
+    }
+    tempMbusKey = "0-" + String(i+1) + ":24.2.1";
+    if(key == tempMbusKey){ //base
+      mbusMeter[i].measurementType = 1;
+      mbusMeter[i].mbusKey = tempMbusKey;
     }
   }
 }
 
-void sumMeterTotals(){
-  totCon = (totConDay + totConNight)*1.0;
-  totConToday = totCon - totConYesterday;
-  totIn = (totInDay + totInNight)*1.0;
-  netPowCon = (totPowCon - totPowIn)*1.0;
-  gasConToday = totGasCon - gasConYesterday;
-  if(dm_time.tm_mday != prevDay){
-    totConYesterday = totCon;
-    gasConYesterday = totGasCon;
-    prevDay = dm_time.tm_mday ;
+bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, time_t measurementTimestamp, String deviceType, String friendlyName, String mqttTopic, String rawKey){
+  String tempTopic = mqttPrefix;
+  if(mqttTopic == ""){           //Use key_name as mqtt topic if keyTopic left empty
+    tempTopic += friendlyName;
+    tempTopic.replace(" ", "_");
+    tempTopic.toLowerCase();
   }
-  if(mqtt_en){
-    for(int i = 0; i < 3; i++){
-      String totalsTopic = "";
-      String jsonOutput;
-      DynamicJsonDocument doc(1024);
-      if(i == 0){
-        totalsTopic = "total_energy_consumed";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(totCon);
-        doc["unit"] = "kWh";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += ",";
-        jsonOutput = "";
+  else{
+    tempTopic += mqttTopic;
+    tempTopic.replace(" ", "_");
+    tempTopic.toLowerCase();
+  }
+  if(payloadFormat > 0){ //minimal JSON payload format
+    DynamicJsonDocument doc(1024);
+    if(measurementValue == 0 && rawKey != ""){
+      doc["value"] = rawKey;
+    }
+    else{
+      if(fmodf(measurementValue, 1.0) == 0) doc["value"] = int(measurementValue);
+      else doc["value"] = round2(measurementValue);
+    }
+    if(measurementUnit != "") doc["unit"] = measurementUnit;
+    doc["timestamp"] = measurementTimestamp;
+    if(payloadFormat > 1){ //standard JSON payload format
+      //friendlyName.toLowerCase();
+      String sensorId = "Utility meter." + friendlyName;
+      friendlyName = "Utility meter " + friendlyName;
+      doc["friendly_name"] = friendlyName;
+      sensorId.toLowerCase();
+      sensorId.replace(" ", "_");
+      doc["sensorId"] = sensorId;
+      if(payloadFormat > 2){ //COFY payload format
         doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total energy consumed";
-        doc["metric"] = "GridElectricityImport";
-        doc["metricKind"] = "cumulative";
-      }
-      else if(i == 1){
-        totalsTopic = "total_energy_injected";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(totIn);
-        doc["unit"] = "kWh";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += ",";
-        jsonOutput = "";
-        doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total energy injected";
-        doc["metric"] = "GridElectricityExport";
-        doc["metricKind"] = "cumulative";
-      }
-      else{
-        totalsTopic = "total_active_power";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(netPowCon);
-        doc["unit"] = "kW";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += "]";
-        jsonOutput = "";
-        doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total active power";
-        doc["metric"] = "GridElectricityPower";
-        doc["metricKind"] = "gauge";
-      }
-      totalsTopic = "data/devices/utility_meter/" + totalsTopic;
-      serializeJson(doc, jsonOutput);
-      if(sinceLastUpload >= (upload_throttle*1000)){
-        pubMqtt(totalsTopic, jsonOutput, false);
+        if(friendlyName == "Total energy consumed"){
+          doc["metric"] = "GridElectricityImport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total energy injected"){
+          doc["metric"] = "GridElectricityExport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total active power"){
+          doc["metric"] = "GridElectricityPower";
+          doc["metricKind"] = "gauge";
+        }
+        else{
+          for(int k = 0; k < sizeof(cofyKeys)/sizeof(cofyKeys[0]); k++){
+            if(key == cofyKeys[k][0]){
+              if(cofyKeys[k][1] != "") doc["metric"] = cofyKeys[k][1];
+              doc["metricKind"] = cofyKeys[k][2];
+            }
+          }
+        }
       }
     }
-    if(sinceLastUpload >= (upload_throttle*1000)){
-      sinceLastUpload = 0;
+    //serializeJson(doc, jsonOutput);
+    if(mqttDebug){
+      Serial.println("");
+      Serial.print(tempTopic);
+      Serial.print(" ");
+      serializeJson(doc, Serial);
     }
   }
+  else{
+    if(fmodf(measurementValue, 1.0) == 0){
+      if(mqttDebug) Serial.println(int(measurementValue));
+    }
+    else{
+      if(mqttDebug) Serial.println(round2(measurementValue));
+    }
+  }
+  return true;
 }
