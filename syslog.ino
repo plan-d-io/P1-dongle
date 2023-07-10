@@ -34,28 +34,49 @@ void syslog(String msg, int level){
   }
 }
 
-void appendFile(fs::FS &fs, const char * path, const char * message){
+bool writeFile(fs::FS &fs, const char * path, const char * message){
+   Serial.printf("Writing file: %s\r\n", path);
+
+   File file = fs.open(path, FILE_WRITE);
+   if(!file){
+      Serial.println("− failed to open file for writing");
+      return false;
+   }
+   if(file.print(message)){
+      Serial.println("− file written");
+      return true;
+   }else {
+      Serial.println("− frite failed");
+      return false;
+   }
+}
+
+bool appendFile(fs::FS &fs, const char * path, const char * message){
     //Serial.printf("Appending to file: %s\r\n", path);
 
     File file = fs.open(path, FILE_APPEND);
     if(!file){
         //Serial.println("- failed to open file for appending");
-        return;
+        return false;
     }
     if(file.print(message)){
         //Serial.println("- message appended");
+        return true;
     } else {
         //Serial.println("- append failed");
+        return false;
     }
     file.close();
 }
 
-void renameFile(fs::FS &fs, const char * path1, const char * path2){
+bool renameFile(fs::FS &fs, const char * path1, const char * path2){
     //Serial.printf("Renaming file %s to %s\r\n", path1, path2);
     if (fs.rename(path1, path2)) {
         //Serial.println("- file renamed");
+        return true;
     } else {
         //Serial.println("- rename failed");
+        return false;
     }
 }
 
@@ -83,4 +104,21 @@ int sizeFile(fs::FS &fs, const char * path){
     //Serial.println(" bytes");
     file.close();
     return fileSize;
+}
+
+bool readFile(fs::FS &fs, const char * path){
+    Serial.printf("Reading file: %s\r\n", path);
+
+    File file = fs.open(path);
+    if(!file || file.isDirectory()){
+        Serial.println("- failed to open file for reading");
+        return false;
+    }
+
+    Serial.println("- read from file:");
+    while(file.available()){
+        Serial.write(file.read());
+    }
+    file.close();
+    return true;
 }

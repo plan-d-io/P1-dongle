@@ -18,7 +18,7 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
-unsigned int fw_ver = 104;
+unsigned int fw_ver = 105;
 unsigned int onlineVersion, fw_new;
 DNSServer dnsServer;
 AsyncWebServer server(80);
@@ -154,6 +154,9 @@ void setup(){
     }
     else spiffsMounted = true;
     file.close();
+    if(!writeFile(SPIFFS, "/hello.txt", "Hello ")) spiffsMounted = false;
+    if(!appendFile(SPIFFS, "/hello.txt", "World!\r\n")) spiffsMounted = false;
+    if(!readFile(SPIFFS, "/hello.txt")) spiffsMounted = false;    
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
