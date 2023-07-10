@@ -154,9 +154,10 @@ void setup(){
     }
     else spiffsMounted = true;
     file.close();
-    if(!writeFile(SPIFFS, "/hello.txt", "Hello ")) spiffsMounted = false;
-    if(!appendFile(SPIFFS, "/hello.txt", "World!\r\n")) spiffsMounted = false;
-    if(!readFile(SPIFFS, "/hello.txt")) spiffsMounted = false;    
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ")) spiffsMounted = false;
+    if(!appendFile(SPIFFS, "/test.txt", "World!\r\n")) spiffsMounted = false;
+    if(!readFile(SPIFFS, "/test.txt")) spiffsMounted = false;   
+    deleteFile(SPIFFS, "/test.txt");
   }
   syslog("----------------------------", 1);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
