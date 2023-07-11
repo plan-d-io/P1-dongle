@@ -78,7 +78,7 @@ boolean startUpdate(){
               bool canBegin = Update.begin(contentLength);
               // If yes, begin
               if (canBegin) {
-                unitState = 0;
+                unitState = -1;
                 blinkLed();
                 syslog("Beginning firmware upgrade. This may take 2 - 5 mins to complete. Things might be quiet for a while.. Patience!", 2);
                 // No activity would appear on the Serial monitor
@@ -93,7 +93,7 @@ boolean startUpdate(){
                 if (Update.end()) {
                   if (Update.isFinished()) {
                     syslog("Firmware upgrade successfully completed. Rebooting to finish update.", 1);
-                    last_reset = "Firmware upgrade successfully completed. Rebooting to finish update";
+                    saveResetReason("Firmware upgrade successfully completed. Rebooting to finish update");
                     fw_ver = onlineVersion;
                     _update_start = false;
                     _update_finish = true;
@@ -127,20 +127,20 @@ boolean startUpdate(){
             else{
               syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
               _update_start = false;
-              unitState = 4;
+              if(unitState < 6) unitState = 5;
             }
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
             _update_start = false;
-            unitState = 4;
+            if(unitState < 6) unitState = 5;
           }
           https.end(); 
         } 
         else {
           Serial.print("Unable to connect");
           _update_start = false;
-          unitState = 4;
+          if(unitState < 6) unitState = 5;
         }
       }
       client->stop();
@@ -154,7 +154,7 @@ boolean startUpdate(){
     else{
       syslog("No firmware upgrade available", 0);
       _update_start = false;
-      unitState = 4;
+      if(unitState < 5) unitState = 4;
       return false;
     }
     _update_start = false;
@@ -197,7 +197,7 @@ boolean finishUpdate(bool restore){
       unsigned long eof = payload.lastIndexOf('\n');
       if(eof > 0){
         syslog("Downloading static files", 2);
-        unitState = 0;
+        unitState = -1;
         blinkLed();
         unsigned long delimStart = 0;
         unsigned long delimEnd = 0;
@@ -296,7 +296,7 @@ boolean finishUpdate(bool restore){
     _update_finish = false;
     if(_restore_finish) _restore_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
-    last_reset = "Static files successfully updated. Rebooting to finish update.";
+    saveResetReason("Static files successfully updated. Rebooting to finish update.");
     saveConfig();
     SPIFFS.end();
     delay(500);
@@ -306,7 +306,7 @@ boolean finishUpdate(bool restore){
     sinceConnCheck = 10000;
   }
   saveConfig();
-  unitState = 4;
+  if(unitState < 6) unitState = 5;
   delay(500);
   return true;
 }

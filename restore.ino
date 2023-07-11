@@ -96,7 +96,6 @@ void restoreSPIFFS(){
   /*Download the other static files*/
   _restore_finish = true;
   saveConfig();
-  preferences.end();
   SPIFFS.end();
   delay(500);
   ESP.restart();

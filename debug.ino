@@ -17,9 +17,6 @@ void get_reset_reason(RESET_REASON reason){
     case 16 : resetReason = "RTCWDT_RTC_RESET";break;      /**<16, RTC Watch dog reset digital core and rtc module*/
     default : resetReason = "NO_MEAN";
   }
-  last_reset_verbose = last_reset;
-  last_reset = "";
-  preferences.putString("LAST_RESET", last_reset);
 }
 
 void getHeapDebug(){
@@ -42,8 +39,8 @@ void pushDebugValues(){
       doc["value"] = _bootcount;
     }
     else if(i == 1){
-      chanName = "last_reset_reason";
-      doc["friendly_name"] = "Last reset reason";
+      chanName = "last_reset_reason_hw";
+      doc["friendly_name"] = "Last reset reason (hardware)";
       doc["value"] = resetReason;
     }
     else if(i == 2){
@@ -65,9 +62,9 @@ void pushDebugValues(){
       doc["value"] = minFreeHeap;
     }
     else if(i == 5){
-      chanName = "last_reset_reason_verbose";
-      doc["friendly_name"] = "Last reset reason (verbose)";
-      doc["value"] = last_reset_verbose;
+      chanName = "last_reset_reason_fw";
+      doc["friendly_name"] = "Last reset reason (firmware)";
+      doc["value"] = _last_reset;
     }
     else if(i == 6){
       chanName = "ip";
@@ -94,7 +91,7 @@ void pushDebugValues(){
     serializeJson(doc, jsonOutput);
     if(_mqtt_en){
       if(sinceLastUpload >= _upload_throttle){
-       pubMqtt(dtopic, jsonOutput, false);
+       pubMqtt(dtopic, jsonOutput, true);
       }
     }
   }

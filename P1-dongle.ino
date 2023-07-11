@@ -17,7 +17,12 @@
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
 
+unsigned int fw_ver = 200;
+
+
+
 /*V2.0 declarations*/
+#include "ledControl.h"
 #include "externalIntegrations.h"
 #include "WebRequestHandler.h" //
 #include "configStore.h"
@@ -28,21 +33,17 @@ Preferences preferences; //
 AsyncWebServer server(80); //
 #define HWSERIAL Serial1 //
 
-unsigned long keyPushList = 65534;//511;
-unsigned int mbusPushList = 136;
-int payloadFormat = 3; //0 = value only, 1 = minimal json, 2 = standard json, 3 = COFY format
-
+/*Debug*/
 bool serialDebug = true;
-bool telegramDebug = true;
+bool telegramDebug = false;
 bool mqttDebug = false;
-bool extendedTelegramDebug;
-bool realto = true;
-bool haMakeAutoDiscovery = true;
+bool extendedTelegramDebug = false;
+
 bool ha_metercreated;
-bool pushFullTelegram;
-unsigned int fw_ver = 105;
+unsigned int mqttPushCount;
+
 int telegramCount;
-String mqttPrefix = "data/devices/utility_meter/"; //temp, needs to be loaded from preferences!
+
 time_t meterTimestamp;
 
 float totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
@@ -75,8 +76,7 @@ struct mbusConfig {
 };
 /*Legacy declarations*/
 unsigned int onlineVersion, fw_new;
-struct tm dm_time;  // dm time elements structure
-time_t dm_timestamp; // dm timestamp
+
 DNSServer dnsServer;
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
@@ -89,26 +89,24 @@ bool updateAvailable;
 
 #define TRIGGER 25 //Pin to trigger meter telegram request
 //Global timing vars
-elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
+elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceDebugUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 //LED state machine vars
-uint8_t DisBuff[2 + 5 * 5 * 3];
-elapsedMillis ledTime;
-boolean ledState = true;
-byte unitState = 0;
 
 //General housekeeping vars
 unsigned int reconncount, remotehostcount;
-String resetReason, last_reset_verbose;
+String resetReason;
 float freeHeap, minFreeHeap, maxAllocHeap;
 String ssidList;
 char apSSID[] = "COFY0000";
 byte mac[6];
-boolean rebootReq = false;
-boolean rebootInit = false;
-boolean wifiError, mqttHostError, mqttClientError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, eidSave, mqttSave, haSave, debugInfo, timeconfigured;
+bool rebootReq, rebootInit;
+bool mqttHostError = true;
+bool mqttClientError = true;
+
+bool wifiError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, debugInfo, timeconfigured;
 
 
-boolean timeSet, mTimeFound, spiffsMounted;
+boolean timeSet, spiffsMounted;
 
 uint8_t prevButtonState = false;
 
@@ -121,6 +119,7 @@ void setup(){
   pinMode(TRIGGER, OUTPUT);
   setBuff(0x00, 0xff, 0x00); //red 
   M5.dis.displaybuff(DisBuff);
+  unitState = -1;
   Serial.begin(115200);
   HWSERIAL.begin(115200, SERIAL_8N1, 21, 22);
   delay(500);
@@ -129,6 +128,7 @@ void setup(){
   syslog("Digital meter dongle booting", 0);
   restoreConfig();
   initSPIFFS();
+  syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
   if(_dev_fleet) syslog("Using experimental (development) firmware", 2); //change this to one variable, but keep legacy compatibility intact
   if(_alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
   syslog("Checking if internal clock is set", 0);
@@ -137,17 +137,27 @@ void setup(){
   syslog("Boot #" + String(_bootcount), 1);
   saveBoots();
   get_reset_reason(rtc_get_reset_reason(0));
-  syslog("Last reset reason: " + resetReason, 1);
-  syslog("Last reset reason (verbose): " + last_reset_verbose, 1);
+  syslog("Last reset reason (hardware): " + resetReason, 1);
+  syslog("Last reset reason (firmware): " + _last_reset, 1);
   debugInfo = true;
   initWifi();
   scanWifi();
   server.addHandler(new WebRequestHandler());
   server.begin();
+  _key_pushlist = 65534;//511;
+  _mbus_pushlist = 136;
+  _payload_format = 3; 
+  sinceConnCheck = 60000;
 }
 
 void loop(){
   blinkLed();
+  if(_mqtt_tls){
+    mqttclientSecure.loop();
+  }
+  else{
+    mqttclient.loop();
+  }
   if(wifiScan) scanWifi();
   if(sinceRebootCheck > 2000){
     if(rebootInit){
@@ -157,30 +167,38 @@ void loop(){
     }
     sinceRebootCheck = 0;
   }
-  if(sinceMeterCheck > 90000){
-    syslog("Meter disconnected", 2);
-    meterError = true;
-    sinceMeterCheck = 0;
+  if(_trigger_type == 0){
+    if(sinceMeterCheck > 30000){
+      syslog("Meter disconnected", 2);
+      meterError = true;
+      if(_wifi_STA && unitState < 7) unitState = 6;
+      else if(!_wifi_STA && unitState < 3) unitState = 2;
+      sinceMeterCheck = 0;
+    }
   }
-  if(_trigger_type == 1){
+  else if(_trigger_type == 1){
     if(sinceTelegramRequest >= _trigger_interval *1000){
       digitalWrite(TRIGGER, HIGH);
       sinceTelegramRequest = 0;
     }
+    if(sinceMeterCheck > (_trigger_interval *1000) + 30000){
+      syslog("Meter disconnected", 2);
+      meterError = true;
+      if(_wifi_STA && unitState < 7) unitState = 6;
+      else if(!_wifi_STA && unitState < 3) unitState = 2;
+      sinceMeterCheck = 0;
+    }
   }
   if(!_wifi_STA){
     dnsServer.processNextRequest();
-    if(!timeSet) setMeterTime();
     if(sinceWifiCheck >= 600000){
       if(scanWifi()) rebootInit = true;
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 3600){
-      setMeterTime();
+      timeSet = false;
       sinceClockCheck = 0;
     }
-    if(mTimeFound && ! meterError) unitState = 2;
-    else unitState = 3;
   }
   else{
     if(!bundleLoaded) restoreSPIFFS();
@@ -196,18 +214,19 @@ void loop(){
       sinceUpdateCheck = 0;
     }
     if(sinceClockCheck >= 3600){
-      if(timeconfigured) setMeterTime();
+      if(!timeconfigured) timeSet = false; //if timeConfigured = true, the NTP serivce takes care of reqular clock syncing
       sinceClockCheck = 0;
     }
     if(sinceConnCheck >= 60000){
       checkConnection();
-      getHeapDebug();
       sinceConnCheck = 0;
     }
-    if(wifiError || mqttHostError || mqttClientError || httpsError || meterError || !spiffsMounted) unitState = 5;
-    else unitState = 4;
+    if(sinceDebugUpload >= 300000){
+      getHeapDebug();
+      sinceDebugUpload = 0;
+    }
     if(reconncount > 15 || remotehostcount > 60){
-      last_reset = "Rebooting to try fix connections";
+      saveResetReason("Rebooting to try fix connections");
       if(saveConfig()){
         syslog("Rebooting to try fix connections", 2);
         setReboot();
@@ -237,9 +256,6 @@ void loop(){
     if(_trigger_type == 1){
       digitalWrite(TRIGGER, LOW);
       sinceTelegramRequest = 0;
-    }
-    if(meterError){
-      meterError = false;
     }
     processMeterTelegram(s);
   }

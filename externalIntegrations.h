@@ -2,6 +2,9 @@
 
 /* Add additional COFY field to the MQTT payload */
 static const String cofyKeys[][ 3 ] PROGMEM = {
+{ "A-0:0.0.1", "GridElectricityImport", "cumulative"},
+{ "A-0:0.0.2", "GridElectricityExport", "cumulative"},
+{ "A-0:0.0.3", "GridElectricityPower", "gauge"},
 { "1-0:1.8.1", "", "cumulative" },
 { "1-0:1.8.2", "", "cumulative" },
 { "1-0:2.8.1", "", "cumulative" }, 

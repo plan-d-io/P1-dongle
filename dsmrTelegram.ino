@@ -22,6 +22,11 @@ static const keyConfig dsmrKeys[] PROGMEM = {
    *  DSMR keys are adressed in the firmware by their order in this array. DO NOT rearrange keys.
    *  If you want to add new keys, add them to the bottom of the array.
    */
+    /*The first three keys are custom keys, required for dongle operation*/
+    { "A-0:0.0.1", 2, "energy", "Total energy consumed",  "",  false},
+    { "A-0:0.0.2", 2, "energy", "Total energy injected",  "",  false},
+    { "A-0:0.0.3", 2, "power", "Total active power",  "",  false},
+    /*Standard keys*/
     { "1-0:1.8.1", 2, "energy", "Total consumption T1",  "",  false},
     { "1-0:1.8.2", 2, "energy", "Total consumption T2",  "",  false},
     { "1-0:2.8.1", 2, "energy", "Total injection T1",  "",  false},
@@ -65,7 +70,7 @@ void processMeterTelegram(String rawTelegram){
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
   if(extendedTelegramDebug) Serial.println(rawTelegram);
-  if(pushFullTelegram) {}//something to push raw telegram here
+  if(_push_full_telegram) {}//something to push raw telegram here
   DynamicJsonDocument realtoReadings(1024);
   int pass = 0;
   while(delimEnd < eof){
@@ -107,7 +112,7 @@ void processMeterTelegram(String rawTelegram){
     if(key == "0-0:1.0.0"){
       splitMeterTime(value, splitTime, splitTimestamp);
       meterTimestamp = splitTimestamp;
-      if(realto) realtoReadings["timestamp"] = meterTimestamp;
+      if(_realto_en) realtoReadings["timestamp"] = meterTimestamp;
       if(telegramDebug){
         Serial.print(": Meter time: ");
         Serial.print(splitTimestamp);
@@ -115,6 +120,13 @@ void processMeterTelegram(String rawTelegram){
         strftime(timeStringBuff, sizeof(timeStringBuff), " %Y/%m/%d %H:%M:%S", &splitTime);
         Serial.print(timeStringBuff);
       }
+      if(!timeSet && !timeconfigured){ //If no NTP service configured (or resync required), use meter time to set internal clock
+        Serial.println("");
+        syslog("Syncing to to metertime", 0);
+        localtime(&splitTimestamp);
+        timeSet = true;
+      }
+      sinceMeterCheck = 0; //The metertime key is used to check for the presence of the digital meter
     }
     /*Consumed energy tariff 1*/
     if(key == "1-0:1.8.1"){
@@ -146,15 +158,12 @@ void processMeterTelegram(String rawTelegram){
       splitWithUnit(value, splitValue, splitUnit);
       powIn = splitValue;
     }
-    /*Process basic readings*/
+    /*Process minimum required readings*/
     totCon = totConT1 + totConT2;
-    pushDSMRValue(key, totCon, "kWh", meterTimestamp, "energy", "Total energy consumed", "", "");
     totIn = totInT1 + totInT2;
-    pushDSMRValue(key, totIn, "kWh", meterTimestamp, "energy", "Total energy injected", "", "");
-    netPowCon = powCon - powIn;
-    pushDSMRValue(key, netPowCon, "kW", meterTimestamp, "power", "Total active power", "", "");
-    /*Next, we check if the keys are int the dsmrKeys[] list so we know if and how to process them*/
-    for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){ 
+    netPowCon = powCon - powIn;   
+    /*Next, we check if the key is in the dsmrKeys[] list so we know if and how to process it*/
+    for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
       if(key == dsmrKeys[i].dsmrKey){
         if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
           /*"Other" or "string" values (currently handled the same) just get their raw value forwarded, so no need to do any processing.
@@ -176,17 +185,17 @@ void processMeterTelegram(String rawTelegram){
           //No need for any processing
         }  
         /*Check if the key,value pair needs to be pushed
-         * The unsigned long keyPushList contains 32 bits indicating if the value needs to be pushed (1) or not (0)
-         * E.g. if keyPushList is 329, its binary representation is 00000000000000000000000101001001
+         * The unsigned long _key_pushlist contains 32 bits indicating if the value needs to be pushed (1) or not (0)
+         * E.g. if _key_pushlist is 329, its binary representation is 00000000000000000000000101001001
          * The LSB (at the rightmost side) represents dsmrKeys[0], the bit to the left of it dsmrKeys[1] etc.
-         * We boolean AND the keyPushList with a binary mask 1, which is shifted to the left according to which key in dsmrKeys[] we are comparing
+         * We boolean AND the _key_pushlist with a binary mask 1, which is shifted to the left according to which key in dsmrKeys[] we are comparing
          * If the result is 1, this means the key,value pair must be pushed
-         * E.g. if keyPushList is 329, dsmrKeys[0] must be pushed, dsmrKeys[1] not, dsmrKeys[2] not, dsmrKeys[3] must, etc.
+         * E.g. if _key_pushlist is 329, dsmrKeys[0] must be pushed, dsmrKeys[1] not, dsmrKeys[2] not, dsmrKeys[3] must, etc.
          * Sounds complicated, but this way we only need one variable in NVS to store up to 32 options.
          */
         unsigned long mask = 1;
         mask <<= i;
-        unsigned long test = keyPushList & mask;
+        unsigned long test = _key_pushlist & mask;
         if(test > 0){
           if(telegramDebug){
             Serial.print(" - ");
@@ -227,8 +236,8 @@ void processMeterTelegram(String rawTelegram){
                 Serial.print(")");
               }
             }
-            String tempTopic = mqttPrefix;
-            if(dsmrKeys[i].keyTopic == ""){           //Use key_name as mqtt topic if keyTopic left empty
+            String tempTopic = _mqtt_prefix;
+            if(dsmrKeys[i].keyTopic == ""){ //Use key_name as mqtt topic if keyTopic left empty
               tempTopic += dsmrKeys[i].keyName;
               tempTopic.replace(" ", "_");
               tempTopic.toLowerCase();
@@ -243,10 +252,10 @@ void processMeterTelegram(String rawTelegram){
               Serial.print(tempTopic);
             }
           }
-          if(telegramCount == 2 && haMakeAutoDiscovery) haAutoDiscovery(key, splitUnit, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic);
+          if(mqttPushCount == 2) haAutoDiscovery(key, splitUnit, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic);
         }
       }
-      if(realto){
+      if(_realto_en){
         for(int j = 0; j < sizeof(realtoKeys)/sizeof(realtoKeys[0]); j++){
           if(key == realtoKeys[j]){
             if(fmodf(splitValue, 1.0) == 0) realtoReadings[key]["value"] = int(splitValue);
@@ -269,13 +278,11 @@ void processMeterTelegram(String rawTelegram){
           for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){  //if so, process the key according the parameters set for that key
             if(mbusMeter[i].type == mbusKeys[j].keyType){
               splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
-              if(mbusMeter[i].enabled == true) {
-                if(telegramCount == 2){
-                  if(haMakeAutoDiscovery) haAutoDiscovery(key, splitUnit, mbusKeys[j].deviceType, mbusKeys[j].keyName, mbusKeys[j].keyTopic);                   
-                }
+              if(mbusMeter[i].enabled == true) {       
+                if(mqttPushCount == 2) haAutoDiscovery(key, splitUnit, mbusKeys[j].deviceType, mbusKeys[j].keyName, mbusKeys[j].keyTopic);              
                 pushDSMRValue(key, splitValue, splitUnit, splitTimestamp, mbusKeys[j].deviceType, mbusKeys[j].keyName, mbusKeys[j].keyTopic, "");
               }
-              if(realto){
+              if(_realto_en){
                 for(int k = 0; k < sizeof(realtoKeys)/sizeof(realtoKeys[0]); k++){
                   if(key == realtoKeys[k]){
                     if(fmodf(splitValue, 1.0) == 0) realtoReadings[key]["value"] = int(splitValue);
@@ -285,7 +292,7 @@ void processMeterTelegram(String rawTelegram){
                 }
               }
               if(telegramDebug){
-                String tempTopic = mqttPrefix;
+                String tempTopic = _mqtt_prefix;
                 if(mbusKeys[j].keyTopic == ""){
                   tempTopic += mbusKeys[j].keyName;
                   tempTopic.replace(" ", "_");
@@ -316,8 +323,23 @@ void processMeterTelegram(String rawTelegram){
     }
     if(telegramDebug) Serial.println("");
   }
-  if(realto) serializeJson(realtoReadings, Serial);
+  if(_realto_en) serializeJson(realtoReadings, Serial);
   if(extendedTelegramDebug) Serial.println("finished telegram");
+  telegramCount++;
+  if(mqttPushCount < 2) haEraseDevice();
+  if(mqttPushCount == 2){
+    haAutoDiscovery("", "kWh", "energy", "Total energy consumed", "");
+    haAutoDiscovery("", "kWh", "energy", "Total energy injected", "");
+    haAutoDiscovery("", "kW", "power", "Total active power", "");
+  }
+  String key = "A-0:0.0.1";
+  pushDSMRValue(key, totCon, "kWh", meterTimestamp, "energy", "Total energy consumed", "", "");
+  key = "A-0:0.0.2";
+  pushDSMRValue(key, totIn, "kWh", meterTimestamp, "energy", "Total energy injected", "", "");
+  key = "A-0:0.0.3";
+  pushDSMRValue(key, netPowCon, "kW", meterTimestamp, "power", "Total active power", "", "");
+  if(mqttPushCount > 0) mqttPushCount++;
+  
 }
 
 /*The following helper functions split the value part of each key,value pair according to the type of value*/
@@ -386,7 +408,7 @@ void registerMbusMeter(String &key, String &value){
       if(mbusMeter[i].type >=0 && mbusMeter[i].type <= 16){
         unsigned int mask = 1;
         mask <<= mbusMeter[i].type;
-        unsigned long test = mbusPushList & mask;
+        unsigned long test = _mbus_pushlist & mask;
         if(test > 0){
           mbusMeter[i].enabled = true;
         }
@@ -428,8 +450,10 @@ void registerMbusMeter(String &key, String &value){
   }
 }
 
-bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, time_t measurementTimestamp, String deviceType, String friendlyName, String mqttTopic, String rawKey){
-  String tempTopic = mqttPrefix;
+void pushDSMRValue(String &key, float measurementValue, String measurementUnit, time_t measurementTimestamp, String deviceType, String friendlyName, String mqttTopic, String rawKey){
+  String tempTopic = _mqtt_prefix;
+  String jsonOutput;
+  bool pushSuccess = false;
   if(mqttTopic == ""){           //Use key_name as mqtt topic if keyTopic left empty
     tempTopic += friendlyName;
     tempTopic.replace(" ", "_");
@@ -440,7 +464,7 @@ bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, 
     tempTopic.replace(" ", "_");
     tempTopic.toLowerCase();
   }
-  if(payloadFormat > 0){ //minimal JSON payload format
+  if(_payload_format > 0){ //minimal JSON payload format
     DynamicJsonDocument doc(1024);
     if(measurementValue == 0 && rawKey != ""){
       doc["value"] = rawKey;
@@ -451,7 +475,7 @@ bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, 
     }
     if(measurementUnit != "") doc["unit"] = measurementUnit;
     doc["timestamp"] = measurementTimestamp;
-    if(payloadFormat > 1){ //standard JSON payload format
+    if(_payload_format > 1){ //standard JSON payload format
       //friendlyName.toLowerCase();
       String sensorId = "Utility meter." + friendlyName;
       friendlyName = "Utility meter " + friendlyName;
@@ -459,7 +483,7 @@ bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, 
       sensorId.toLowerCase();
       sensorId.replace(" ", "_");
       doc["sensorId"] = sensorId;
-      if(payloadFormat > 2){ //COFY payload format
+      if(_payload_format > 2){ //COFY payload format
         doc["entity"] = "utility_meter";
         if(friendlyName == "Total energy consumed"){
           doc["metric"] = "GridElectricityImport";
@@ -483,8 +507,9 @@ bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, 
         }
       }
     }
-    //serializeJson(doc, jsonOutput);
-    if(mqttDebug){
+    serializeJson(doc, jsonOutput);
+    pushSuccess = pubMqtt(tempTopic, jsonOutput, false);
+    if(mqttDebug && pushSuccess){
       Serial.println("");
       Serial.print(tempTopic);
       Serial.print(" ");
@@ -493,11 +518,14 @@ bool pushDSMRValue(String &key, float measurementValue, String measurementUnit, 
   }
   else{
     if(fmodf(measurementValue, 1.0) == 0){
-      if(mqttDebug) Serial.println(int(measurementValue));
+      pushSuccess = pubMqtt(tempTopic, String(int(measurementValue)), false);
+      if(mqttDebug && pushSuccess) Serial.println(int(measurementValue));
     }
     else{
-      if(mqttDebug) Serial.println(round2(measurementValue));
+      pushSuccess = pubMqtt(tempTopic, String(round2(measurementValue)), false);
+      if(mqttDebug && pushSuccess) Serial.println(round2(measurementValue));
     }
+    
   }
-  return true;
+  if(pushSuccess && mqttPushCount == 0) mqttPushCount = 1;
 }

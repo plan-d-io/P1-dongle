@@ -1,5 +1,6 @@
 void setupMqtt() {
   String mqttinfo = "MQTT enabled! Will connect as " + _mqtt_id;
+  mqttHostError = false;
   if (_mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + _mqtt_user;
   }
@@ -62,6 +63,7 @@ void setupMqtt() {
         else{
           syslog("MQTT host IP resolving failed", 3);
           mqttHostError = true;
+          if(unitState < 6) unitState = 5;
         } 
       }
       else{
@@ -87,7 +89,10 @@ void connectMqtt() {
       if(!mqttclientSecure.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          if(!mqttPaused) syslog("Lost connection to secure MQTT broker", 2);
+          if(!mqttPaused){
+            syslog("Lost connection to secure MQTT broker", 2);
+            if(unitState < 6) unitState = 5;
+          }
         }
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
@@ -107,7 +112,10 @@ void connectMqtt() {
         disconnected = true;
         if(mqttWasConnected){
           //reconncount++;
-          if(!mqttPaused) syslog("Lost connection to MQTT broker", 2);
+          if(!mqttPaused){
+            syslog("Lost connection to MQTT broker", 2);
+            if(unitState < 6) unitState = 5;
+          }
         }
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
@@ -125,6 +133,7 @@ void connectMqtt() {
     if(disconnected){
       if(mqttretry < 2){
         syslog("Connected to MQTT broker", 1);
+        if(unitState < 5) unitState = 4;
         if(mqttPaused) mqttPaused = false;
         if(_mqtt_tls){
           mqttclientSecure.publish("data/devices/utility_meter", "online", true);
@@ -135,12 +144,18 @@ void connectMqtt() {
           mqttclient.subscribe("set/devices/utility_meter/reboot");
         }
         mqttClientError = false;
+        if(debugInfo && !mqttWasConnected){
+          hadebugDevice(true);
+          hadebugDevice(false);
+          getHeapDebug();
+        }
         mqttWasConnected = true;
         reconncount = 0;
       }
       else{
         syslog("Failed to connect to MQTT broker", 3);
         mqttClientError = true;
+        if(unitState < 6) unitState = 5;
       }
     }
   }
@@ -149,22 +164,24 @@ void connectMqtt() {
   }
 }
 
-void pubMqtt(String topic, String payload, boolean retain){
-  if(_mqtt_en && !mqttClientError && !clientSecureBusy){
-    if(_mqtt_tls){
+bool pubMqtt(String topic, String payload, boolean retain){
+  bool pushed = false;
+  if(_mqtt_en && !mqttClientError && !mqttHostError){
+    if(_mqtt_tls && !clientSecureBusy){
       if(mqttclientSecure.connected()){
         mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain);
+        pushed = true;
       }
     }
     else{
       if(mqttclient.connected()){
         mqttclient.publish(topic.c_str(), payload.c_str(), retain);
+        pushed = true;
       }
     }
   }
+  return pushed;
 }
-
-
 
 void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
@@ -179,7 +196,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
     if(doc["value"] == "true"){
-      last_reset = "Reboot requested by MQTT";
+      saveResetReason("Reboot requested by MQTT");
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
         setReboot();

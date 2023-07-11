@@ -46,23 +46,31 @@ String getHostname(){
 }
 
 void initSPIFFS(){
-  // Initialize SPIFFS //move this to a utility function
+  /*Initialize SPIFFS*/
   syslog("Mounting SPIFFS... ", 0);
   if(!SPIFFS.begin(true)){
     syslog("Could not mount SPIFFS", 3);
+    spiffsMounted = false;
   }
   else{
+    /*Check if SPIFFS contains files*/
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
     listDir(SPIFFS, "/", 0);
-    File file = SPIFFS.open("/index.html");
+    File file = SPIFFS.open("/index.html"); //test a file
     if(!file || file.isDirectory() || file.size() == 0) {
         syslog("Could not load files from SPIFFS", 3);
+        spiffsMounted = false;
+    }
+    /*Check SPIFFS file I/O*/
+    syslog("Testing SPIFFS file I/O... ", 0);
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt")){
+      syslog("Could not perform file I/O on SPIFFS", 3);
+      spiffsMounted = false;
     }
     else spiffsMounted = true;
     file.close();
   }
   syslog("----------------------------", 1);
-  syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
 }
 
 void initWifi(){
@@ -81,7 +89,8 @@ void initWifi(){
     if(WiFi.status() == WL_CONNECTED){
       syslog("Connected to the WiFi network " + _wifi_ssid, 1);
       MDNS.begin("p1dongle");
-      unitState = 5;
+      if(spiffsMounted) unitState = 4;
+      else unitState = 7;
       MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
@@ -94,28 +103,33 @@ void initWifi(){
         if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
+            unitState = 7;
         }
         // Load loadCertBundle into WiFiClientSecure
         if(file && file.size() > 0) {
             if(!client->loadCertBundle(file, file.size())){
                 syslog("WiFiClientSecure: could not load cert bundle", 3);
                 bundleLoaded = false;
+                unitState = 7;
             }
         }
         file.close();
       } 
       else {
         syslog("Unable to create SSL client", 2);
-        unitState = 5;
+        unitState = 7;
         httpsError = true;
       }
       if(_update_start){
+        unitState = -1;
         startUpdate();
       }
       if(_update_finish){
+        unitState = -1;
         finishUpdate(false);
       }
       if(_restore_finish || !spiffsMounted){
+        unitState = -1;
         finishUpdate(true);
       }
       if(_mqtt_en) setupMqtt();
@@ -130,6 +144,7 @@ void initWifi(){
       syslog("Could not connect to the WiFi network", 2);
       wifiError = true;
       _wifi_STA = false;
+      unitState = 1;
     }
   }
   if(!_wifi_STA){
@@ -139,7 +154,7 @@ void initWifi(){
     dnsServer.start(53, "*", WiFi.softAPIP());
     MDNS.begin("p1dongle");
     syslog("AP set up", 1);
-    unitState = 3;
+    unitState = 0;
   }
 }
 
@@ -178,14 +193,6 @@ void setClock(boolean firstSync)
   }
 }
 
-void setMeterTime(){
-  if(mTimeFound){
-    if(!timeSet) syslog("Syncing to to metertime", 0);
-    localtime(&dm_timestamp); //CHECK THIS NOT IMPLEMENTED IN dsmrTelegram YET
-    timeSet = true;
-  }
-}
-
 void checkConnection(){
   if(WiFi.status() != WL_CONNECTED){
     syslog("Lost WiFi connection, trying to reconnect", 2);
@@ -207,9 +214,8 @@ void checkConnection(){
   }
   if(WiFi.status() == WL_CONNECTED){
     if(_mqtt_en){
-      connectMqtt();
-      //if(_ha_en && !ha_metercreated) haAutoDiscovery(1); CHECK THIS
-      //else if(_ha_en && ha_metercreated) haAutoDiscovery(0);
+      if(mqttHostError) setupMqtt();
+      if(mqttClientError) connectMqtt();
     }
   }
 }
@@ -227,43 +233,13 @@ void setReboot(){
   syslog("Rebooting", 2);
 }
 
-void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
-{
-    //Serial.println("setting LED");
-    DisBuff[0] = 0x05;
-    DisBuff[1] = 0x05;
-    for (int i = 0; i < 25; i++)
-    {
-        DisBuff[2 + i * 3 + 0] = Rdata;
-        DisBuff[2 + i * 3 + 1] = Gdata;
-        DisBuff[2 + i * 3 + 2] = Bdata;
-    }
-}
-
-void blinkLed(){
-  if(ledTime >= 300){
-    //Serial.println(unitState);
-    if(ledState){
-      if(unitState == 1 || unitState == 3 ||unitState == 5) setBuff(0x00, 0x00, 0x00);
-    }
-    else{
-      if(unitState <= 1) setBuff(0xff, 0x00, 0x00);
-      else if(unitState == 2 || unitState == 3) setBuff(0xff, 0x40, 0x00);
-      else setBuff(0x00, 0x00, 0x40);
-    }
-    ledState = !ledState;
-    ledTime = 0;
-    M5.dis.displaybuff(DisBuff);
-  }
-}
-
 double round2(double value) {
    return (int)(value * 100 + 0.05) / 100.0;
 }
 
+/*SPIFFS file utilities*/
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\r\n", dirname);
-
     File root = fs.open(dirname);
     if(!root){
         Serial.println("- failed to open directory");
@@ -273,7 +249,6 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
         Serial.println(" - not a directory");
         return;
     }
-
     File file = root.openNextFile();
     while(file){
         if(file.isDirectory()){
@@ -290,4 +265,67 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
         }
         file = root.openNextFile();
     }
+}
+
+bool writeFile(fs::FS &fs, const char * path, const char * message){
+   File file = fs.open(path, FILE_WRITE);
+   if(!file){
+      return false;
+   }
+   if(file.print(message)){
+      return true;
+   }else {
+      return false;
+   }
+}
+
+bool appendFile(fs::FS &fs, const char * path, const char * message){
+    File file = fs.open(path, FILE_APPEND);
+    if(!file){
+        return false;
+    }
+    if(file.print(message)){
+        return true;
+    } else {
+        return false;
+    }
+    file.close();
+}
+
+bool renameFile(fs::FS &fs, const char * path1, const char * path2){
+    if (fs.rename(path1, path2)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void deleteFile(fs::FS &fs, const char * path){
+    if(fs.remove(path)){
+    } else {
+    }
+}
+
+int sizeFile(fs::FS &fs, const char * path){
+    int fileSize = 0;
+    File file = fs.open(path);
+    if(!file || file.isDirectory()){
+        return fileSize;
+    }
+    fileSize = file.size();
+    file.close();
+    return fileSize;
+}
+
+bool readFile(fs::FS &fs, const char * path){
+    File file = fs.open(path);
+    if(!file || file.isDirectory()){
+        Serial.println("- failed to open file for reading");
+        return false;
+    }
+    while(file.available()){
+        Serial.write(file.read());
+    }
+    file.close();
+    return true;
 }
