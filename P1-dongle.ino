@@ -104,7 +104,7 @@ bool mqttHostError = true;
 bool mqttClientError = true;
 
 bool wifiError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, debugInfo, timeconfigured;
-
+bool haDiscovered = false;
 
 boolean timeSet, spiffsMounted;
 
@@ -169,7 +169,7 @@ void loop(){
   }
   if(_trigger_type == 0){
     if(sinceMeterCheck > 30000){
-      syslog("Meter disconnected", 2);
+      if(!meterError) syslog("Meter disconnected", 2);
       meterError = true;
       if(_wifi_STA && unitState < 7) unitState = 6;
       else if(!_wifi_STA && unitState < 3) unitState = 2;

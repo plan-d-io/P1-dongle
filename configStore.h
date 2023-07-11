@@ -97,7 +97,8 @@ static const uintStore configUInt[] PROGMEM = {
   {"MBus keys", &_mbus_pushlist, "PUSH_MBUS", 136},
   {"MQTT port", &_mqtt_port, "MQTT_PORT", 1883},
   {"Telegram trigger interval", &_trigger_interval, "TRG_INT", 10},
-  {"Telegram trigger type", &_trigger_type, "TRG_TYPE", 0}
+  {"Telegram trigger type", &_trigger_type, "TRG_TYPE", 0},
+  {"Bootcount", &_bootcount, "reboots", 0}
 };
 
 static const ulongStore configULong[] PROGMEM = {

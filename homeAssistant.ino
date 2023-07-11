@@ -20,7 +20,10 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
     tempTopic.replace(" ", "_");
     tempTopic.toLowerCase();
   }
-  syslog("Performing Home Assistant MQTT autodiscovery", 0);
+  if(!haDiscovered){
+    syslog("Performing Home Assistant MQTT autodiscovery", 0);
+    haDiscovered = true;
+  }
   DynamicJsonDocument doc(1024);
   friendlyName = "Utility meter " + friendlyName;
   doc["name"] = friendlyName;

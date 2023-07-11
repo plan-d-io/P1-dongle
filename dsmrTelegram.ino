@@ -127,6 +127,11 @@ void processMeterTelegram(String rawTelegram){
         timeSet = true;
       }
       sinceMeterCheck = 0; //The metertime key is used to check for the presence of the digital meter
+      if(meterError){
+        unitState = 4;
+        syslog("Meter reconnected", 1);
+        meterError = false;
+      }
     }
     /*Consumed energy tariff 1*/
     if(key == "1-0:1.8.1"){
