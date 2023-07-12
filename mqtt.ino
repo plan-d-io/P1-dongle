@@ -146,7 +146,9 @@ void connectMqtt() {
         mqttClientError = false;
         if(debugInfo && !mqttWasConnected){
           hadebugDevice(true);
+          delay(500);
           hadebugDevice(false);
+          delay(500);
           getHeapDebug();
         }
         mqttWasConnected = true;
@@ -169,14 +171,14 @@ bool pubMqtt(String topic, String payload, boolean retain){
   if(_mqtt_en && !mqttClientError && !mqttHostError){
     if(_mqtt_tls && !clientSecureBusy){
       if(mqttclientSecure.connected()){
-        mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain);
-        pushed = true;
+        if(mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain)) pushed = true;
+        else mqttPushFails++;
       }
     }
     else{
       if(mqttclient.connected()){
-        mqttclient.publish(topic.c_str(), payload.c_str(), retain);
-        pushed = true;
+        if(mqttclient.publish(topic.c_str(), payload.c_str(), retain)) pushed = true;
+        else mqttPushFails++;
       }
     }
   }
@@ -187,11 +189,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
   unsigned long dtimestamp = time(&now);
   Serial.print("got mqtt message on ");
-  Serial.println(String(topic));
+  Serial.print(String(topic));
   String messageTemp;
   for (int i = 0; i < length; i++) {
     messageTemp += (char)payload[i];
   }
+  Serial.print(", ");
+  Serial.println(messageTemp);
   if (String(topic) == "set/devices/utility_meter/reboot") {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
@@ -199,6 +203,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
       saveResetReason("Reboot requested by MQTT");
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
+        pubMqtt("set/devices/utility_meter/reboot", "{\"value\": \"false\"}", false);
+        delay(500);
         setReboot();
       }
     }

@@ -109,6 +109,8 @@ void hadebugDevice(bool eraseMeter){
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
   }
+  //if(eraseMeter) syslog("Erasing Home Assistant MQTT debug entries", 0);
+  //else syslog("Performing Home Assistant MQTT debug autodiscovery", 0);
   for(int i = 0; i < 11; i++){
     String chanName = "";
     DynamicJsonDocument doc(1024);
@@ -185,7 +187,7 @@ void hadebugDevice(bool eraseMeter){
     device["configuration_url"] = "http://" + WiFi.localIP().toString();
     device["sw_version"] = String(fw_ver/100.0);
     String configTopic = "";
-    if(i == 9) configTopic = "homeassistant/switch/" + chanName + "/config";
+    if(i == 10) configTopic = "homeassistant/switch/" + chanName + "/config";
     else configTopic = "homeassistant/sensor/" + chanName + "/config";
     String jsonOutput ="";
     //Ensure devices are erased before created again

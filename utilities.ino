@@ -214,6 +214,10 @@ void checkConnection(){
   }
   if(WiFi.status() == WL_CONNECTED){
     if(_mqtt_en){
+      if(mqttPushFails > 10){
+        mqttClientError = true;
+        mqttPushFails = 0;
+      }
       if(mqttHostError) setupMqtt();
       if(mqttClientError) connectMqtt();
     }

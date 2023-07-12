@@ -40,7 +40,7 @@ bool mqttDebug = false;
 bool extendedTelegramDebug = false;
 
 bool ha_metercreated;
-unsigned int mqttPushCount;
+unsigned int mqttPushCount, mqttPushFails;
 
 int telegramCount;
 
@@ -148,6 +148,8 @@ void setup(){
   _mbus_pushlist = 136;
   _payload_format = 3; 
   sinceConnCheck = 60000;
+  sinceMeterCheck = 0;
+  _upload_throttle = 10;
 }
 
 void loop(){
@@ -218,6 +220,7 @@ void loop(){
       sinceClockCheck = 0;
     }
     if(sinceConnCheck >= 60000){
+      if(_ha_en && debugInfo) hadebugDevice(false);
       checkConnection();
       sinceConnCheck = 0;
     }

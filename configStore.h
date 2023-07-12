@@ -56,6 +56,7 @@ String _mqtt_host, _mqtt_id, _mqtt_user, _mqtt_pass, _mqtt_prefix;
 bool _update_auto, _update_autoCheck, _update_start, _update_finish, _dev_fleet, _alpha_fleet, _restore_finish;
 unsigned long _fw_new;
 /*Debug*/
+bool _reinit_spiffs;
 unsigned int _bootcount;
 String _last_reset;
 /*DSMR processing*/
@@ -81,6 +82,7 @@ static const boolStore configBool[] PROGMEM = {
   {"Update autocheck", &_update_autoCheck, "UPD_AUTOCHK", true},
   {"Update start", &_update_start, "UPD_START", false},
   {"Update finish", &_update_finish, "UPD_FINISH", false},
+  {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false},
   {"Dev fleet", &_dev_fleet, "BETA_FLT", false},
   {"Alpha fleet", &_alpha_fleet, "ALPHA_FLT", false},
   {"Restore finish", &_restore_finish, "RST_FINISH", false},
