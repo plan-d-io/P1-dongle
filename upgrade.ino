@@ -306,7 +306,7 @@ boolean finishUpdate(bool restore){
     sinceConnCheck = 10000;
   }
   saveConfig();
-  if(unitState < 6) unitState = 5;
+  //if(unitState < 6) unitState = 5; //what?
   delay(500);
   return true;
 }

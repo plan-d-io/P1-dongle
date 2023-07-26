@@ -9,12 +9,14 @@ void setupMqtt() {
     mqttclientSecure.setClient(*client);
     if(_upload_throttle > 0){
       mqttclientSecure.setKeepAlive(_upload_throttle +1).setSocketTimeout(_upload_throttle +1);
+      mqttclientSecure.setBufferSize(1024);
     }
   }
   else {
     mqttclient.setClient(wificlient);
     if(_upload_throttle > 0){
       mqttclient.setKeepAlive(_upload_throttle +1).setSocketTimeout(_upload_throttle +1);
+      mqttclient.setBufferSize(1024);
     }
   }
   /*Set broker location*/
@@ -171,13 +173,19 @@ bool pubMqtt(String topic, String payload, boolean retain){
   if(_mqtt_en && !mqttClientError && !mqttHostError){
     if(_mqtt_tls && !clientSecureBusy){
       if(mqttclientSecure.connected()){
-        if(mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain)) pushed = true;
+        if(mqttclientSecure.publish(topic.c_str(), payload.c_str(), retain)){
+          mqttPushFails = 0;
+          pushed = true;
+        }
         else mqttPushFails++;
       }
     }
     else{
       if(mqttclient.connected()){
-        if(mqttclient.publish(topic.c_str(), payload.c_str(), retain)) pushed = true;
+        if(mqttclient.publish(topic.c_str(), payload.c_str(), retain)){
+          mqttPushFails = 0;
+          pushed = true;
+        }
         else mqttPushFails++;
       }
     }

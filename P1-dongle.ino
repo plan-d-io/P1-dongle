@@ -42,11 +42,11 @@ bool extendedTelegramDebug = false;
 bool ha_metercreated;
 unsigned int mqttPushCount, mqttPushFails;
 
-int telegramCount;
+bool telegramInit;
 
 time_t meterTimestamp;
 
-float totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, volt1, volt2, volt3, avgDem, maxDemM;
+float totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, totWatCon, totHeatCon, volt1, volt2, volt3, avgDem, maxDemM;
 String mbusTempKey = "0-1:24.2.1";
 
 struct mbusMeterType {
@@ -93,7 +93,7 @@ elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload
 //LED state machine vars
 
 //General housekeeping vars
-unsigned int reconncount, remotehostcount;
+unsigned int reconncount, remotehostcount, telegramCount;
 String resetReason;
 float freeHeap, minFreeHeap, maxAllocHeap;
 String ssidList;
@@ -103,7 +103,7 @@ bool rebootReq, rebootInit;
 bool mqttHostError = true;
 bool mqttClientError = true;
 
-bool wifiError, mqttWasConnected, httpsError, meterError, eidError, wifiSave, wifiScan, debugInfo, timeconfigured;
+bool wifiError, mqttWasConnected, mqttPushed, httpsError, meterError, eidError, wifiSave, wifiScan, debugInfo, timeconfigured;
 bool haDiscovered = false;
 
 boolean timeSet, spiffsMounted;
@@ -150,6 +150,7 @@ void setup(){
   sinceConnCheck = 60000;
   sinceMeterCheck = 0;
   _upload_throttle = 10;
+  sinceLastUpload = _upload_throttle*1000;
 }
 
 void loop(){

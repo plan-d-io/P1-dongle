@@ -55,7 +55,7 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
     Serial.print(" ");
     serializeJson(doc, Serial);
   }
-  delay(100);
+  if(mqttPushCount < 4) delay(100);
 }
 
 void haEraseDevice(){
@@ -197,7 +197,6 @@ void hadebugDevice(bool eraseMeter){
         Serial.print("Erasing ");
         Serial.println(configTopic);
       }
-      delay(100);
     }
     serializeJson(doc, jsonOutput);
     if(!eraseMeter){
@@ -210,8 +209,8 @@ void hadebugDevice(bool eraseMeter){
           Serial.print(" ");
           serializeJson(doc, Serial);
         }
-        delay(100);
       }
     }
+    if(mqttPushCount < 4) delay(100);
   }
 }

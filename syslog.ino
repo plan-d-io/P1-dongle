@@ -11,7 +11,7 @@ void syslog(String msg, int level){
   else logmsg = logmsg + "MISC: ";
   logmsg = logmsg + msg;
   Serial.println(logmsg);
-  if(_mqtt_en){
+  if(_mqtt_en && !mqttClientError && !mqttHostError){
     DynamicJsonDocument doc(1024);
     doc["friendly_name"] = "System log";
     doc["value"] = logmsg;

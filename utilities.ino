@@ -71,6 +71,16 @@ void initSPIFFS(){
     file.close();
   }
   syslog("----------------------------", 1);
+  if(spiffsMounted){
+    _reinit_spiffs = false;
+    saveConfig();
+  }
+  else if(!_reinit_spiffs && !spiffsMounted){ //if SPIFFS couldn't be mounted, try a restart first
+    _reinit_spiffs = true;
+    saveConfig();
+    delay(500);
+    ESP.restart();
+  }
 }
 
 void initWifi(){
@@ -216,6 +226,7 @@ void checkConnection(){
     if(_mqtt_en){
       if(mqttPushFails > 10){
         mqttClientError = true;
+        syslog("Could not perform MQTT push", 3);
         mqttPushFails = 0;
       }
       if(mqttHostError) setupMqtt();
