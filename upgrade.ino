@@ -82,7 +82,7 @@ boolean startUpdate(){
               bool canBegin = Update.begin(contentLength);
               // If yes, begin
               if (canBegin) {
-                unitState = 0;
+                unitState = -1;
                 blinkLed();
                 syslog("Beginning firmware upgrade. This may take 2 - 5 mins to complete. Things might be quiet for a while.. Patience!", 2);
                 // No activity would appear on the Serial monitor
@@ -131,20 +131,20 @@ boolean startUpdate(){
             else{
               syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
               update_start = false;
-              unitState = 4;
+              if(unitState < 6) unitState = 5;
             }
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
             update_start = false;
-            unitState = 4;
+            if(unitState < 6) unitState = 5;
           }
           https.end(); 
         } 
         else {
           Serial.print("Unable to connect");
           update_start = false;
-          unitState = 4;
+          if(unitState < 6) unitState = 5;
         }
       }
       client->stop();
@@ -158,7 +158,7 @@ boolean startUpdate(){
     else{
       syslog("No firmware upgrade available", 0);
       update_start = false;
-      unitState = 4;
+      if(unitState < 5) unitState = 4;
       return false;
     }
     update_start = false;
@@ -205,7 +205,7 @@ boolean finishUpdate(bool restore){
       unsigned long eof = payload.lastIndexOf('\n');
       if(eof > 0){
         syslog("Downloading static files", 2);
-        unitState = 0;
+        unitState = -1;
         blinkLed();
         unsigned long delimStart = 0;
         unsigned long delimEnd = 0;

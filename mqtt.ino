@@ -1,5 +1,6 @@
 void setupMqtt() {
   String mqttinfo = "MQTT enabled! Will connect as " + mqtt_id;
+  mqttHostError = false;
   if (mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
   }
@@ -62,6 +63,7 @@ void setupMqtt() {
         else{
           syslog("MQTT host IP resolving failed", 3);
           mqttHostError = true;
+          if(unitState < 6) unitState = 5;
         } 
       }
       else{
@@ -88,6 +90,7 @@ void connectMqtt() {
         disconnected = true;
         if(mqttWasConnected){
           if(!mqttPaused) syslog("Lost connection to secure MQTT broker", 2);
+          if(unitState < 6) unitState = 5;
         }
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
@@ -96,7 +99,7 @@ void connectMqtt() {
           if (mqtt_auth) mqttclientSecure.connect(mqtt_id.c_str(), mqtt_user.c_str(), mqtt_pass.c_str(), mqtt_topic.c_str(), 1, true, "offline");
           else mqttclientSecure.connect(mqtt_id.c_str());
           mqttretry++;
-          reconncount++;
+          remotehostcount++;
           delay(250);
         }
         Serial.println("");
@@ -107,7 +110,10 @@ void connectMqtt() {
         disconnected = true;
         if(mqttWasConnected){
           //reconncount++;
-          if(!mqttPaused) syslog("Lost connection to MQTT broker", 2);
+          if(!mqttPaused){
+            syslog("Lost connection to MQTT broker", 2);
+            if(unitState < 6) unitState = 5;
+          }
         }
         syslog("Trying to connect to MQTT broker", 0);
         while(!mqttclient.connected() && mqttretry < 2){
@@ -125,6 +131,7 @@ void connectMqtt() {
     if(disconnected){
       if(mqttretry < 2){
         syslog("Connected to MQTT broker", 1);
+        if(unitState < 5) unitState = 4;
         if(mqttPaused) mqttPaused = false;
         if(mqtt_tls){
           mqttclientSecure.publish("data/devices/utility_meter", "online", true);
@@ -141,6 +148,7 @@ void connectMqtt() {
       else{
         syslog("Failed to connect to MQTT broker", 3);
         mqttClientError = true;
+        if(unitState < 6) unitState = 5;
       }
     }
   }

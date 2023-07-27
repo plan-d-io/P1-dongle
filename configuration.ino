@@ -29,6 +29,7 @@ boolean restoreConfig() {
   dsmrVersion = preferences.getUInt("DM_DSMRV");
   trigger_interval = preferences.getUInt("TRG_INT");
   trigger_type = preferences.getUInt("TRG_TYPE");
+  reinit_spiffs = preferences.getBool("RINT_SPIFFS");
   pls_en = preferences.getBool("PLS_EN");
   pls_mind1 = preferences.getInt("PLS_MIND1");
   pls_mind2 = preferences.getInt("PLS_MIND2");
@@ -114,6 +115,7 @@ boolean saveConfig() {
   preferences.putUInt("DM_DSMRV", dsmrVersion);
   preferences.putUInt("TRG_INT", trigger_interval);
   preferences.putUInt("TRG_TYPE", trigger_type);
+  preferences.putBool("RINT_SPIFFS", reinit_spiffs);
   if (dmAvDem == "1") preferences.putBool("DM_AVDEM", true);
   else preferences.putBool("DM_AVDEM", false);
   if (dmMaxDemM == "1") preferences.putBool("DM_MAXDEMM", true);
