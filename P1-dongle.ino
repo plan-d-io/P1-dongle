@@ -19,7 +19,7 @@
   #include <elapsedMillis.h>
   #include "ledControl.h"
   
-  unsigned int fw_ver = 106;
+  unsigned int fw_ver = 107;
   unsigned int onlineVersion, fw_new;
   DNSServer dnsServer;
   AsyncWebServer server(80);
@@ -164,6 +164,7 @@
   }
   
   void loop(){
+
     blinkLed();
     if(mqtt_tls){
       mqttclientSecure.loop();
@@ -220,14 +221,6 @@
     }
     else{
       if(!bundleLoaded) restoreSPIFFS();
-      /*Re.alto: upload aggregate readings*/
-      if(mqtt_en){
-        if(sinceLastUpload >= upload_throttle * 1000){
-          //Serial.println(jsonOutputReadings);
-          sinceLastUpload = 0;
-        }
-      }
-      /*Re.alto end*/
       if(update_autoCheck && sinceUpdateCheck >= 86400000){
         updateAvailable = checkUpdate();
         if(updateAvailable) startUpdate();
