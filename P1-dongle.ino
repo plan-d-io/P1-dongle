@@ -19,7 +19,7 @@
   #include <elapsedMillis.h>
   #include "ledControl.h"
   
-  unsigned int fw_ver = 107;
+  unsigned int fw_ver = 108;
   unsigned int onlineVersion, fw_new;
   DNSServer dnsServer;
   AsyncWebServer server(80);
