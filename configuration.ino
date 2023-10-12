@@ -32,6 +32,12 @@ boolean restoreConfig(){
     else *configPass[i].var = configPass[i].defaultValue;
   }
   preferences.end();
+  /*Temp bootstrap for pre-V2.0 compatibility*/
+  if(_dev_fleet) _rel_chan = "develop";
+  else if(_alpha_fleet) _rel_chan = "alpha";
+  else if(_v2_fleet) _rel_chan = "V2";
+  else _rel_chan = "main";
+  /*End temp bootstrap*/
   return true;
 }
 
@@ -40,6 +46,28 @@ boolean saveConfig(){
    * using its configured key name. If the key,value pair is already present, it will be overwritten, if not, it will be created.
    * Close the NVS when done.
    */
+  /*Temp bootstrap for pre-V2.0 compatibility*/
+  if(_rel_chan == "develop") {
+    _dev_fleet = true;
+    _alpha_fleet = false;
+    _v2_fleet = false;
+  }
+  else if(_rel_chan == "alpha"){
+    _alpha_fleet= true;
+    _dev_fleet = false;
+    _v2_fleet = false;
+  }
+  else if(_rel_chan == "V2"){
+    _v2_fleet = true;
+    _alpha_fleet = false;
+    _dev_fleet = false;
+  }
+  else if(_rel_chan == "main"){
+    _v2_fleet = false;
+    _alpha_fleet = false;
+    _dev_fleet = false;
+  }
+  /*End temp bootstrap*/
   preferences.begin("cofy-config", false);
   for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
     preferences.putBool(configBool[i].configName.c_str(), *configBool[i].var);
@@ -75,18 +103,29 @@ boolean resetConfig() {
   /*Erase the wifi configuration and put the dongle back into AP mode on next boot, 
    * or completely erase the NVS to perform a factory reset.
    */
-  preferences.begin("cofy-config", false);
   if(resetWifi){
+    syslog("WiFi credentials reset by user", 2);
+    saveResetReason("Rebooting for WiFi reset");
+    if(saveConfig()){
+      delay(200);
+    }
+    preferences.begin("cofy-config", false);
     preferences.remove("WIFI_SSID");
     preferences.remove("WIFI_PASSWD");
     preferences.remove("WIFI_STA");
-    preferences.putString("LAST_RESET", "<timestamp>Restarting for config reset");
   }
   else if(factoryReset){
+    syslog("Factory reset by user", 2);
+    saveResetReason("Rebooting for factory reset");
+    if(saveConfig()){
+      delay(200);
+    }
     preferences.clear();
   }
   preferences.end();
-  return true;
+  delay(200);
+  rebootInit = true;
+  return rebootInit;
 }
 
 bool findInConfig(String param, int &varType, int &varNum){
@@ -156,64 +195,79 @@ bool findInConfig(String param, int &varType, int &varNum){
   return found;
 }
 
-String returnConfigVar(String varName, int varType, int varNum, bool returnExtended){
+String returnConfigVar(String varName, int varType, int varNum, int level){
   /*Return a specific configuration variable based on its type (varType) and location (varNum) within its specific data type store.
    * The variable is encapsulated in a JSON string, to be used as a response to the HTTP API or MQTT reply.
-   * It's possible to add custom JSON fields to the response, see webHelp.h
+   * The level of verbosity can be set with level:
+   * 0: minimal (only key:value)
+   * 1: standard
+   * 2: extended with additional JSON fields, see webHelp.h
    */
   String jsonOutput;
   DynamicJsonDocument doc(1024);
-  JsonObject configVar  = doc.createNestedObject(varName);
-  if(varType == 0){
-    configVar["varName"] = configBool[varNum].varName;
-    configVar["type"] = "bool";
-    configVar["value"] = *configBool[varNum].var;
-    configVar["defaultValue"] = configBool[varNum].defaultValue;
+  if(level == 0){
+    if(varType == 0) doc[varName] = *configBool[varNum].var;
+    if(varType == 1) doc[varName] = *configInt[varNum].var;
+    if(varType == 2) doc[varName] = *configUInt[varNum].var;
+    if(varType == 3) doc[varName] = *configULong[varNum].var;
+    if(varType == 4) doc[varName] = *configString[varNum].var;
+    if(varType == 5) doc[varName] = *configPass[varNum].var;
+    serializeJson(doc, jsonOutput);
   }
-  else if(varType == 1){
-    configVar["varName"] = configInt[varNum].varName;
-    configVar["type"] = "int32";
-    configVar["value"] = *configInt[varNum].var;
-    configVar["defaultValue"] = configInt[varNum].defaultValue;
-  }
-  else if(varType == 2){
-    configVar["varName"] = configUInt[varNum].varName;
-    configVar["type"] = "uint32";
-    configVar["value"] = *configUInt[varNum].var;
-    configVar["defaultValue"] = configUInt[varNum].defaultValue;
-  }
-  else if(varType == 3){
-    configVar["varName"] = configULong[varNum].varName;
-    configVar["type"] = "uint64";
-    configVar["value"] = *configULong[varNum].var;
-    configVar["defaultValue"] = configULong[varNum].defaultValue;
-  }
-  else if(varType == 4){
-    configVar["varName"] = configString[varNum].varName;
-    configVar["type"] = "string";
-    configVar["value"] = *configString[varNum].var;
-    configVar["defaultValue"] = configString[varNum].defaultValue;
-  }
-  else if(varType == 5){
-    /*Passwords do not display values in the JSON response*/
-    configVar["varName"] = configPass[varNum].varName;
-    configVar["type"] = "password";
-  }
-  serializeJson(doc, jsonOutput);
-  if(returnExtended){
-    /*Add additional JSON fields through  addJson[] matrix in webHelp.h*/
-    for(int i = 0; i < sizeof(addJson)/sizeof(addJson[0]); i++){
-      if(addJson[i][0] == varName){
-        DynamicJsonDocument addJsonFields(256);
-        if(deserializeJson(addJsonFields, addJson[i][1].c_str())){
-          jsonOutput = jsonOutput.substring(0, jsonOutput.length()-2);
-          jsonOutput += ",";
-          jsonOutput += addJson[i][1].substring(1);
-          jsonOutput += "}";
+  else{
+    JsonObject configVar  = doc.createNestedObject(varName);
+    if(varType == 0){
+      configVar["varName"] = configBool[varNum].varName;
+      configVar["type"] = "bool";
+      configVar["value"] = *configBool[varNum].var;
+      configVar["defaultValue"] = configBool[varNum].defaultValue;
+    }
+    else if(varType == 1){
+      configVar["varName"] = configInt[varNum].varName;
+      configVar["type"] = "int32";
+      configVar["value"] = *configInt[varNum].var;
+      configVar["defaultValue"] = configInt[varNum].defaultValue;
+    }
+    else if(varType == 2){
+      configVar["varName"] = configUInt[varNum].varName;
+      configVar["type"] = "uint32";
+      configVar["value"] = *configUInt[varNum].var;
+      configVar["defaultValue"] = configUInt[varNum].defaultValue;
+    }
+    else if(varType == 3){
+      configVar["varName"] = configULong[varNum].varName;
+      configVar["type"] = "uint64";
+      configVar["value"] = *configULong[varNum].var;
+      configVar["defaultValue"] = configULong[varNum].defaultValue;
+    }
+    else if(varType == 4){
+      configVar["varName"] = configString[varNum].varName;
+      configVar["type"] = "string";
+      configVar["value"] = *configString[varNum].var;
+      configVar["defaultValue"] = configString[varNum].defaultValue;
+    }
+    else if(varType == 5){
+      configVar["varName"] = configPass[varNum].varName;
+      configVar["type"] = "password";
+      configVar["value"] = *configPass[varNum].var;
+    }
+    serializeJson(doc, jsonOutput);
+    if(level == 2){
+      /*Add additional JSON fields through  addJson[] matrix in webHelp.h*/
+      for(int i = 0; i < sizeof(addJson)/sizeof(addJson[0]); i++){
+        if(addJson[i][0] == varName){
+          DynamicJsonDocument addJsonFields(256);
+          if(deserializeJson(addJsonFields, addJson[i][1].c_str())){
+            jsonOutput = jsonOutput.substring(0, jsonOutput.length()-2);
+            jsonOutput += ",";
+            jsonOutput += addJson[i][1].substring(1);
+            jsonOutput += "}";
+          }
         }
       }
     }
   }
+
   return jsonOutput;
 }
 
@@ -267,7 +321,7 @@ boolean storeConfigVar(String keyValue, int varType, int varNum){
 }
 
 
-boolean processConfigJson(String jsonString, String &response, bool updateConfig){
+boolean processConfigJson(String jsonString, String &configResponse, bool updateConfig){
   /*Process a JSON string containing configuration variables coming in through the HTTP API or MQTT, 
    * and prepare a JSON response reflecting the updated value of the configuration variables.
    * The JSON string should be formatted as {"NVS key name":value}. You can chain multiple configuration variables in one string.
@@ -290,10 +344,16 @@ boolean processConfigJson(String jsonString, String &response, bool updateConfig
        */
       int retVarType, retVarNum;
       if(findInConfig(keyValue.key().c_str(), retVarType, retVarNum)){
+        log_v("Found %s in config", keyValue.key().c_str());
         if(updateConfig){
           /*If updateConfig is false, just return the current value of the key. If true, update the value.
            * ArduinoJSON type detection is used to doublecheck the validity of the new configuration value.
            */
+          if( strcmp(keyValue.key().c_str(), "WIFI_PASSWD" ) == 0 && strlen(keyValue.value().as<char*>()) == 0) {
+            log_v("Empty value for %s, skipping", keyValue.key().c_str());
+            continue;
+          }
+          log_v("Storing config %s: %s", keyValue.key().c_str(), keyValue.value().as<char*>());
           if(retVarType == 0){
             if (keyValue.value().is<bool>()){
               bool testVar = keyValue.value().as<bool>();
@@ -331,49 +391,58 @@ boolean processConfigJson(String jsonString, String &response, bool updateConfig
             }
           }
           saveConfig();
+          infoMsg = "Please reboot the dongle to have changes take effect";
         }
         /*Build a JSON response containing the new value for every updated key, concatenate if there are multiple*/
-        foundInConfig = returnConfigVar(keyValue.key().c_str(), retVarType, retVarNum, false);
+        foundInConfig = returnConfigVar(keyValue.key().c_str(), retVarType, retVarNum, 1);
         if(foundInConfig != ""){
-          response += foundInConfig.substring(1, foundInConfig.length()-1);
-          response += ",";
+          configResponse += foundInConfig.substring(1, foundInConfig.length()-1);
+          configResponse += ",";
         }
       }
     }
     /*Tidy up the concatenation. The response is passed by reference.*/
-    if(response != ""){
-      response = response.substring(0, response.length()-1);
-      response = "{" + response;
-      response += "}";
+    if(configResponse != ""){
+      configResponse = configResponse.substring(0, configResponse.length()-1);
+      configResponse = "{" + configResponse;
+      configResponse += "}";
     }
   }
+  else Serial.println("nope");
   return isJson;
 }
 
 boolean processConfigString(String confString, String &response, bool updateConfig){
   /*Process a string containing configuration variables coming in through the HTTP API (or MQTT), 
    * and prepare a JSON response reflecting the updated value of the configuration variables.
-   * The string should be formatted as WIFI_STA=true&WIFI_SSID=test
+   * The string should be formatted as WIFI_STA=true\r\nWIFI_SSID=test
    * This function is mainly intended for HTTP forms returning input data over POST.
     */
   String foundInConfig;
   int prevsep, separator;
   while(separator > -1){
-    separator = confString.indexOf('&');
+    separator = confString.indexOf('\n');
     /*Extract individual key=value pairs*/
     String subString = confString.substring(0, separator);
+    subString = subString.substring(0, separator);
     if(subString != ""){
       /*Split each pair into its key name and key value*/
       int kvsep = subString.indexOf('=');
       String key = subString.substring(0, kvsep);
-      String keyValue = subString.substring(kvsep+1);
+      if(key == "WIFI_NW") key = "WIFI_SSID"; //temp fix for a bug in the ESPasyncWebserver library
+      String keyValue;
+      int sepr = subString.indexOf('\r');
+      if(sepr > 0){
+        keyValue = subString.substring(kvsep+1, sepr);
+      }
+      else keyValue = subString.substring(kvsep+1);
       int retVarType, retVarNum;
-      if(findInConfig(key, retVarType, retVarNum)){
+      if(findInConfig(key.c_str(), retVarType, retVarNum)){
         /*check if the key name exists in one of the data stores through findInConfig()*/
         if(updateConfig){
           storeConfigVar(keyValue.c_str(), retVarType, retVarNum);
         }
-        foundInConfig = returnConfigVar(key, retVarType, retVarNum, false);
+        foundInConfig = returnConfigVar(key, retVarType, retVarNum, 1);
         if(foundInConfig != ""){
           response += foundInConfig.substring(1, foundInConfig.length()-1);
           response += ",";
@@ -433,8 +502,18 @@ boolean isNumeric(String &varValue, long &longValue, unsigned long &ulongValue, 
 
 String returnConfig(){
   /*Return the entire NVS configuration as one single JSON string*/
+  //syslog("Compiling config", 1);
+  Serial.println("Compiling config");
   String jsonOutput;
-  DynamicJsonDocument doc(4096);
+  DynamicJsonDocument doc(5120);
+  JsonObject hostVar  = doc.createNestedObject("HOSTNAME");
+  hostVar["varName"] = "Dongle hostname";
+  hostVar["type"] = "string";
+  hostVar["value"] = String(apSSID);
+  JsonObject fwVar  = doc.createNestedObject("FW_VER");
+  fwVar["varName"] = "Firmware version";
+  fwVar["type"] = "numeric";
+  fwVar["value"] = round2(fw_ver/100.0);
   for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
     JsonObject configVar  = doc.createNestedObject(configBool[i].configName);
     configVar["varName"] = configBool[i].varName;
@@ -470,12 +549,41 @@ String returnConfig(){
     configVar["value"] = *configString[i].var;
     configVar["defaultValue"] = configString[i].defaultValue;
   }
+  /*Passwords and sensitive data (e.g. GDPR stuff) are not included in the config file, only an indication if the data is present.
+   * These data can still be accessed directly.
+   */
   for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
     JsonObject configVar  = doc.createNestedObject(configPass[i].configName);
     configVar["varName"] = configPass[i].varName;
     configVar["type"] = "password";
-    if(*configString[i].var != "") configVar["filled"] = true;
+    if(*configPass[i].var != "") configVar["filled"] = true;
   }
   serializeJson(doc, jsonOutput);
   return jsonOutput;
+}
+
+String returnBasicConfig(){
+  /*Return a JSON string containing some basic config settings, useful to send over MQTT*/
+  String basicParameters[] = {"REL_CHAN", "reboots", "UPD_AUTO", "UPD_AUTOCHK", "RLT_EN", "RLT_THROTTLE", "EMAIL", "WIFI_SSID", "MQTT_HOST", "MQTT_PORT", "MQTT_ID", "MQTT_USER", "MQTT_PFIX"};
+  String response = "{\"HOSTNAME\":\"" + String(apSSID) + "\",";
+  response += "\"FW_VER\":\"" + String(round2(fw_ver/100.0)) + "\",";
+  for(int i = 0; i < sizeof(basicParameters)/sizeof(basicParameters[0]); i++){
+    String foundInConfig;
+    int retVarType, retVarNum;
+    /*Check if the NVS key name exists*/ 
+    if(findInConfig(basicParameters[i], retVarType, retVarNum)){
+      /*Build a JSON response containing the new value for every updated key, concatenate if there are multiple*/
+      foundInConfig = returnConfigVar(basicParameters[i], retVarType, retVarNum, 0);
+      if(foundInConfig != ""){
+        response += foundInConfig.substring(1, foundInConfig.length()-1);
+        response += ",";
+      }
+    }
+  }
+  /*Tidy up the concatenation*/
+  if(response != ""){
+    response = response.substring(0, response.length()-1);
+    response += "}";
+  }
+  return response;
 }

@@ -29,7 +29,7 @@ void getHeapDebug(){
 void pushDebugValues(){
   time_t now;
   unsigned long dtimestamp = time(&now);
-  for(int i = 0; i < 9; i++){
+  for(int i = 0; i < 11; i++){
     String chanName = "";
     String dtopic = "";
     DynamicJsonDocument doc(1024);
@@ -83,10 +83,21 @@ void pushDebugValues(){
       else if(_dev_fleet) doc["value"] = "development";
       else doc["value"] = "main";
     }
+    else if(i == 9){
+      chanName = "email";
+      doc["friendly_name"] = "Email";
+      doc["value"] = _user_email;
+    }
+    else if(i == 10){
+      chanName = "rssi";
+      doc["friendly_name"] = "RSSI";
+      doc["value"] = wifiRSSI;
+    }
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;
     doc["timestamp"] = dtimestamp;
-    dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
+    if(_realto_en) dtopic = _mqtt_prefix + "sys/" + chanName;
+    else dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
     String jsonOutput;
     serializeJson(doc, jsonOutput);
     if(_mqtt_en){

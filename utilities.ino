@@ -1,32 +1,31 @@
 boolean scanWifi(){
+  /*Scan all WiFi networks in range and compile their SSIDs into a JSON array*/
   syslog("Performing wifi scan", 0);
-  int16_t n = WiFi.scanNetworks();
-  String savedSSID = _wifi_ssid;
   boolean foundSavedSSID = false;
-  String buildSSIDlist = "";
+  int16_t n = WiFi.scanNetworks();
+  /*Check if the previously saved SSID is detected.*/
   for (int i = 0; i < n; ++i) {
-    if(WiFi.SSID(i) != savedSSID){
-      buildSSIDlist += "<option value=\"";
-      buildSSIDlist += WiFi.SSID(i);
-      buildSSIDlist += "\">";
-      buildSSIDlist += WiFi.SSID(i);
-      buildSSIDlist += "</option>";
-    }
-    else{
+    if(WiFi.SSID(i) = _wifi_ssid){
       foundSavedSSID = true;
     }
   }
-  buildSSIDlist += "</select>";  
-  ssidList = "<select name=\"ssid\">";
+  DynamicJsonDocument doc(1024);
+  JsonArray data = doc.createNestedArray("SSIDlist");
+  int offset = 0;
+  /*If the previously saved SSID is present, put it first in the JSON array so the webmin HTML selects this SSID as the default option to display in the dropdown selection*/
   if(foundSavedSSID){
-    ssidList += "<option value=\"";
-    ssidList += savedSSID;
-    ssidList += "\">";
-    ssidList += savedSSID;
-    ssidList += "</option>";
+    data[0]["SSID"] = _wifi_ssid;
+    offset = 1;
   }
-  ssidList += buildSSIDlist;
+  for (int i = 0; i < n; ++i) {
+    if(WiFi.SSID(i) != _wifi_ssid){
+      data[offset]["SSID"] = WiFi.SSID(i);
+      offset++;
+    }
+  }
+  serializeJson(doc, ssidList);
   wifiScan = false;
+  WiFi.scanDelete();
   return foundSavedSSID;
 }
 
@@ -34,14 +33,17 @@ String getHostname(){
   WiFi.macAddress(mac);
   char macbuf[] = "00000";
   String macbufs = "";
+  macbufs += String(mac[3], HEX);
   macbufs += String(mac[4], HEX);
   macbufs += String(mac[5], HEX);
   macbufs.toUpperCase();
-  macbufs.toCharArray(macbuf, 5);
-  apSSID[4] = macbuf[0];
-  apSSID[5] = macbuf[1];
-  apSSID[6] = macbuf[2];
-  apSSID[7] = macbuf[3];
+  macbufs.toCharArray(macbuf, 7);
+  apSSID[2] = macbuf[0];
+  apSSID[3] = macbuf[1];
+  apSSID[4] = macbuf[2];
+  apSSID[5] = macbuf[3];
+  apSSID[6] = macbuf[4];
+  apSSID[7] = macbuf[5];
   return macbufs;
 }
 
@@ -63,20 +65,21 @@ void initSPIFFS(){
     }
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
-    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt")){
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt")){
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
     else spiffsMounted = true;
     file.close();
   }
-  syslog("----------------------------", 1);
+  syslog("----------------------------", 0);
   if(spiffsMounted){
     _reinit_spiffs = false;
     saveConfig();
   }
   else if(!_reinit_spiffs && !spiffsMounted){ //if SPIFFS couldn't be mounted, try a restart first
     _reinit_spiffs = true;
+    saveResetReason("Rebooting to retry SPIFFS access");
     saveConfig();
     delay(500);
     ESP.restart();
@@ -84,6 +87,7 @@ void initSPIFFS(){
 }
 
 void initWifi(){
+  scanWifi();
   if(_wifi_STA){
     syslog("WiFi mode: station", 1);
     WiFi.mode(WIFI_STA);
@@ -101,32 +105,39 @@ void initWifi(){
       MDNS.begin("p1dongle");
       if(spiffsMounted) unitState = 4;
       else unitState = 7;
+      /*Add WiFi events to immediately detect WiFi changes*/
+      WiFi.onEvent(WiFiEvent, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_LOST_IP);
+      WiFi.onEvent(WiFiEvent, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE);
+      WiFi.onEvent(WiFiEvent, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+      /*Advertise over mDNS this dongle can be accessed at port 80*/
       MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
       printLocalTime(true);
       if(client){
         syslog("Setting up TLS/SSL client", 0);
-        client->setUseCertBundle(true);
+        //client->setCACertBundle(true);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
+        File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
         if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 3);
+            //client->setCACertBundle(false);
             bundleLoaded = false;
             unitState = 7;
         }
         // Load loadCertBundle into WiFiClientSecure
-        if(file && file.size() > 0) {
-            if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 3);
-                bundleLoaded = false;
-                unitState = 7;
-            }
+        else {
+                size_t fileSize = file.size();
+                uint8_t *certData = new uint8_t[fileSize];
+                file.read(certData, fileSize);
+                client->setCACertBundle(certData);
+                //delete[] certData;
         }
         file.close();
       } 
       else {
         syslog("Unable to create SSL client", 2);
+        //client->setCACertBundle(false);
         unitState = 7;
         httpsError = true;
       }
@@ -203,49 +214,69 @@ void setClock(boolean firstSync)
   }
 }
 
+void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info){
+  /*If a change in WiFi happens, skip immediately to checking the connection*/
+  Serial.println("Disconnected from WiFi access point");
+  Serial.print("WiFi lost connection. Reason: ");
+  Serial.println(info.wifi_sta_disconnected.reason);
+  sinceConnCheck = 60000;
+}
+
 void checkConnection(){
   if(WiFi.status() != WL_CONNECTED){
     syslog("Lost WiFi connection, trying to reconnect", 2);
     WiFi.disconnect();
+    wifiError = true;
+    mqttClientError = true;
     elapsedMillis restartAttemptTime;
     while (WiFi.status() != WL_CONNECTED && restartAttemptTime < 20000) {
-      WiFi.reconnect();
+      WiFi.begin(_wifi_ssid.c_str(), _wifi_password.c_str());
     }
     if(restartAttemptTime >= 20000) {
       syslog("Wifi reconnection failed! Trying again in a minute", 3);
       reconncount++;
-      wifiError = true;
     }
   }
   if(wifiError && WiFi.status() == WL_CONNECTED){
     wifiError = false;
     syslog("Reconnected to the WiFi network", 0);
-    if(!_mqtt_en) reconncount = 0;
+    reconncount = 0;
   }
   if(WiFi.status() == WL_CONNECTED){
-    if(_mqtt_en){
-      if(mqttPushFails > 10){
+    wifiRSSI = WiFi.RSSI();
+    if(_mqtt_en && !mqttPaused){
+      if(mqttPushFails > 5){
         mqttClientError = true;
-        syslog("Could not perform MQTT push", 3);
+        syslog("MQTT client connection failed", 4);
         mqttPushFails = 0;
+        reconncount++;
       }
       if(mqttHostError) setupMqtt();
-      if(mqttClientError) connectMqtt();
+      else connectMqtt();
     }
   }
 }
 
 void setReboot(){
   sinceConnCheck = 0;
-  syslog("Removing Home Assistant entities", 0);
+  //syslog("Removing Home Assistant entities", 0);
   //haAutoDiscovery(3); CHECKTHIS
-  syslog("Saving configuration", 0);
+  //syslog("Saving configuration", 0);
   saveConfig();
-  preferences.end();
+  //preferences.end();
   SPIFFS.end();
   rebootInit = true;
   sinceRebootCheck = 0;
   syslog("Rebooting", 2);
+}
+
+void forcedReset(){
+// use the watchdog timer to do a hard restart
+// It sets the wdt to 1 second, adds the current process and then starts an
+// infinite loop.
+  esp_task_wdt_init(1, true);
+  esp_task_wdt_add(NULL);
+  while(true);  // wait for watchdog timer to be triggered
 }
 
 double round2(double value) {
@@ -315,9 +346,11 @@ bool renameFile(fs::FS &fs, const char * path1, const char * path2){
     }
 }
 
-void deleteFile(fs::FS &fs, const char * path){
+bool deleteFile(fs::FS &fs, const char * path){
     if(fs.remove(path)){
+      return true;
     } else {
+      return false;
     }
 }
 

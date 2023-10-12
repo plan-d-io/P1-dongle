@@ -32,15 +32,6 @@ const char* github_root_ca= \
 
 void restoreSPIFFS(){
   listDir(SPIFFS, "/", 0);
-  /*Reformat the SPIFFS*/
-  syslog("Formatting", 0);
-  bool formatted = SPIFFS.format();
-  if(formatted){
-    syslog("Success formatting", 0);
-  }
-  else{
-    syslog("Error formatting", 3);
-  }
   /*Load the static cert into the https client*/
   if(client){
     syslog("Setting up fallback TLS/SSL client", 2);
@@ -49,54 +40,111 @@ void restoreSPIFFS(){
   else{
     syslog("Failed to setup fallback TLS/SSL client", 3);
   }
-  /*Next, store a file to SPIFFS*/
-  syslog("Downloading cert bundle", 0);
+  boolean repoOK = false;
+  syslog("Checking remote repository", 0);
   String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
   if(_dev_fleet) baseUrl += "develop";
   else if(_alpha_fleet) baseUrl += "alpha";
+  else if(_v2_fleet) baseUrl += "V2-0";
   else baseUrl += "main";
   String fileUrl = baseUrl + "/data/cert/x509_crt_bundle.bin";
   String s = "/cert/x509_crt_bundle.bin";
   Serial.println(fileUrl);
   if (https.begin(*client, fileUrl)) {
     int httpCode = https.GET();
+    Serial.println(httpCode);
     if (httpCode > 0) {
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        SPIFFS.remove(s);
-        File f = SPIFFS.open(s, FILE_WRITE);
-        long contentLength = https.getSize();
-        Serial.print("File size: ");
-        Serial.println(contentLength);
-        Serial.println("Begin download");
-        size_t written = https.writeToStream(&f);
-        if (written == contentLength) {
-          Serial.println("Written : " + String(written) + " successfully");
-        }
-        f.close();
+        syslog("Found remote TLS bundle", 0);
+        repoOK = true;
       }
       else{
         syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
       }
     } 
     else {
-      syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
+      syslog("Could not connect to repository, HTTPS code " + String(httpCode) +" " + String(https.errorToString(httpCode)), 2);
     }
     https.end();
   }
-  /*Check if the cert bundle is present*/
-  File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
-  if(file && file.size() > 0){
-    syslog("Cert bundle present on SPIFFS", 1);
+  Serial.println(fileUrl);
+  if (https.begin(*client, fileUrl)) {
+    int httpCode = https.GET();
+    Serial.println(httpCode);
+    if (httpCode > 0) {
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+        syslog("Found remote TLS bundle", 0);
+        repoOK = true;
+      }
+      else{
+        syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
+      }
+    } 
+    else {
+      syslog("Could not connect to repository, HTTPS code " + String(httpCode) +" " + String(https.errorToString(httpCode)), 2);
+    }
+    https.end();
   }
-  if(!file) {
-      syslog("Could not load cert bundle from SPIFFS", 3);
+  delay(1000);
+  if(repoOK){
+    /*Reformat the SPIFFS*/
+    syslog("Formatting", 0);
+    bool formatted = SPIFFS.format();
+    if(formatted){
+      syslog("Success formatting", 0);
+    }
+    else{
+      syslog("Error formatting", 3);
+    }
+    delay(1000);
+    /*Next, store a file to SPIFFS*/
+    syslog("Downloading cert bundle", 0);
+    Serial.println(fileUrl);
+    if (https.begin(*client, fileUrl)) {
+      int httpCode = https.GET();
+      Serial.println(httpCode);
+      if (httpCode > 0) {
+        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+          SPIFFS.remove(s);
+          File f = SPIFFS.open(s, FILE_WRITE);
+          long contentLength = https.getSize();
+          Serial.print("File size: ");
+          Serial.println(contentLength);
+          Serial.println("Begin download");
+          size_t written = https.writeToStream(&f);
+          if (written == contentLength) {
+            Serial.println("Written : " + String(written) + " successfully");
+          }
+          f.close();
+        }
+        else{
+          syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
+        }
+      } 
+      else {
+        syslog("Could not connect to repository, HTTPS code " + String(httpCode) +" " +  String(https.errorToString(httpCode)), 2);
+      }
+      https.end();
+    }
+    /*Check if the cert bundle is present*/
+    File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
+    if(file && file.size() > 0){
+      syslog("Cert bundle present on SPIFFS", 1);
+    }
+    if(!file) {
+        syslog("Could not load cert bundle from SPIFFS", 3);
+    }
+    file.close();
+    bundleLoaded = true;
+    /*Download the other static files*/
+    _restore_finish = true;
+    saveResetReason("Rebooting after SPIFFS restore");
+    saveConfig();
+    SPIFFS.end();
+    delay(500);
+    ESP.restart();
   }
-  file.close();
-  bundleLoaded = true;
-  /*Download the other static files*/
-  _restore_finish = true;
-  saveConfig();
-  SPIFFS.end();
-  delay(500);
-  ESP.restart();
+  else{
+    //probably should do something here
+  }
 }

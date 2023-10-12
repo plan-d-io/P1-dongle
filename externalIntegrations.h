@@ -1,4 +1,4 @@
-/*Add third-party, external integrations and their configuration options here*/
+/*Add third-party, external integrations configuration options here*/
 
 /* Add additional COFY field to the MQTT payload */
 static const String cofyKeys[][ 3 ] PROGMEM = {
@@ -24,6 +24,9 @@ static const String cofyKeys[][ 3 ] PROGMEM = {
 { "0-0:96.13.0", "", "gauge" }
 };
 
+/*Re.alto*/
+elapsedMillis lastRealtoUpload;
+unsigned int realtoUploadTries;
 /* Configure the keys to be included in the realto payload */
 static const String realtoKeys[] PROGMEM = {
 { "1-0:1.8.1", },
@@ -42,3 +45,4 @@ static const String realtoKeys[] PROGMEM = {
 { "1-0:71.7.0", },
 { "0-1:24.2.3", }
 };
+   

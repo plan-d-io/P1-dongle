@@ -1,5 +1,6 @@
-/*These bespoke structures are used to construct non-volatile (NVS) data storages for each data type*/
+/*In this file you can add and configure global variables stored in non-volatile (NVS) data storage*/
 
+/*The following bespoke structures are used to construct NVS data storages for each data type*/
 struct boolStore{
    String varName;
    bool* var;
@@ -53,8 +54,9 @@ bool _mqtt_en, _mqtt_tls, _mqtt_auth;
 unsigned int _mqtt_port;
 String _mqtt_host, _mqtt_id, _mqtt_user, _mqtt_pass, _mqtt_prefix;
 /*Update*/
-bool _update_auto, _update_autoCheck, _update_start, _update_finish, _dev_fleet, _alpha_fleet, _restore_finish;
+bool _update_auto, _update_autoCheck, _update_start, _update_finish, _dev_fleet, _alpha_fleet, _v2_fleet, _restore_finish;
 unsigned long _fw_new;
+String _rel_chan;
 /*Debug*/
 bool _reinit_spiffs;
 unsigned int _bootcount;
@@ -66,8 +68,11 @@ unsigned int _mbus_pushlist, _trigger_interval, _trigger_type;
 int _payload_format;
 /*External services*/
 bool _ha_en, _eid_en, _realto_en;
+String _ha_device;
+unsigned long _realtoThrottle;
 /*Placeholder vars*/
 float _tempFloat;
+String _tempString;
 
 /*The configuration data stores for every data type.
  * Format: { "User-readable name", global variable name (reference), "NVS key name", default value }
@@ -85,6 +90,7 @@ static const boolStore configBool[] PROGMEM = {
   {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false},
   {"Dev fleet", &_dev_fleet, "BETA_FLT", false},
   {"Alpha fleet", &_alpha_fleet, "ALPHA_FLT", false},
+  {"V2 fleet", &_v2_fleet, "V2_FLT", false},
   {"Restore finish", &_restore_finish, "RST_FINISH", false},
   {"Home Assistant enabled", &_ha_en, "HA_EN", false},
   {"Re.alto enabled", &_realto_en, "RLT_EN", false},
@@ -105,25 +111,29 @@ static const uintStore configUInt[] PROGMEM = {
 
 static const ulongStore configULong[] PROGMEM = {
   {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 65534},
-  {"New firmware version", &_fw_new, "FW_NEW", 0},
-  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 0}
+  //{"New firmware version", &_fw_new, "FW_NEW", 0},
+  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 0},
+  {"Re.alto throttle", &_realtoThrottle, "RLT_THROTTLE", 60}
 };
 
 static const stringStore configString[] PROGMEM = {
-  {"WiFi SSID", &_wifi_ssid, "WIFI_SSID", ""}, 
+  {"WiFi network", &_wifi_ssid, "WIFI_SSID", ""},
   {"MQTT hostname", &_mqtt_host, "MQTT_HOST", "10.42.0.1"},
   {"MQTT ID", &_mqtt_id, "MQTT_ID", ""},
   {"MQTT username", &_mqtt_user, "MQTT_USER", ""},
-  {"MQTT topic prefix", &_mqtt_prefix, "MQTT_PFIX", "data/devices/utility_meter/"},
-  {"Last reset reason (firmware)", &_last_reset, "LAST_RESET", ""}
+  {"MQTT topic prefix", &_mqtt_prefix, "MQTT_PFIX", "data/devices/beta_meter/"},
+  {"HA device name", &_ha_device, "HA_DEVICE", "Beta meter"},
+  {"Last reset reason (firmware)", &_last_reset, "LAST_RESET", ""},
+  {"Release channel", &_rel_chan, "REL_CHAN", "main"},
+  {"Temp string", &_tempString, "TMP_STR", ""},
+  {"User email", &_user_email, "EMAIL", ""}
 };
 
 static const stringStore configPass[] PROGMEM = {
   /*Although also Strings, passwords get their own data store as they are never returned as plaintext (contrary to Strings)
     This store can also be used for GDPR sensitive information, e.g. user e-mails.*/
   {"WiFi password", &_wifi_password, "WIFI_PASSWD", ""},
-  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""},
-  {"User email", &_user_email, "USER_EMAIL", ""}
+  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""}
 };
 
 static const floatStore configFloat[] PROGMEM = {

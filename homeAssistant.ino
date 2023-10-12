@@ -25,7 +25,6 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
     haDiscovered = true;
   }
   DynamicJsonDocument doc(1024);
-  friendlyName = "Utility meter " + friendlyName;
   doc["name"] = friendlyName;
   if(deviceType != "") doc["device_class"] = deviceType;
   if(unit != "") doc["unit_of_measurement"] = unit;
@@ -33,20 +32,23 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
   if(deviceType == "energy" || deviceType == "gas" || deviceType == "water") doc["state_class"] = "total_increasing";
   else doc["state_class"] = "measurement";
   friendlyName.replace(" ", "_");
-  friendlyName.toLowerCase();
-  doc["unique_id"] = friendlyName;
-  doc["object_id"] = friendlyName;
+  friendlyName.toLowerCase();  
+  String deviceName = _ha_device;
+  deviceName.replace(" ", "_");
+  deviceName.toLowerCase();
+  doc["unique_id"] = deviceName + "_" + friendlyName;
+  doc["object_id"] = deviceName + "_" + friendlyName;
   doc["value_template"] = "{{ value_json.value }}";
   doc["availability_topic"] = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
   JsonObject device  = doc.createNestedObject("device");
   JsonArray identifiers = device.createNestedArray("identifiers");
-  identifiers.add("P1_utility_meter");
-  device["name"] = "Utility meter";
+  identifiers.add(deviceName);
+  device["name"] = _ha_device;
   device["model"] = "P1 dongle for DSMR compatible utility meters";
   device["manufacturer"] = "plan-d.io";
-  //device["configuration_url"] = "http://" + WiFi.localIP().toString();
+  device["configuration_url"] = "http://" + WiFi.localIP().toString();
   device["sw_version"] = String(fw_ver/100.0);
-  String configTopic = "homeassistant/sensor/" + friendlyName + "/config";
+  String configTopic = "homeassistant/sensor/" + deviceName + "_" + friendlyName + "/config";
   serializeJson(doc, jsonOutput);
   bool pushSuccess = pubMqtt(configTopic, jsonOutput, true);
   if(mqttDebug && pushSuccess){
@@ -68,17 +70,20 @@ void haEraseDevice(){
   }
   syslog("Erasing Home Assistant MQTT autodiscovery entries", 0);
   for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){ //erase all the DSMR keys
-    String tempTopic = _mqtt_prefix;
-    if(dsmrKeys[i].keyTopic == ""){
+    String tempTopic = "homeassistant/sensor/";
+    String deviceName = _ha_device;
+    deviceName += " ";
+    tempTopic += deviceName;
+    //if(dsmrKeys[i].keyTopic == ""){
       tempTopic += dsmrKeys[i].keyName;
       tempTopic.replace(" ", "_");
       tempTopic.toLowerCase();
-    }
-    else{
+    //}
+    /*else{
       tempTopic += dsmrKeys[i].keyTopic;
       tempTopic.replace(" ", "_");
       tempTopic.toLowerCase();
-    }
+    }*/
     pubMqtt(tempTopic, "", false);
     if(mqttDebug){
       Serial.print("Erasing ");
@@ -86,17 +91,20 @@ void haEraseDevice(){
     }
   }
   for(int i = 0; i < sizeof(mbusKeys)/sizeof(mbusKeys[0]); i++){  //erase all the mbus keys
-    String tempTopic = _mqtt_prefix;
-    if(mbusKeys[i].keyTopic == ""){ 
+    String tempTopic = "homeassistant/sensor/";
+    String deviceName = _ha_device;
+    deviceName += " ";
+    tempTopic += deviceName;
+    //if(mbusKeys[i].keyTopic == ""){ 
       tempTopic += mbusKeys[i].keyName;
       tempTopic.replace(" ", "_");
       tempTopic.toLowerCase();
-    }
-    else{
+    //}
+    /*else{
       tempTopic += mbusKeys[i].keyTopic;
       tempTopic.replace(" ", "_");
       tempTopic.toLowerCase();
-    }
+    }*/
     pubMqtt(tempTopic, "", false);
     if(mqttDebug){
       Serial.print("Erasing ");
@@ -116,71 +124,71 @@ void hadebugDevice(bool eraseMeter){
     DynamicJsonDocument doc(1024);
     if(i == 0){
       chanName = String(apSSID) + "_reboots";
-      doc["name"] = String(apSSID ) + " Reboots";
+      doc["name"] = "Reboots";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboots";
     }
     else if(i == 1){
       chanName = String(apSSID) + "_last_reset_reason_hw";
-      doc["name"] = String(apSSID ) + " Last reset reason (hardware)";
+      doc["name"] = "Last reset reason (hardware)";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/last_reset_reason_hw";
     }
     else if(i == 2){
       chanName = String(apSSID) + "_free_heap_size";
-      doc["name"] = String(apSSID ) + " Free heap size";
+      doc["name"] = "Free heap size";
       doc["unit_of_measurement"] = "kB";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/free_heap_size";
     }
     else if(i == 3){
       chanName = String(apSSID) + "_max_allocatable_block";
-      doc["name"] = String(apSSID ) + " Allocatable block size";
+      doc["name"] = "Allocatable block size";
       doc["unit_of_measurement"] = "kB";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/max_allocatable_block";
     }
     else if(i == 4){
       chanName = String(apSSID) + "_min_free_heap";
-      doc["name"] = String(apSSID ) + " Lowest free heap size";
+      doc["name"] = "Lowest free heap size";
       doc["unit_of_measurement"] = "kB";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/min_free_heap";
     }
     else if(i == 5){
       chanName = String(apSSID) + "_last_reset_reason_fw";
-      doc["name"] = String(apSSID ) + " Last reset reason (firmware)";
+      doc["name"] = "Last reset reason (firmware)";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/last_reset_reason_fw";
     }
     else if(i == 6){
       chanName = String(apSSID) + "_syslog";
-      doc["name"] = String(apSSID ) + " Syslog";
+      doc["name"] = "Syslog";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/syslog";
     }
     else if(i == 7){
       chanName = String(apSSID) + "_ip";
-      doc["name"] = String(apSSID ) + " IP";
+      doc["name"] = "IP";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/ip";
     }
     else if(i == 8){
       chanName = String(apSSID) + "_firmware";
-      doc["name"] = String(apSSID ) + " firmware";
+      doc["name"] = "Firmware";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/firmware";
     }
     else if(i == 9){
       chanName = String(apSSID) + "_release_channel";
-      doc["name"] = String(apSSID ) + " release channel";
+      doc["name"] = "Release channel";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/release_channel";
     }
     else if(i == 10){
       chanName = String(apSSID) + "_reboot";
-      doc["name"] = String(apSSID ) + " Reboot";
+      doc["name"] = "Reboot";
       doc["payload_on"] = "{\"value\": \"true\"}";
       doc["payload_off"] = "{\"value\": \"false\"}";
       doc["command_topic"] = "set/devices/utility_meter/reboot";
     }
     doc["unique_id"] = chanName;
     doc["object_id"] = chanName;
-    doc["availability_topic"] = "data/devices/utility_meter";
+    doc["availability_topic"] = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
     doc["value_template"] = "{{ value_json.value }}";
     JsonObject device  = doc.createNestedObject("device");
     JsonArray identifiers = device.createNestedArray("identifiers");
-    identifiers.add("P1_dongle");
+    identifiers.add(apSSID);
     device["name"] = apSSID;
     device["model"] = "P1 dongle debug monitoring";
     device["manufacturer"] = "plan-d.io";
