@@ -110,19 +110,24 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     <div class="container">
         <noscript>To use the digital meter dongle, please enable JavaScript<br></noscript>
-        <div class="svg-main-container">
-            <img src="logo" class="main-svg">
-        </div>
         <h2>Digital meter dongle</h2>
         <h2 id="hostnameHeader"></h2>
         <h3><span id="infoMessage" style='text-align:center;color:red;'></span></h3>
-    <div class="svg-container">
-        <img id="wifi" alt="" src="" />
-        <img id="meter" alt="" src="" />
-        <img id="cloud" alt="" src="" />
-        <img id="externalio" alt="" src="" />
-    </div>
+      
+        <div class="svg-container">
+            <img id="wifi" alt="" src="" />
+            <img id="meter" alt="" src="" />
+            <img id="cloud" alt="" src="" />
+            <img id="externalio" alt="" src="" />
+        </div>
     
+        <button class="collapsible" id="realTimeDataCollapsible">Real-time data</button>
+        <div class="content">
+            <div class="grid-container">
+                <!-- Data will be populated here by JavaScript -->
+            </div>
+        </div>
+        
         <form id="configForm">
             <button type="button" class="collapsible active">Basic settings</button>
             <div class="content" style="display: block;">
@@ -182,7 +187,39 @@ const char index_html[] PROGMEM = R"rawliteral(
                     });
             });
         }
-        var coll = document.getElementsByClassName("collapsible"); //animate the collapsibles
+
+        function fetchData() {
+            fetch('/data?webmin')
+                .then(response => response.json())
+                .then(data => {
+                    const gridContainer = document.querySelector('.grid-container');
+                    gridContainer.innerHTML = ''; // Clear previous data
+                    data.forEach(item => {
+                        const gridItem = document.createElement('div');
+                        gridItem.classList.add('grid-item');
+                        
+                        // Create a div for the friendly_name
+                        const friendlyNameDiv = document.createElement('div');
+                        friendlyNameDiv.classList.add('friendly-name');
+                        friendlyNameDiv.innerHTML = `<strong>${item.friendly_name}</strong>`;
+                        
+                        // Create a div for the value and unit
+                        const valueUnitDiv = document.createElement('div');
+                        valueUnitDiv.innerHTML = `${item.value} ${item.unit}`;
+                        
+                        // Append the friendly_name div and value-unit div to the grid item
+                        gridItem.appendChild(friendlyNameDiv);
+                        gridItem.appendChild(valueUnitDiv);
+                        
+                        gridContainer.appendChild(gridItem);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                });
+        }
+     
+        var coll = document.querySelectorAll(".collapsible:not(#realTimeDataCollapsible)");  //animate the collapsibles
         for (var i = 0; i < coll.length; i++) {
             coll[i].addEventListener("click", function() {
                 this.classList.toggle("active");
@@ -305,6 +342,24 @@ const char index_html[] PROGMEM = R"rawliteral(
                     console.error('Error fetching or processing data:', error);
                     document.getElementById('infoMessage').textContent = "Error loading data, please refresh the page";
                 });
+
+              // Real-time data collapsible
+              const realTimeDataCollapsible = document.getElementById('realTimeDataCollapsible');
+              const realTimeDataContent = realTimeDataCollapsible.nextElementSibling;
+              let interval;
+          
+              realTimeDataCollapsible.addEventListener('click', function() {
+                  this.classList.toggle('active');
+                  if (realTimeDataContent.style.display === "block") {
+                      realTimeDataContent.style.display = "none";
+                      clearInterval(interval); // Stop fetching data when collapsed
+                  } else {
+                      realTimeDataContent.style.display = "block";
+                      fetchData(); // Fetch data immediately on expand
+                      interval = setInterval(fetchData, 1000); // Fetch data every second
+                  }
+              });
+                
             // Mark password fields as changed when their value is modified
             const passwordFields = document.querySelectorAll('input[type="password"]');
             passwordFields.forEach(field => {
@@ -442,7 +497,7 @@ const char css[] PROGMEM = R"rawliteral(
 
         h2 {
             color: #1fa3ec;
-            padding: 1vh;
+            padding: 0.5vh;
         }
         h3 {
             color: #1fa3ec;
@@ -483,6 +538,25 @@ const char css[] PROGMEM = R"rawliteral(
             content: ' +';
             font-weight: bold;
             float: right;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3 columns */
+            grid-template-rows: 1fr 1fr; /* 2 rows */
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%; /* Adjust as per your requirement */
+        }
+
+        .grid-item .friendly-name {
+            margin-bottom: 2px; /* Adjust this value as per your preference */
         }
 
         .active:after {
