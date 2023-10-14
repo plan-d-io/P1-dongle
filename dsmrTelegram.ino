@@ -68,7 +68,7 @@ static const mbusConfig mbusKeys[] PROGMEM = {
    * Note: multiple M-bus meters from the same type are currently not supported
    */
     { 3, "gas", "Natural gas consumption", "",  false},
-    { 4, "", "Heat", "",  false},
+    { 4, "", "heat", "",  false},
     { 7, "water", "Water consumption", "",  false}
 };
 
@@ -450,4 +450,58 @@ bool pushDSMRValue(String key, float measurementValue, String measurementUnit, t
     }
   }
   return pushSuccess;
+}
+
+void formatPayload(String key, float measurementValue, String measurementUnit, time_t measurementTimestamp, String deviceType, String friendlyName, String mqttTopic, String rawKey){
+  String jsonOutput;
+  if(_payload_format > 0){ //minimal JSON payload format
+    DynamicJsonDocument doc(1024);
+    if(measurementValue == 0 && rawKey != ""){
+      doc["value"] = rawKey;
+    }
+    else{
+      if(fmodf(measurementValue, 1.0) == 0) doc["value"] = int(measurementValue);
+      else doc["value"] = round2(measurementValue);
+    }
+    if(measurementUnit != "") doc["unit"] = measurementUnit;
+    doc["timestamp"] = measurementTimestamp;
+    if(_payload_format > 1){ //standard JSON payload format
+      //friendlyName.toLowerCase();
+      String sensorId = _ha_device + "." + friendlyName;
+      friendlyName = _ha_device + " " + friendlyName;
+      doc["friendly_name"] = friendlyName;
+      sensorId.toLowerCase();
+      sensorId.replace(" ", "_");
+      doc["sensorId"] = sensorId;
+      if(_payload_format > 2){ //COFY payload format
+        doc["entity"] = _ha_device;
+        if(friendlyName == "Total energy consumed"){
+          doc["metric"] = "GridElectricityImport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total energy injected"){
+          doc["metric"] = "GridElectricityExport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total active power"){
+          doc["metric"] = "GridElectricityPower";
+          doc["metricKind"] = "gauge";
+        }
+        else{
+          for(int k = 0; k < sizeof(cofyKeys)/sizeof(cofyKeys[0]); k++){
+            if(key == cofyKeys[k][0]){
+              if(cofyKeys[k][1] != "") doc["metric"] = cofyKeys[k][1];
+              doc["metricKind"] = cofyKeys[k][2];
+            }
+          }
+        }
+      }
+    }
+    serializeJson(doc, jsonOutput);
+  }
+  else{
+    if(fmodf(measurementValue, 1.0) == 0) jsonOutput = String(int(measurementValue));
+    else jsonOutput = String(round2(measurementValue));
+  }
+  Serial.println(jsonOutput);
 }

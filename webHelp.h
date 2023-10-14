@@ -189,28 +189,30 @@ const char index_html[] PROGMEM = R"rawliteral(
         }
 
         function fetchData() {
-            fetch('/data?webmin')
+            fetch('/data?basic')
                 .then(response => response.json())
                 .then(data => {
                     const gridContainer = document.querySelector('.grid-container');
                     gridContainer.innerHTML = ''; // Clear previous data
-                    data.forEach(item => {
+        
+                    // Take only the first 6 elements
+                    const firstSixItems = data.slice(0, 6);
+        
+                    firstSixItems.forEach(item => {
                         const gridItem = document.createElement('div');
                         gridItem.classList.add('grid-item');
-                        
+        
                         // Create a div for the friendly_name
                         const friendlyNameDiv = document.createElement('div');
                         friendlyNameDiv.classList.add('friendly-name');
                         friendlyNameDiv.innerHTML = `<strong>${item.friendly_name}</strong>`;
-                        
-                        // Create a div for the value and unit
-                        const valueUnitDiv = document.createElement('div');
-                        valueUnitDiv.innerHTML = `${item.value} ${item.unit}`;
-                        
-                        // Append the friendly_name div and value-unit div to the grid item
                         gridItem.appendChild(friendlyNameDiv);
-                        gridItem.appendChild(valueUnitDiv);
-                        
+        
+                        // Add value and unit
+                        const valueDiv = document.createElement('div');
+                        valueDiv.innerHTML = `${item.value} ${item.unit}`;
+                        gridItem.appendChild(valueDiv);
+        
                         gridContainer.appendChild(gridItem);
                     });
                 })
@@ -218,6 +220,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                     console.error("Error fetching data:", error);
                 });
         }
+
      
         var coll = document.querySelectorAll(".collapsible:not(#realTimeDataCollapsible)");  //animate the collapsibles
         for (var i = 0; i < coll.length; i++) {

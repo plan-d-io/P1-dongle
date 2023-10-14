@@ -133,26 +133,32 @@ void mqttPushTelegramValues(){
         }
       }
     }
-    /*Loop over the Mbus keys found in the meter telegram and push their value
+    /*Loop over the Mbus keys found in the meter telegram and push their value*/
     for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+      String measurementUnit;
+      String deviceType;
+      String friendlyName;
+      String mqttTopic;
       if(mbusMeter[i].keyFound == true){
-        if(mbusMeter[i].type == 3) Serial.print("Natural gas consumption: ");
-        else if (mbusMeter[i].type == 4) Serial.print("Heat consumption: ");
-        else if (mbusMeter[i].type == 7) Serial.print("Water consumption: ");
-        if(fmodf(mbusMeter[i].keyValueFloat, 1.0) == 0) Serial.print(int(mbusMeter[i].keyValueFloat));
-        else Serial.print(round2(mbusMeter[i].keyValueFloat));
-        if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) Serial.print(" m³ (");
-        else if (mbusMeter[i].type == 7) Serial.print(" kWh (");
-        Serial.print(mbusMeter[i].keyTimeStamp);
-        Serial.println(")");
+        for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
+          if(mbusKeys[j].keyType == mbusMeter[i].type){
+            friendlyName = mbusKeys[j].keyName;
+            deviceType = mbusKeys[j].deviceType;
+            mqttTopic = mbusKeys[j].keyTopic;
+          }
+        }
+        if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";
+        else if (mbusMeter[i].type == 7) measurementUnit = "kWh";
+        pushDSMRValue(mbusMeter[i].mbusKey, mbusMeter[i].keyValueFloat, measurementUnit, mbusMeter[i].keyTimeStamp, deviceType, friendlyName, mqttTopic, "");
       }
-    }*/
+    }
   }
 }
 
 String httpTelegramValues(String option){
   String jsonOutput = "[";
-  if(option == "webmin"){
+  /*Get a basic JSON string with the most important measurements*/
+  if(option == "basic"){
     int keys[] = {0, 1, 2, 10, 11};
     for(int i = 0; i < 5; i++){
       String tempJson;
@@ -206,9 +212,38 @@ String httpTelegramValues(String option){
       doc["timestamp"] = measurementTimestamp;
       serializeJson(doc, tempJson);
       jsonOutput += tempJson;
-      if(i < 4) jsonOutput += ",";
+      jsonOutput += ",";
     }
+    for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+      String tempJson;
+      String measurementUnit;
+      time_t measurementTimestamp;
+      String deviceType;
+      String friendlyName;
+      if(mbusMeter[i].keyFound == true){
+        for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
+          if(mbusKeys[j].keyType == mbusMeter[i].type){
+            friendlyName = mbusKeys[j].keyName;
+            deviceType = mbusKeys[j].deviceType;
+          }
+        }
+        if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";
+        else if (mbusMeter[i].type == 7) measurementUnit = "kWh";
+        DynamicJsonDocument doc(1024);
+        if(fmodf(mbusMeter[i].keyValueFloat, 1.0) == 0) doc["value"] = int(mbusMeter[i].keyValueFloat);
+        else doc["value"] = round2(mbusMeter[i].keyValueFloat);
+        if(measurementUnit != "") doc["unit"] = measurementUnit;
+        doc["friendly_name"] = friendlyName;
+        doc["timestamp"] = mbusMeter[i].keyTimeStamp;
+        serializeJson(doc, tempJson);
+        jsonOutput += tempJson;
+        jsonOutput += ",";
+        formatPayload(mbusMeter[i].mbusKey, mbusMeter[i].keyValueFloat, measurementUnit, mbusMeter[i].keyTimeStamp, deviceType, friendlyName, "", "");
+      }
+    }
+
   }
+  /*Otherwise, return all enabled keys found in the telegram*/
   else{
     for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
       if(*dsmrKeys[i].keyFound == true){
@@ -327,8 +362,9 @@ String httpTelegramValues(String option){
         }
       }
     }
-    jsonOutput = jsonOutput.substring(0, jsonOutput.length()-1);
+    
   }
+  jsonOutput = jsonOutput.substring(0, jsonOutput.length()-1);
   jsonOutput += "]";
   return jsonOutput;
 }

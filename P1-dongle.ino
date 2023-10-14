@@ -76,7 +76,7 @@ struct keyConfig {
 };
 
 struct mbusConfig {
-  uint8_t keyType; //3 = gas meter, 4 = heat/cold, 7 = water meter
+  int keyType; //3 = gas meter, 4 = heat/cold, 7 = water meter
   String deviceType;
   String  keyName;
   String  keyTopic;
