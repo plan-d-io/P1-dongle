@@ -81,6 +81,7 @@ void mqttPushTelegramValues(){
   if(sinceLastUpload > _upload_throttle*1000){
     String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
     pubMqtt(availabilityTopic, "online", false);
+    /*Loop over the configured DSMR keys and, if found in the meter telegram and enabled, push their value over MQTT*/
     for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
       if(*dsmrKeys[i].keyFound == true){
         /*Check if the key,value pair needs to be pushed
@@ -95,61 +96,19 @@ void mqttPushTelegramValues(){
         unsigned long mask = 1;
         mask <<= i;
         unsigned long test = _key_pushlist & mask;
-        if(test > 0){
-          if(telegramDebug){
-            Serial.print(" - ");
-            Serial.print(dsmrKeys[i].keyName);
-            Serial.print(": ");
-          }
-          if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
-            /*Other or string value (currently handled the same)*/
-            pushDSMRValue(dsmrKeys[i].dsmrKey, 0, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, *dsmrKeys[i].keyValueString);
-          }
-          else if(dsmrKeys[i].keyType == 1){
-            /*Numeric value with no unit*/
-            pushDSMRValue(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
-          }
-          else if(dsmrKeys[i].keyType == 2){
-            /*Numeric value with unit*/
-            String unit;
-            if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
-            else if(dsmrKeys[i].deviceType == "power") unit = "kW";
-            else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
-            else if(dsmrKeys[i].deviceType == "current") unit = "A";
-            pushDSMRValue(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, unit, meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
-          }
-          else if(dsmrKeys[i].keyType == 3){
-            /*timestamped (Mbus) message*/
-            String unit;
-            if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
-            else if(dsmrKeys[i].deviceType == "power") unit = "kW";
-            else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
-            else if(dsmrKeys[i].deviceType == "current") unit = "A";
-            pushDSMRValue(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, unit, *dsmrKeys[i].keyValueLong, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
-          }
-          else{
-            if(telegramDebug) Serial.print("undef");
-          }
-        }
+        if(test > 0) pushDSMRKey(dsmrKeys[i].keyName, dsmrKeyPayload(i), "");
       }
     }
-    /*Loop over the Mbus keys found in the meter telegram and push their value*/
+    /*Loop over the Mbus keys found in the meter telegram and push their value over MQTT*/
     for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-      String measurementUnit;
-      String deviceType;
       String friendlyName;
-      String mqttTopic;
       if(mbusMeter[i].keyFound == true){
         for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
           if(mbusKeys[j].keyType == mbusMeter[i].type){
             friendlyName = mbusKeys[j].keyName;
-            deviceType = mbusKeys[j].deviceType;
-            mqttTopic = mbusKeys[j].keyTopic;
           }
         }
-        if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";
-        else if (mbusMeter[i].type == 7) measurementUnit = "kWh";
-        pushDSMRValue(mbusMeter[i].mbusKey, mbusMeter[i].keyValueFloat, measurementUnit, mbusMeter[i].keyTimeStamp, deviceType, friendlyName, mqttTopic, "");
+        pushDSMRKey(friendlyName, mbusKeyPayload(i), "");
       }
     }
   }
@@ -157,216 +116,176 @@ void mqttPushTelegramValues(){
 
 String httpTelegramValues(String option){
   String jsonOutput = "[";
-  /*Get a basic JSON string with the most important measurements*/
+  /*Get the most important measurements*/
   if(option == "basic"){
     int keys[] = {0, 1, 2, 10, 11};
     for(int i = 0; i < 5; i++){
-      String tempJson;
-      float measurementValue;
-      String measurementUnit;
-      time_t measurementTimestamp;
-      String deviceType = dsmrKeys[keys[i]].deviceType;
-      String friendlyName = dsmrKeys[keys[i]].keyName;
-      if(dsmrKeys[keys[i]].keyType == 0 || dsmrKeys[keys[i]].keyType == 4){
-        /*Other or string value (currently handled the same)*/
-        measurementValue = 0;
-        measurementUnit = "";
-        measurementTimestamp = meterTimestamp;
-      }
-      else if(dsmrKeys[keys[i]].keyType == 1){
-        /*Numeric value with no unit*/
-        measurementValue = *dsmrKeys[keys[i]].keyValueFloat;
-        measurementUnit = "";
-        measurementTimestamp = meterTimestamp;
-      }
-      else if(dsmrKeys[keys[i]].keyType == 2){
-        /*Numeric value with unit*/
-        String unit;
-        if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
-        else if(dsmrKeys[keys[i]].deviceType == "power") unit = "kW";
-        else if(dsmrKeys[keys[i]].deviceType == "voltage") unit = "V";
-        else if(dsmrKeys[keys[i]].deviceType == "current") unit = "A";
-        measurementValue = *dsmrKeys[keys[i]].keyValueFloat;
-        measurementUnit = unit;
-        measurementTimestamp = meterTimestamp;
-      }
-      else if(dsmrKeys[keys[i]].keyType == 3){
-        /*timestamped (Mbus) message*/
-        String unit;
-        if(dsmrKeys[keys[i]].deviceType == "energy") unit = "kWh";
-        else if(dsmrKeys[keys[i]].deviceType == "power") unit = "kW";
-        else if(dsmrKeys[keys[i]].deviceType == "voltage") unit = "V";
-        else if(dsmrKeys[keys[i]].deviceType == "current") unit = "A";
-        measurementValue = *dsmrKeys[keys[i]].keyValueFloat;
-        measurementUnit = unit;
-        measurementTimestamp = *dsmrKeys[keys[i]].keyValueLong;
-      }
-      else{
-        if(telegramDebug) Serial.print("undef");
-      }
-      DynamicJsonDocument doc(1024);
-      if(fmodf(measurementValue, 1.0) == 0) doc["value"] = int(measurementValue);
-      else doc["value"] = round2(measurementValue);
-      if(measurementUnit != "") doc["unit"] = measurementUnit;
-      doc["friendly_name"] = friendlyName;
-      doc["timestamp"] = measurementTimestamp;
-      serializeJson(doc, tempJson);
+      String tempJson = dsmrKeyPayload(keys[i]);
+      tempJson += ",";
       jsonOutput += tempJson;
-      jsonOutput += ",";
     }
     for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-      String tempJson;
-      String measurementUnit;
-      time_t measurementTimestamp;
-      String deviceType;
-      String friendlyName;
       if(mbusMeter[i].keyFound == true){
-        for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
-          if(mbusKeys[j].keyType == mbusMeter[i].type){
-            friendlyName = mbusKeys[j].keyName;
-            deviceType = mbusKeys[j].deviceType;
-          }
-        }
-        if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";
-        else if (mbusMeter[i].type == 7) measurementUnit = "kWh";
-        DynamicJsonDocument doc(1024);
-        if(fmodf(mbusMeter[i].keyValueFloat, 1.0) == 0) doc["value"] = int(mbusMeter[i].keyValueFloat);
-        else doc["value"] = round2(mbusMeter[i].keyValueFloat);
-        if(measurementUnit != "") doc["unit"] = measurementUnit;
-        doc["friendly_name"] = friendlyName;
-        doc["timestamp"] = mbusMeter[i].keyTimeStamp;
-        serializeJson(doc, tempJson);
+        String tempJson = mbusKeyPayload(i);
+        tempJson += ",";
         jsonOutput += tempJson;
-        jsonOutput += ",";
-        formatPayload(mbusMeter[i].mbusKey, mbusMeter[i].keyValueFloat, measurementUnit, mbusMeter[i].keyTimeStamp, deviceType, friendlyName, "", "");
       }
     }
-
   }
   /*Otherwise, return all enabled keys found in the telegram*/
   else{
     for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
       if(*dsmrKeys[i].keyFound == true){
-        String tempJson;
         unsigned long mask = 1;
         mask <<= i;
         unsigned long test = _key_pushlist & mask;
         if(test > 0){
-          String key = dsmrKeys[i].dsmrKey;
-          float measurementValue;
-          String measurementUnit;
-          time_t measurementTimestamp;
-          String deviceType = dsmrKeys[i].deviceType;
-          String friendlyName = dsmrKeys[i].keyName;
-          String rawKey;
-          if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
-            /*Other or string value (currently handled the same)*/
-            measurementValue = 0;
-            measurementUnit = "";
-            measurementTimestamp = meterTimestamp;
-            rawKey = *dsmrKeys[i].keyValueString;
-          }
-          else if(dsmrKeys[i].keyType == 1){
-            /*Numeric value with no unit*/
-            measurementValue = *dsmrKeys[i].keyValueFloat;
-            measurementUnit = "";
-            measurementTimestamp = meterTimestamp;
-            rawKey = "";
-          }
-          else if(dsmrKeys[i].keyType == 2){
-            /*Numeric value with unit*/
-            String unit;
-            if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
-            else if(dsmrKeys[i].deviceType == "power") unit = "kW";
-            else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
-            else if(dsmrKeys[i].deviceType == "current") unit = "A";
-            measurementValue = *dsmrKeys[i].keyValueFloat;
-            measurementUnit = unit;
-            measurementTimestamp = meterTimestamp;
-            rawKey = *"";
-          }
-          else if(dsmrKeys[i].keyType == 3){
-            /*timestamped (Mbus) message*/
-            String unit;
-            if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
-            else if(dsmrKeys[i].deviceType == "power") unit = "kW";
-            else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
-            else if(dsmrKeys[i].deviceType == "current") unit = "A";
-            measurementValue = *dsmrKeys[i].keyValueFloat;
-            measurementUnit = unit;
-            measurementTimestamp = *dsmrKeys[i].keyValueLong;
-            rawKey = *"";
-          }
-          else{
-            if(telegramDebug) Serial.print("undef");
-          }
-          if(_payload_format > 0){ //minimal JSON payload format
-            DynamicJsonDocument doc(1024);
-            if(measurementValue == 0 && rawKey != ""){
-              doc["value"] = rawKey;
-            }
-            else{
-              if(fmodf(measurementValue, 1.0) == 0) doc["value"] = int(measurementValue);
-              else doc["value"] = round2(measurementValue);
-            }
-            if(measurementUnit != "") doc["unit"] = measurementUnit;
-            doc["timestamp"] = measurementTimestamp;
-            if(_payload_format > 1){ //standard JSON payload format
-              //friendlyName.toLowerCase();
-              String sensorId = _ha_device + "." + friendlyName;
-              friendlyName = _ha_device + " " + friendlyName;
-              doc["friendly_name"] = friendlyName;
-              sensorId.toLowerCase();
-              sensorId.replace(" ", "_");
-              doc["sensorId"] = sensorId;
-              if(_payload_format > 2){ //COFY payload format
-                doc["entity"] = _ha_device;
-                if(friendlyName == "Total energy consumed"){
-                  doc["metric"] = "GridElectricityImport";
-                  doc["metricKind"] = "cumulative";
-                }
-                else if(friendlyName == "Total energy injected"){
-                  doc["metric"] = "GridElectricityExport";
-                  doc["metricKind"] = "cumulative";
-                }
-                else if(friendlyName == "Total active power"){
-                  doc["metric"] = "GridElectricityPower";
-                  doc["metricKind"] = "gauge";
-                }
-                else{
-                  for(int k = 0; k < sizeof(cofyKeys)/sizeof(cofyKeys[0]); k++){
-                    if(key == cofyKeys[k][0]){
-                      if(cofyKeys[k][1] != "") doc["metric"] = cofyKeys[k][1];
-                      doc["metricKind"] = cofyKeys[k][2];
-                    }
-                  }
-                }
-              }
-            }
-            serializeJson(doc, tempJson);
-            Serial.println("");
-            serializeJson(doc, Serial);
-          }
-          else{
-            if(fmodf(measurementValue, 1.0) == 0){
-              tempJson = int(measurementValue);
-              Serial.println(int(measurementValue));
-            }
-            else{
-              tempJson = round2(measurementValue);
-              Serial.println(round2(measurementValue));
-            }
-          }
+          String tempJson = dsmrKeyPayload(i);
           tempJson += ",";
           jsonOutput += tempJson;
         }
       }
     }
-    
+    for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+      if(mbusMeter[i].keyFound == true){
+        String tempJson = mbusKeyPayload(i);
+        tempJson += ",";
+        jsonOutput += tempJson;
+      }
+    }
   }
   jsonOutput = jsonOutput.substring(0, jsonOutput.length()-1);
   jsonOutput += "]";
   return jsonOutput;
 }
-  
-  
+
+bool pushDSMRKey(String friendlyName, String payload, String mqttTopic){
+  String tempTopic = _mqtt_prefix;
+  String jsonOutput;
+  bool pushSuccess = false;
+  if(mqttTopic == ""){           //Use key_name as mqtt topic if keyTopic left empty
+    tempTopic += friendlyName;
+    tempTopic.replace(" ", "_");
+    tempTopic.toLowerCase();
+  }
+  else{
+    tempTopic += mqttTopic;
+    tempTopic.replace(" ", "_");
+    tempTopic.toLowerCase();
+  }
+  pushSuccess = pubMqtt(tempTopic, payload, false);
+  if(mqttDebug && pushSuccess){
+    Serial.println("");
+    Serial.print(tempTopic);
+    Serial.print(" ");
+    Serial.println(payload);
+  }
+  else{
+    if(mqttDebug) Serial.println("Could not make MQTT push");
+  }
+  return pushSuccess;
+}
+
+String formatPayload(String key, float measurementValue, String measurementUnit, time_t measurementTimestamp, String deviceType, String friendlyName, String mqttTopic, String rawKey){
+  String jsonOutput;
+  if(_payload_format > 0){ //minimal JSON payload format
+    DynamicJsonDocument doc(1024);
+    if(measurementValue == 0 && rawKey != ""){
+      doc["value"] = rawKey;
+    }
+    else{
+      if(fmodf(measurementValue, 1.0) == 0) doc["value"] = int(measurementValue);
+      else doc["value"] = round2(measurementValue);
+    }
+    if(measurementUnit != "") doc["unit"] = measurementUnit;
+    doc["timestamp"] = measurementTimestamp;
+    if(_payload_format > 1){ //standard JSON payload format
+      //friendlyName.toLowerCase();
+      String sensorId = _ha_device + "." + friendlyName;
+      friendlyName = friendlyName;
+      doc["friendly_name"] = friendlyName;
+      sensorId.toLowerCase();
+      sensorId.replace(" ", "_");
+      doc["sensorId"] = sensorId;
+      if(_payload_format > 2){ //COFY payload format
+        doc["entity"] = _ha_device;
+        if(friendlyName == "Total energy consumed"){
+          doc["metric"] = "GridElectricityImport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total energy injected"){
+          doc["metric"] = "GridElectricityExport";
+          doc["metricKind"] = "cumulative";
+        }
+        else if(friendlyName == "Total active power"){
+          doc["metric"] = "GridElectricityPower";
+          doc["metricKind"] = "gauge";
+        }
+        else{
+          for(int k = 0; k < sizeof(cofyKeys)/sizeof(cofyKeys[0]); k++){
+            if(key == cofyKeys[k][0]){
+              if(cofyKeys[k][1] != "") doc["metric"] = cofyKeys[k][1];
+              doc["metricKind"] = cofyKeys[k][2];
+            }
+          }
+        }
+      }
+    }
+    serializeJson(doc, jsonOutput);
+  }
+  else{
+    if(fmodf(measurementValue, 1.0) == 0) jsonOutput = String(int(measurementValue));
+    else jsonOutput = String(round2(measurementValue));
+  }
+  return jsonOutput;
+}
+
+String dsmrKeyPayload(int i){
+  if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
+    /*Other or string value (currently handled the same)*/
+    return formatPayload(dsmrKeys[i].dsmrKey, 0, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, *dsmrKeys[i].keyValueString);
+  }
+  else if(dsmrKeys[i].keyType == 1){
+    /*Numeric value with no unit*/
+    return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
+  }
+  else if(dsmrKeys[i].keyType == 2){
+    /*Numeric value with unit*/
+    String unit;
+    if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
+    else if(dsmrKeys[i].deviceType == "power") unit = "kW";
+    else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
+    else if(dsmrKeys[i].deviceType == "current") unit = "A";
+    return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, unit, meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
+  }
+  else if(dsmrKeys[i].keyType == 3){
+    /*timestamped (Mbus) message*/
+    String unit;
+    if(dsmrKeys[i].deviceType == "energy") unit = "kWh";
+    else if(dsmrKeys[i].deviceType == "power") unit = "kW";
+    else if(dsmrKeys[i].deviceType == "voltage") unit = "V";
+    else if(dsmrKeys[i].deviceType == "current") unit = "A";
+    return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, unit, *dsmrKeys[i].keyValueLong, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
+  }
+  else{
+    if(telegramDebug) Serial.print("undef");
+    return "";
+  }
+}
+
+String mbusKeyPayload(int i){
+  String measurementUnit;
+  String deviceType;
+  String friendlyName;
+  String mqttTopic;
+  for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
+    if(mbusKeys[j].keyType == mbusMeter[i].type){
+      friendlyName = mbusKeys[j].keyName;
+      deviceType = mbusKeys[j].deviceType;
+      mqttTopic = mbusKeys[j].keyTopic;
+    }
+  }
+  if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";
+  else if (mbusMeter[i].type == 7) measurementUnit = "kWh";
+  return formatPayload(mbusMeter[i].mbusKey, mbusMeter[i].keyValueFloat, measurementUnit, mbusMeter[i].keyTimeStamp, deviceType, friendlyName, mqttTopic, "");
+} 

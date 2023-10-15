@@ -134,23 +134,54 @@ const char index_html[] PROGMEM = R"rawliteral(
             <!-- Dropdown for WiFi Network -->
             <label for="WIFI_SSID">WiFi Network:</label>
             <select id="WIFI_SSID" name="WIFI_SSID"></select><br><br>
-    
             <!-- Password Input -->
             <label for="WIFI_PASSWD">WiFi Password:</label>
             <input type="password" id="WIFI_PASSWD" name="WIFI_PASSWD"><br>
             <span class="show-password">Show password</span>
-    
             <!-- Email Input -->
             <label for="EMAIL">User Email:</label>
-            <input type="email" id="EMAIL" name="EMAIL"><br><br>
-            
+            <input type="email" id="EMAIL" name="EMAIL"><br><br></div>
+
+            <button type="button" class="collapsible">MQTT</button>
+            <div class="content">
+            <label for="MQTT_EN">Use MQTT client</label>
+            <input type="checkbox" id="MQTT_EN" name="MQTT_EN">
+            <label for="MQTT_HOST">Broker hostname or IP address</label>
+            <input type="text" id="MQTT_HOST" name="MQTT_HOST"><br>
+            <label for="MQTT_PORT">Broker port</label>
+            <input type="number" id="MQTT_PORT" name="MQTT_PORT"><br>
+            <label for="MQTT_TLS">Use TLS (SSL)</label>
+            <input type="checkbox" id="MQTT_TLS" name="MQTT_TLS">
+            <label for="MQTT_ID">Client ID</label>
+            <input type="text" id="MQTT_ID" name="MQTT_ID"><br>
+            <label for="MQTT_AUTH">Use MQTT auth</label>
+            <input type="checkbox" id="MQTT_AUTH" name="MQTT_AUTH">
+            <label for="MQTT_USER">Client Iusername</label>
+            <input type="text" id="MQTT_USER" name="MQTT_USER"><br>
+            <label for="MQTT_PASS">Client password</label>
+            <input type="text" id="MQTT_PASS" name="MQTT_PASS"><br>
+            <label for="MQTT_PFIX">MQTT topic prefix</label>
+            <input type="text" id="MQTT_PFIX" name="MQTT_PFIX"><br>
+            <label for="UPL_THROTTLE">Update interval (s)</label>
+            <input type="number" id="UPL_THROTTLE" name="UPL_THROTTLE"><br>
+            <br><br>
             </div>
-            <button type="button" class="collapsible">Advanced settings</button>
+
+            <button type="button" class="collapsible">EnergieID</button>
+            <div class="content">
+            Coming soon
+            </div>
+
+            <button type="button" class="collapsible">Telegram settings</button>
+            <div class="content">
+            Coming soon
+            </div>
+
+            <button type="button" class="collapsible">Dongle settings</button>
             <div class="content">
             <!-- Dropdown for Release Channel -->
             <label for="REL_CHAN">Release Channel:</label>
             <select id="REL_CHAN" name="REL_CHAN"></select><br><br>
-            
             </div>
             <input type="submit" class="submit" value="Submit">
         </form>
@@ -168,7 +199,6 @@ const char index_html[] PROGMEM = R"rawliteral(
                 ...options.headers,
                 'Accept-Encoding': 'identity'
             };
-        
             return new Promise((resolve, reject) => {
                 const fetchPromise = fetch(url, options);
                 const timeoutPromise = new Promise((_, reject) => 
@@ -187,7 +217,6 @@ const char index_html[] PROGMEM = R"rawliteral(
                     });
             });
         }
-
         function fetchData() {
             fetch('/data?basic')
                 .then(response => response.json())
@@ -220,8 +249,6 @@ const char index_html[] PROGMEM = R"rawliteral(
                     console.error("Error fetching data:", error);
                 });
         }
-
-     
         var coll = document.querySelectorAll(".collapsible:not(#realTimeDataCollapsible)");  //animate the collapsibles
         for (var i = 0; i < coll.length; i++) {
             coll[i].addEventListener("click", function() {
@@ -588,26 +615,36 @@ const char css[] PROGMEM = R"rawliteral(
             max-width: 600px;
             margin: 0 auto;
         }
-
+        
         input[type="text"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             box-sizing: border-box;
         }
-    
         input[type="password"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             box-sizing: border-box;
         }
-
         input[type="email"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             box-sizing: border-box;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            display: block;
+            margin: 10px 0;
+            margin-left: 0;
+            margin-right: auto;
         }
 
         label {
@@ -618,6 +655,8 @@ const char css[] PROGMEM = R"rawliteral(
             margin-top: 3px;
             margin-bottom: 1px;
             text-align: left;
+            display: flex;
+            align-items: center;
         }
 
         select {
