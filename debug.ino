@@ -23,6 +23,7 @@ void getHeapDebug(){
   freeHeap = ESP.getFreeHeap()/1000.0;
   minFreeHeap = ESP.getMinFreeHeap()/1000.0;
   maxAllocHeap = ESP.getMaxAllocHeap()/1000.0;
+  Serial.println(freeHeap);
   if(_mqtt_en && debugInfo) pushDebugValues();
 }
 

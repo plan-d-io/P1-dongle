@@ -129,6 +129,7 @@ void initWifi(){
         else {
                 size_t fileSize = file.size();
                 uint8_t *certData = new uint8_t[fileSize];
+                memset(certData, 0, fileSize);
                 file.read(certData, fileSize);
                 client->setCACertBundle(certData);
                 //delete[] certData;

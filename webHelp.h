@@ -156,7 +156,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <input type="text" id="MQTT_ID" name="MQTT_ID"><br>
             <label for="MQTT_AUTH">Use MQTT auth</label>
             <input type="checkbox" id="MQTT_AUTH" name="MQTT_AUTH">
-            <label for="MQTT_USER">Client Iusername</label>
+            <label for="MQTT_USER">Client username</label>
             <input type="text" id="MQTT_USER" name="MQTT_USER"><br>
             <label for="MQTT_PASS">Client password</label>
             <input type="text" id="MQTT_PASS" name="MQTT_PASS"><br>

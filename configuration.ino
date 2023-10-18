@@ -344,16 +344,20 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
        */
       int retVarType, retVarNum;
       if(findInConfig(keyValue.key().c_str(), retVarType, retVarNum)){
-        log_v("Found %s in config", keyValue.key().c_str());
+        Serial.print("Found in config: ");
+        Serial.println(keyValue.key().c_str());
         if(updateConfig){
           /*If updateConfig is false, just return the current value of the key. If true, update the value.
            * ArduinoJSON type detection is used to doublecheck the validity of the new configuration value.
            */
           if( strcmp(keyValue.key().c_str(), "WIFI_PASSWD" ) == 0 && strlen(keyValue.value().as<char*>()) == 0) {
-            log_v("Empty value for %s, skipping", keyValue.key().c_str());
+            Serial.println("Empty value, skipping");
             continue;
           }
-          log_v("Storing config %s: %s", keyValue.key().c_str(), keyValue.value().as<char*>());
+          Serial.print("Storing config ");
+          Serial.print(keyValue.key().c_str());
+          Serial.print(' ');
+          Serial.println(keyValue.value().as<char*>());
           if(retVarType == 0){
             if (keyValue.value().is<bool>()){
               bool testVar = keyValue.value().as<bool>();
@@ -361,31 +365,41 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
             }
           }
           else if(retVarType == 1){
-            if (keyValue.value().is<signed int>()){
+            Serial.println("sig int");
+            //if (keyValue.value().is<signed int>()){
+              Serial.println("check");
               int testVar = keyValue.value().as<signed int>();
               *configInt[retVarNum].var = testVar;
-            }
+            //}
           }
           else if(retVarType == 2){
-            if (keyValue.value().is<unsigned int>()){
+            Serial.println("un int");
+            //if (keyValue.value().is<unsigned int>()){
+              Serial.println("check");
               unsigned int testVar = keyValue.value().as<unsigned int>();
               *configUInt[retVarNum].var = testVar;
-            }
+            //}
           }
           else if(retVarType == 3){
-            if (keyValue.value().is<unsigned long>()){
+            Serial.println("ulong");
+            //if (keyValue.value().is<unsigned long>()){
+              Serial.println("check");
               unsigned long testVar = keyValue.value().as<unsigned long>();
               *configULong[retVarNum].var = testVar;
-            }
+            //}
           }
           else if(retVarType == 4){
+            Serial.println("char");
             if (keyValue.value().is<const char*>()){
+              Serial.println("check");
               String testVar = keyValue.value().as<const char*>();
               *configString[retVarNum].var = testVar;
             }
           }
           else if(retVarType == 5){
+            Serial.println("char");
             if (keyValue.value().is<const char*>()){
+              Serial.println("check");
               String testVar = keyValue.value().as<const char*>();
               *configPass[retVarNum].var = testVar;
             }
@@ -409,6 +423,7 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
     }
   }
   else Serial.println("nope");
+  configBufferString = returnConfig();
   return isJson;
 }
 

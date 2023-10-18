@@ -78,38 +78,54 @@ void printTelegramValues(){
 }
 
 void mqttPushTelegramValues(){
-  if(sinceLastUpload > _upload_throttle*1000){
-    String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
-    pubMqtt(availabilityTopic, "online", false);
-    /*Loop over the configured DSMR keys and, if found in the meter telegram and enabled, push their value over MQTT*/
-    for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
-      if(*dsmrKeys[i].keyFound == true){
-        /*Check if the key,value pair needs to be pushed
-         * The unsigned long _key_pushlist contains 32 bits indicating if the value needs to be pushed (1) or not (0)
-         * E.g. if _key_pushlist is 329, its binary representation is 00000000000000000000000101001001
-         * The LSB (at the rightmost side) represents dsmrKeys[0], the bit to the left of it dsmrKeys[1] etc.
-         * We boolean AND the _key_pushlist with a binary mask 1, which is shifted to the left according to which key in dsmrKeys[] we are comparing
-         * If the result is 1, this means the key,value pair must be pushed
-         * E.g. if _key_pushlist is 329, dsmrKeys[0] must be pushed, dsmrKeys[1] not, dsmrKeys[2] not, dsmrKeys[3] must, etc.
-         * Sounds complicated, but this way we only need one variable in NVS to store up to 32 options.
-         */
-        unsigned long mask = 1;
-        mask <<= i;
-        unsigned long test = _key_pushlist & mask;
-        if(test > 0) pushDSMRKey(dsmrKeys[i].keyName, dsmrKeyPayload(i), "");
-      }
-    }
-    /*Loop over the Mbus keys found in the meter telegram and push their value over MQTT*/
-    for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-      String friendlyName;
-      if(mbusMeter[i].keyFound == true){
-        for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
-          if(mbusKeys[j].keyType == mbusMeter[i].type){
-            friendlyName = mbusKeys[j].keyName;
+  if(_mqtt_en){
+    if(sinceLastUpload > _upload_throttle*1000){
+      if(mqttDebug) Serial.println("Performing MQTT push");
+      String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+      pubMqtt(availabilityTopic, "online", false);
+      /*Loop over the configured DSMR keys and, if found in the meter telegram and enabled, push their value over MQTT*/
+      for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
+        if(*dsmrKeys[i].keyFound == true){
+          /*Check if the key,value pair needs to be pushed
+           * The unsigned long _key_pushlist contains 32 bits indicating if the value needs to be pushed (1) or not (0)
+           * E.g. if _key_pushlist is 329, its binary representation is 00000000000000000000000101001001
+           * The LSB (at the rightmost side) represents dsmrKeys[0], the bit to the left of it dsmrKeys[1] etc.
+           * We boolean AND the _key_pushlist with a binary mask 1, which is shifted to the left according to which key in dsmrKeys[] we are comparing
+           * If the result is 1, this means the key,value pair must be pushed
+           * E.g. if _key_pushlist is 329, dsmrKeys[0] must be pushed, dsmrKeys[1] not, dsmrKeys[2] not, dsmrKeys[3] must, etc.
+           * Sounds complicated, but this way we only need one variable in NVS to store up to 32 options.
+           */
+          unsigned long mask = 1;
+          mask <<= i;
+          unsigned long test = _key_pushlist & mask;
+          if(test > 0){
+            if(mqttDebug){
+              Serial.print(dsmrKeys[i].keyName);
+              Serial.print(" ");
+              Serial.println(dsmrKeyPayload(i));
+            }
+            pushDSMRKey(dsmrKeys[i].keyName, dsmrKeyPayload(i), "");
           }
         }
-        pushDSMRKey(friendlyName, mbusKeyPayload(i), "");
       }
+      /*Loop over the Mbus keys found in the meter telegram and push their value over MQTT*/
+      for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+        String friendlyName;
+        if(mbusMeter[i].keyFound == true){
+          for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
+            if(mbusKeys[j].keyType == mbusMeter[i].type){
+              friendlyName = mbusKeys[j].keyName;
+            }
+          }
+          if(mqttDebug){
+            Serial.print(friendlyName);
+            Serial.print(" ");
+            Serial.println(mbusKeyPayload(i));
+          }
+          pushDSMRKey(friendlyName, mbusKeyPayload(i), "");
+        }
+      }
+      sinceLastUpload = 0;
     }
   }
 }

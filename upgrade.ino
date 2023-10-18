@@ -2,12 +2,14 @@ boolean checkUpdate(){
   if(_update_autoCheck){
     clientSecureBusy = true;
     bool needUpdate = false;
-    if(mqttclientSecure.connected()){
-      syslog("Disconnecting TLS MQTT connection to perform firmware version check", 0);
-      String mqtt_topic = "plan-d/" + String(apSSID);
-      mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
-      mqttclientSecure.disconnect();
-      mqttPaused = true;
+    if(_mqtt_tls){
+      if(mqttclientSecure.connected()){
+        syslog("Disconnecting TLS MQTT connection to perform firmware version check", 0);
+        String mqtt_topic = "plan-d/" + String(apSSID);
+        mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
+        mqttclientSecure.disconnect();
+        mqttPaused = true;
+      }
     }
     if(bundleLoaded){
       syslog("Checking repository for firmware update... ", 0);

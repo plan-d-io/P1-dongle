@@ -1,5 +1,3 @@
-
-
 #include "rom/rtc.h"
 #include <esp_int_wdt.h>
 #include <esp_task_wdt.h>
@@ -41,6 +39,7 @@ bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
 bool extendedTelegramDebug = false;
+String configBufferString;
 
 bool ha_metercreated;
 unsigned int mqttPushCount, mqttPushFails;
@@ -148,6 +147,7 @@ void setup(){
   syslog("Last reset reason (firmware): " + _last_reset, 1);
   debugInfo = true;
   initWifi();
+  configBufferString = returnConfig();
   server.addHandler(new WebRequestHandler());
   server.begin();
 }

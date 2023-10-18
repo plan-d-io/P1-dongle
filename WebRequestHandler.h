@@ -1,10 +1,11 @@
 /*The webserver client and its handlers live here*/
 #include "SPIFFS.h"
 extern bool findInConfig(String, int&, int&), processConfigJson(String, String&, bool), processConfigString(String, String&, bool), storeConfigVar(String, int, int);
-extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), httpTelegramValues(String option), infoMsg, _user_email;
+extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), httpTelegramValues(String option), infoMsg, _user_email, configBufferString;
 extern const char index_html[], reboot_html[], test_html[], css[];
 extern char apSSID[];
-extern void setReboot();
+extern void setReboot(), getHeapDebug();
+extern float freeHeap;
 class WebRequestHandler : public AsyncWebHandler {
 public:
   WebRequestHandler() {}
@@ -32,6 +33,7 @@ bool WebRequestHandler::canHandle(AsyncWebServerRequest *request){
 
 void WebRequestHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
   /*Handler for POST and PUT requests (with a body)*/
+  getHeapDebug();
   if(request->method() == 2 || request->method() == 4 || request->method() == 8){
     Serial.print("POST/PUT to ");
     Serial.println(request->url());
@@ -61,6 +63,7 @@ void WebRequestHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data
 void WebRequestHandler::handleRequest(AsyncWebServerRequest *request){
   /*Handler for GET requests, with optional arguments*/
   if(request->method() == 1){
+    Serial.println(freeHeap);
     Serial.print("GET to ");
     Serial.println(request->url());
     int params = request->params();
@@ -68,7 +71,8 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request){
       /*Request to query or update the configuration. First check if the request has arguments corresponding to NVS key names*/
       if(params == 0){
         /*If not, return the full configuration as JSON*/
-        request->send(200, "application/json", returnConfig()); 
+        //request->send(200, "application/json", returnConfig()); 
+        request->send(200, "application/json", configBufferString); 
       }
       else{
         String response, foundInConfig;
