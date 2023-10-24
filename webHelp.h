@@ -330,7 +330,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                     // Set the footer version
                     const version = data.FW_VER.value;
                     const footerLink = document.getElementById('footerLink');
-                    footerLink.textContent = `Digital meter dongle V${version} by re.alto & plan-d.io`;
+                    footerLink.textContent = `Digital meter dongle V${version} by plan-d.io`;
                     //Populate all the form fields
                     const inputs = document.querySelectorAll('input, select, textarea');
                     inputs.forEach(input => {

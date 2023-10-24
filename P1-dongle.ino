@@ -37,15 +37,15 @@ AsyncWebServer server(80); //
 /*Debug*/
 bool serialDebug = true;
 bool telegramDebug = false;
-bool mqttDebug = false;
+bool mqttDebug = true;
 bool extendedTelegramDebug = false;
-String configBufferString;
 
 bool ha_metercreated;
 unsigned int mqttPushCount, mqttPushFails;
 
 time_t meterTimestamp;
 
+String configBuffer;
 
 String mbusTempKey = "0-1:24.2.1";
 
@@ -147,9 +147,9 @@ void setup(){
   syslog("Last reset reason (firmware): " + _last_reset, 1);
   debugInfo = true;
   initWifi();
-  configBufferString = returnConfig();
   server.addHandler(new WebRequestHandler());
   server.begin();
+  configBuffer = returnConfig();
 }
 
 void loop(){

@@ -112,6 +112,7 @@ void mqttPushTelegramValues(){
       for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
         String friendlyName;
         if(mbusMeter[i].keyFound == true){
+          String tempJson = mbusKeyPayload(i);
           for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
             if(mbusKeys[j].keyType == mbusMeter[i].type){
               friendlyName = mbusKeys[j].keyName;
@@ -120,9 +121,9 @@ void mqttPushTelegramValues(){
           if(mqttDebug){
             Serial.print(friendlyName);
             Serial.print(" ");
-            Serial.println(mbusKeyPayload(i));
+            Serial.println(tempJson);
           }
-          pushDSMRKey(friendlyName, mbusKeyPayload(i), "");
+          pushDSMRKey(friendlyName, tempJson, "");
         }
       }
       sinceLastUpload = 0;
@@ -191,10 +192,10 @@ bool pushDSMRKey(String friendlyName, String payload, String mqttTopic){
   }
   pushSuccess = pubMqtt(tempTopic, payload, false);
   if(mqttDebug && pushSuccess){
-    Serial.println("");
     Serial.print(tempTopic);
     Serial.print(" ");
     Serial.println(payload);
+    Serial.println("");
   }
   else{
     if(mqttDebug) Serial.println("Could not make MQTT push");
@@ -261,9 +262,10 @@ String dsmrKeyPayload(int i){
     /*Other or string value (currently handled the same)*/
     return formatPayload(dsmrKeys[i].dsmrKey, 0, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, *dsmrKeys[i].keyValueString);
   }
-  else if(dsmrKeys[i].keyType == 1){
+  else if(dsmrKeys[i].keyType == 1 || dsmrKeys[i].keyType == 5){
     /*Numeric value with no unit*/
-    return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
+    if(dsmrKeys[i].keyType == 1) return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueFloat, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
+    if(dsmrKeys[i].keyType == 5) return formatPayload(dsmrKeys[i].dsmrKey, *dsmrKeys[i].keyValueLong, "", meterTimestamp, dsmrKeys[i].deviceType, dsmrKeys[i].keyName, dsmrKeys[i].keyTopic, "");
   }
   else if(dsmrKeys[i].keyType == 2){
     /*Numeric value with unit*/
@@ -294,11 +296,11 @@ String mbusKeyPayload(int i){
   String deviceType;
   String friendlyName;
   String mqttTopic;
-  for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
-    if(mbusKeys[j].keyType == mbusMeter[i].type){
-      friendlyName = mbusKeys[j].keyName;
-      deviceType = mbusKeys[j].deviceType;
-      mqttTopic = mbusKeys[j].keyTopic;
+  for(int z = 0; z < sizeof(mbusKeys)/sizeof(mbusKeys[0]); z++){
+    if(mbusKeys[z].keyType == mbusMeter[i].type){
+      friendlyName = mbusKeys[z].keyName;
+      deviceType = mbusKeys[z].deviceType;
+      mqttTopic = mbusKeys[z].keyTopic;
     }
   }
   if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) measurementUnit = "m³";

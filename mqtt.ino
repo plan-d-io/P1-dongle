@@ -5,6 +5,8 @@ void setupMqtt() {
   }
   syslog(mqttinfo, 1);
   if(_mqtt_tls){
+    if(mqttWasConnected) mqttclientSecure.disconnect();
+    mqttWasConnected = false;
     mqttclientSecure.setClient(*client);
     if(_upload_throttle > 0){
       if(_realto_en) mqttclientSecure.setKeepAlive(_realtoThrottle*2).setSocketTimeout(_realtoThrottle*2);
@@ -13,6 +15,8 @@ void setupMqtt() {
     }
   }
   else {
+    if(mqttWasConnected) mqttclient.disconnect();
+    mqttWasConnected = false;
     mqttclient.setClient(wificlient);
     if(_upload_throttle > 0){
       if(_realto_en) mqttclient.setKeepAlive(_realtoThrottle*2).setSocketTimeout(_realtoThrottle*2);

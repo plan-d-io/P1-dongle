@@ -35,7 +35,7 @@ static const keyConfig dsmrKeys[] PROGMEM = {
     { "1-0:1.8.1", &totConT1, &dummyInt, &dummyString, 2, "energy", "Total consumption T1",  "",  false, &totConT1Found},
     { "1-0:1.8.2", &totConT2, &dummyInt, &dummyString, 2, "energy", "Total consumption T2",  "",  false, &totConT2Found},
     { "1-0:2.8.1", &totInT1, &dummyInt, &dummyString, 2, "energy", "Total injection T1",  "",  false, &totInT1Found},
-    { "1-0:2.8.2", &totInT2, &dummyInt, &dummyString, 1, "energy", "Total injection T2",  "",  false, &totInT2Found},
+    { "1-0:2.8.2", &totInT2, &dummyInt, &dummyString, 2, "energy", "Total injection T2",  "",  false, &totInT2Found},
     { "0-0:96.14.0", &dummyFloat, &actTarrif, &dummyString, 5, "", "Active tariff period",  "",  false, &actTarrifFound},
     { "1-0:1.7.0", &powCon, &dummyInt, &dummyString, 2, "power", "Active power consumption",  "",  false, &powConFound},
     { "1-0:2.7.0", &powIn, &dummyInt, &dummyString, 2, "power", "Active power injection",  "",  false, &powInFound},

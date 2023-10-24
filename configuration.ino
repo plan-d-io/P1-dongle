@@ -404,8 +404,6 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
               *configPass[retVarNum].var = testVar;
             }
           }
-          saveConfig();
-          infoMsg = "Please reboot the dongle to have changes take effect";
         }
         /*Build a JSON response containing the new value for every updated key, concatenate if there are multiple*/
         foundInConfig = returnConfigVar(keyValue.key().c_str(), retVarType, retVarNum, 1);
@@ -415,6 +413,10 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
         }
       }
     }
+    saveConfig();
+    infoMsg = "Please reboot the dongle to have changes take effect";
+    mqttHostError = true;
+    sinceConnCheck = 60000;
     /*Tidy up the concatenation. The response is passed by reference.*/
     if(configResponse != ""){
       configResponse = configResponse.substring(0, configResponse.length()-1);
@@ -423,7 +425,7 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
     }
   }
   else Serial.println("nope");
-  configBufferString = returnConfig();
+  configBuffer = returnConfig();
   return isJson;
 }
 
