@@ -69,6 +69,7 @@ int _payload_format;
 /*External services*/
 bool _ha_en, _eid_en, _realto_en;
 String _ha_device;
+String _eid_provkey, _eid_provsec;
 unsigned long _realtoThrottle;
 /*Placeholder vars*/
 float _tempFloat;
@@ -133,7 +134,9 @@ static const stringStore configPass[] PROGMEM = {
   /*Although also Strings, passwords get their own data store as they are never returned as plaintext (contrary to Strings)
     This store can also be used for GDPR sensitive information, e.g. user e-mails.*/
   {"WiFi password", &_wifi_password, "WIFI_PASSWD", ""},
-  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""}
+  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""},
+  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", ""},
+  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", ""}
 };
 
 static const floatStore configFloat[] PROGMEM = {

@@ -61,3 +61,58 @@ bool realtoUpload(){
   }
   return true;
 }
+
+void eidHello(){
+  syslog("Preparing EID hello", 0);
+  clientSecureBusy = true;
+  if(_mqtt_tls){
+    if(mqttclientSecure.connected()){
+      syslog("Disconnecting TLS MQTT connection", 0);
+      String mqtt_topic = "plan-d/" + String(apSSID);
+      mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
+      mqttclientSecure.disconnect();
+      mqttPaused = true;
+    }
+  }
+  if(bundleLoaded){
+    syslog("Performing EID hello", 0);
+    String checkUrl = "https://hooks.energyid.eu/hello";
+    syslog("Connecting to " + checkUrl, 0);
+    if (https.begin(*client, checkUrl)) {  
+      https.addHeader("X-Provisioning-Key", _eid_provkey);
+      https.addHeader("X-Provisioning-Secret", _eid_provsec);
+      https.addHeader("Content-Type", "application/json");
+      int httpCode = https.POST(eidHelloMsg());
+      if (httpCode > 0) {
+        DynamicJsonDocument doc(1048);
+        Serial.println(httpCode);
+        String payload = https.getString();
+        Serial.println(payload);
+        deserializeJson(doc, payload);
+        JsonObject obj = doc.as<JsonObject>();
+        String sensor = obj["webhookPolicy"]["allowedInterval"];
+        Serial.println(sensor);
+      }
+      https.end();
+    }
+    client->stop();
+    clientSecureBusy = false;
+    if(mqttPaused){
+      sinceConnCheck = 10000;
+      mqttPaused = false;
+    }
+  }
+}
+
+String eidHelloMsg(){
+  String jsonOutput;
+  DynamicJsonDocument doc(1024);
+  doc["claimCode"] = String(apSSID);
+  doc["deviceId"] = String(apSSID);
+  doc["deviceName"] = "P1 dongle by Plan-D";
+  doc["firmwareVersion"] = String(fw_ver/100.0);
+  doc["ipAddress"] = WiFi.localIP().toString();
+  doc["lcoalDeviceUrl"] = "http://" + WiFi.localIP().toString();
+  serializeJson(doc, jsonOutput);
+  return jsonOutput;
+}

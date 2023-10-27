@@ -102,6 +102,7 @@ void initWifi(){
     Serial.println("");
     if(WiFi.status() == WL_CONNECTED){
       syslog("Connected to the WiFi network " + _wifi_ssid, 1);
+      syslog("Local IP: " + WiFi.localIP().toString(), 0);
       MDNS.begin("p1dongle");
       if(spiffsMounted) unitState = 4;
       else unitState = 7;
@@ -160,7 +161,6 @@ void initWifi(){
       if(_update_autoCheck) {
         sinceUpdateCheck = 86400000-60000;
       }
-      syslog("Local IP: " + WiFi.localIP().toString(), 0);
     }
     else{
       syslog("Could not connect to the WiFi network", 2);

@@ -150,6 +150,9 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
+  eidHello();
+  Serial.println("Done");
+  
 }
 
 void loop(){
@@ -215,6 +218,7 @@ void loop(){
       if(_realto_en) realtoUpload();
     }
     if(_update_autoCheck && sinceUpdateCheck >= 86400000){
+      //eidHello();
       updateAvailable = checkUpdate();
       if(updateAvailable) startUpdate();
       sinceUpdateCheck = 0;
