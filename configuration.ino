@@ -31,6 +31,10 @@ boolean restoreConfig(){
     if(preferences.isKey(configPass[i].configName.c_str())) *configPass[i].var = preferences.getString(configPass[i].configName.c_str());
     else *configPass[i].var = configPass[i].defaultValue;
   }
+  for(int i = 0; i < sizeof(configSecret)/sizeof(configSecret[0]); i++){
+    if(preferences.isKey(configSecret[i].configName.c_str())) *configSecret[i].var = preferences.getString(configSecret[i].configName.c_str());
+    else *configSecret[i].var = configSecret[i].defaultValue;
+  }
   for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
     if(preferences.isKey(configIP[i].configName.c_str())) *configIP[i].var = preferences.getUInt(configIP[i].configName.c_str());
     else *configIP[i].var = configIP[i].defaultValue;
@@ -90,6 +94,9 @@ boolean saveConfig(){
   }
   for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
     preferences.putString(configPass[i].configName.c_str(), *configPass[i].var);
+  }
+  for(int i = 0; i < sizeof(configSecret)/sizeof(configSecret[0]); i++){
+    preferences.putString(configSecret[i].configName.c_str(), *configSecret[i].var);
   }
   for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
     preferences.putUInt(configIP[i].configName.c_str(), *configIP[i].var);
@@ -201,10 +208,19 @@ bool findInConfig(String param, int &varType, int &varNum){
     }
   }
   if(!found){
+    for(int i = 0; i < sizeof(configSecret)/sizeof(configSecret[0]); i++){
+      if(configSecret[i].configName == param){
+        found = true;
+        varType = 6;
+        varNum = i;
+      }
+    }
+  }
+  if(!found){
     for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
       if(configIP[i].configName == param){
         found = true;
-        varType = 6;
+        varType = 7;
         varNum = i;
       }
     }
@@ -269,6 +285,11 @@ String returnConfigVar(String varName, int varType, int varNum, int level){
       configVar["value"] = *configPass[varNum].var;
     }
     else if(varType == 6){
+      configVar["varName"] = configSecret[varNum].varName;
+      configVar["type"] = "secret";
+      configVar["value"] = *configSecret[varNum].var;
+    }
+    else if(varType == 7){
       configVar["varName"] = configIP[varNum].varName;
       configVar["type"] = "ipaddress";
       configVar["value"] = uint32ToIPAddress(*configIP[varNum].var);
@@ -339,6 +360,9 @@ boolean storeConfigVar(String keyValue, int varType, int varNum){
     *configPass[varNum].var = keyValue;
   }
   else if(varType == 6){
+    *configSecret[varNum].var = keyValue;
+  }
+  else if(varType == 7){
     *configIP[varNum].var = ipStringToUint32(keyValue);
   }
   saveConfig();
@@ -430,6 +454,14 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
             }
           }
           else if(retVarType == 6){
+            Serial.println("char");
+            if (keyValue.value().is<const char*>()){
+              Serial.println("check");
+              String testVar = keyValue.value().as<const char*>();
+              *configSecret[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 7){
             Serial.println("ip");
             if (keyValue.value().is<const char*>()){
               Serial.println("check");
@@ -605,6 +637,12 @@ String returnConfig(){
     configVar["varName"] = configPass[i].varName;
     configVar["type"] = "password";
     if(*configPass[i].var != "") configVar["filled"] = true;
+  }
+  for(int i = 0; i < sizeof(configSecret)/sizeof(configSecret[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configSecret[i].configName);
+    configVar["varName"] = configSecret[i].varName;
+    configVar["type"] = "secret";
+    if(*configSecret[i].var != "") configVar["filled"] = true;
   }
   for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
     JsonObject configVar  = doc.createNestedObject(configIP[i].configName);

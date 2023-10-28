@@ -143,7 +143,10 @@ static const stringStore configPass[] PROGMEM = {
   /*Although also Strings, passwords get their own data store as they are never returned as plaintext (contrary to Strings)
     This store can also be used for GDPR sensitive information, e.g. user e-mails.*/
   {"WiFi password", &_wifi_password, "WIFI_PASSWD", ""},
-  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""},
+  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""}
+};
+
+static const stringStore configSecret[] PROGMEM = {
   {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "B3184173261C3"},
   {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "JQKF4e1rdwdrjMMdMwyciN6sj5oUZ0w1"}
 };

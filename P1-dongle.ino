@@ -150,7 +150,7 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
-  eidHello();
+  if(_wifi_STA) eidHello();
   Serial.println("Done");
   
 }

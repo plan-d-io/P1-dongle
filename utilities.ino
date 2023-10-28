@@ -90,9 +90,6 @@ void initWifi(){
   scanWifi();
   if(_wifi_STA){
     syslog("WiFi mode: station", 1);
-    Serial.println(uint32ToIPAddress(_fipaddr));
-    Serial.println(uint32ToIPAddress(_fdefgtw));
-    Serial.println(uint32ToIPAddress(_fsubn));
     WiFi.mode(WIFI_STA);
     if(_fip_en){
       if (!WiFi.config(_fipaddr, _fdefgtw, _fsubn, _fdns1, _fdns2)) {
@@ -112,7 +109,6 @@ void initWifi(){
       syslog("Connected to the WiFi network " + _wifi_ssid, 1);
       syslog("Local IP: " + WiFi.localIP().toString(), 0);
       _fipaddr = WiFi.localIP();
-      Serial.println(uint32ToIPAddress(_fipaddr));
       _fdefgtw = (uint32_t) WiFi.gatewayIP();
       _fsubn = (uint32_t) WiFi.subnetMask();
       _fdns1 = WiFi.dnsIP();

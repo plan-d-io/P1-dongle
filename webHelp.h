@@ -178,7 +178,15 @@ const char index_html[] PROGMEM = R"rawliteral(
 
             <button type="button" class="collapsible">EnergieID</button>
             <div class="content">
-            Coming soon
+            <label for="EID_EN">Use EnergieID</label>
+            <input type="checkbox" id="EID_EN" name="EID_EN">
+            <p style="text-align: left;">To use the EnergieID integration, just copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID file, and claim your dongle using this claim code.</p>
+            <label for="HOSTNAME">Claim code</label>
+            <input type="text" id="HOSTNAME" name="HOSTNAME" disabled><br>
+            <label for="EID_PROVKEY">EnergieID provisioning key</label>
+            <input type="password" id="EID_PROVKEY" name="EID_PROVKEY"><br>
+            <label for="EID_PROVSEC">EnergieID provisioning secret</label>
+            <input type="password" id="EID_PROVSEC" name="EID_PROVSEC"><br>
             </div>
 
             <button type="button" class="collapsible">Advanced network settings</button>
@@ -388,6 +396,11 @@ const char index_html[] PROGMEM = R"rawliteral(
                                 case 'password':
                                     if (data[name].filled) {
                                         input.placeholder = 'Password is set';
+                                    }
+                                    break;
+                                case 'secret':
+                                    if (data[name].filled) {
+                                        input.placeholder = 'Secret is set';
                                     }
                                     break;
                                 case 'email':

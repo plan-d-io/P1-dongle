@@ -163,6 +163,8 @@ void eidHello(){
   if(bundleLoaded){
     syslog("Performing EID hello", 0);
     String checkUrl = "https://hooks.energyid.eu/hello";
+    Serial.println(_eid_provkey);
+    Serial.println(_eid_provsec);
     syslog("Connecting to " + checkUrl, 0);
     if (https.begin(*client, checkUrl)) {  
       https.addHeader("X-Provisioning-Key", _eid_provkey);
@@ -170,10 +172,11 @@ void eidHello(){
       https.addHeader("Content-Type", "application/json");
       int httpCode = https.POST(eidHelloMsg());
       if (httpCode > 0) {
+        Serial.println(httpCode);
+        String payload = https.getString();
+        Serial.println(payload);
         if(httpCode == 200 || httpCode == 201){
           DynamicJsonDocument doc(1048);
-          Serial.println(httpCode);
-          String payload = https.getString();
           deserializeJson(doc, payload);
           JsonObject obj = doc.as<JsonObject>();
           JsonVariant jclaimUrl = obj["claimUrl"];
