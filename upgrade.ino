@@ -19,20 +19,22 @@ boolean checkUpdate(){
       else if(_v2_fleet) checkUrl += "V2-0/version";
       else checkUrl += "main/version";
       syslog("Connecting to " + checkUrl, 0);
-      if (https.begin(*client, checkUrl)) {  
+      if (https.begin(*client, checkUrl)){
         int httpCode = https.GET();
-        if (httpCode > 0) {
+        if (httpCode > 0){
           // HTTP header has been send and Server response header has been handled
           // file found at server
           if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
             String payload = https.getString();
             onlineVersion = atoi(payload.c_str());
           }
-        } else {
+        }
+        else{
           syslog("Could not connect to update repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
         }
         https.end();
-      } else {
+      } 
+      else{
         syslog("Unable to connect to update repository", 2);
       }
     }

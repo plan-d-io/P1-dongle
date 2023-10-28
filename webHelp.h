@@ -24,7 +24,10 @@ static const String svgIcons[][3] PROGMEM = {
   {"cloud-off-outline", "Cloud not connected", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>cloud-off-outline</title><path d=\"M19.8 22.6L17.15 20H6.5Q4.2 20 2.6 18.4T1 14.5Q1 12.58 2.19 11.08 3.38 9.57 5.25 9.15 5.33 8.95 5.4 8.76 5.5 8.57 5.55 8.35L1.4 4.2L2.8 2.8L21.2 21.2M6.5 18H15.15L7.1 9.95Q7.05 10.23 7.03 10.5 7 10.73 7 11H6.5Q5.05 11 4.03 12.03 3 13.05 3 14.5 3 15.95 4.03 17 5.05 18 6.5 18M11.13 14M21.6 18.75L20.15 17.35Q20.58 17 20.79 16.54 21 16.08 21 15.5 21 14.45 20.27 13.73 19.55 13 18.5 13H17V11Q17 8.93 15.54 7.46 14.08 6 12 6 11.33 6 10.7 6.16 10.07 6.33 9.5 6.68L8.05 5.23Q8.93 4.63 9.91 4.31 10.9 4 12 4 14.93 4 16.96 6.04 19 8.07 19 11 20.73 11.2 21.86 12.5 23 13.78 23 15.5 23 16.5 22.63 17.31 22.25 18.15 21.6 18.75M14.83 12.03Z\" /></svg>"},
   {"counter", "Digital meter connected", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>counter</title><path d=\"M4,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M4,6V18H11V6H4M20,18V6H18.76C19,6.54 18.95,7.07 18.95,7.13C18.88,7.8 18.41,8.5 18.24,8.75L15.91,11.3L19.23,11.28L19.24,12.5L14.04,12.47L14,11.47C14,11.47 17.05,8.24 17.2,7.95C17.34,7.67 17.91,6 16.5,6C15.27,6.05 15.41,7.3 15.41,7.3L13.87,7.31C13.87,7.31 13.88,6.65 14.25,6H13V18H15.58L15.57,17.14L16.54,17.13C16.54,17.13 17.45,16.97 17.46,16.08C17.5,15.08 16.65,15.08 16.5,15.08C16.37,15.08 15.43,15.13 15.43,15.95H13.91C13.91,15.95 13.95,13.89 16.5,13.89C19.1,13.89 18.96,15.91 18.96,15.91C18.96,15.91 19,17.16 17.85,17.63L18.37,18H20M8.92,16H7.42V10.2L5.62,10.76V9.53L8.76,8.41H8.92V16Z\" /></svg>"},
   {"numeric-off", "Digital meter disconnected", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>numeric-off</title><path d=\"M22.1 21.5L2.4 1.7L1.1 3L5.1 7H2V9H4V17H6V7.9L9.3 11.2C8.5 11.4 8 12.2 8 13V17H14V15.9L20.8 22.7L22.1 21.5M10 15V13H11.1L13.1 15H10M14 10.8L10.2 7H12C13.1 7 14 7.9 14 9V10.8M20 9H16V7H20C21.1 7 22 7.9 22 9V10.5C22 11.3 21.3 12 20.5 12C21.3 12 22 12.7 22 13.5V15C22 16 21.2 16.9 20.2 17L18.2 15H20V13H18V11H20V9Z\" /></svg>"},
-  {"connection", "No external IO connected", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>connection</title><path d=\"M21.4 7.5C22.2 8.3 22.2 9.6 21.4 10.3L18.6 13.1L10.8 5.3L13.6 2.5C14.4 1.7 15.7 1.7 16.4 2.5L18.2 4.3L21.2 1.3L22.6 2.7L19.6 5.7L21.4 7.5M15.6 13.3L14.2 11.9L11.4 14.7L9.3 12.6L12.1 9.8L10.7 8.4L7.9 11.2L6.4 9.8L3.6 12.6C2.8 13.4 2.8 14.7 3.6 15.4L5.4 17.2L1.4 21.2L2.8 22.6L6.8 18.6L8.6 20.4C9.4 21.2 10.7 21.2 11.4 20.4L14.2 17.6L12.8 16.2L15.6 13.3Z\" /></svg>"}
+  {"connection", "No external IO connected", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>connection</title><path d=\"M21.4 7.5C22.2 8.3 22.2 9.6 21.4 10.3L18.6 13.1L10.8 5.3L13.6 2.5C14.4 1.7 15.7 1.7 16.4 2.5L18.2 4.3L21.2 1.3L22.6 2.7L19.6 5.7L21.4 7.5M15.6 13.3L14.2 11.9L11.4 14.7L9.3 12.6L12.1 9.8L10.7 8.4L7.9 11.2L6.4 9.8L3.6 12.6C2.8 13.4 2.8 14.7 3.6 15.4L5.4 17.2L1.4 21.2L2.8 22.6L6.8 18.6L8.6 20.4C9.4 21.2 10.7 21.2 11.4 20.4L14.2 17.6L12.8 16.2L15.6 13.3Z\" /></svg>"},
+  {"lan-connect", "Connected to MQTT broker", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>lan-connect</title><path d=\"M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M3,13V18L3,20H10V18H5V13H3M14,13C12.89,13 12,13.89 12,15V19C12,20.11 12.89,21 14,21H11V23H23V21H20C21.11,21 22,20.11 22,19V15C22,13.89 21.11,13 20,13H14M14,15H20V19H14V15Z\" /></svg>"},
+  {"lan-pending", "Could not connect to MQTT broker", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>lan-pending</title><path d=\"M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M3,12V14H5V12H3M14,13C12.89,13 12,13.89 12,15V19C12,20.11 12.89,21 14,21H11V23H23V21H20C21.11,21 22,20.11 22,19V15C22,13.89 21.11,13 20,13H14M3,15V17H5V15H3M14,15H20V19H14V15M3,18V20H5V18H3M6,18V20H8V18H6M9,18V20H11V18H9Z\" /></svg>"},
+  {"lan-disconnect", "No MQTT broker configured", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><title>lan-disconnect</title><path d=\"M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M14,13C12.89,13 12,13.89 12,15V19C12,20.11 12.89,21 14,21H11V23H23V21H20C21.11,21 22,20.11 22,19V15C22,13.89 21.11,13 20,13H14M3.88,13.46L2.46,14.88L4.59,17L2.46,19.12L3.88,20.54L6,18.41L8.12,20.54L9.54,19.12L7.41,17L9.54,14.88L8.12,13.46L6,15.59L3.88,13.46M14,15H20V19H14V15Z\" /></svg>"}
   };
 
 
@@ -77,9 +80,15 @@ String returnSvg(){
     cloudVar["img"] = svgIcons[9][2];
     cloudVar["alt"] = svgIcons[9][1];
   }
-  JsonObject extVar  = doc.createNestedObject("externalio");
-  extVar["img"] = svgIcons[12][2];
-  extVar["alt"] = svgIcons[12][1];
+  JsonObject localVar  = doc.createNestedObject("broker");
+  if(_wifi_STA && !mqttHostError && !mqttClientError && !httpsError){
+    localVar["img"] = svgIcons[13][2];
+    localVar["alt"] = svgIcons[13][1];
+  }
+  else{
+    localVar["img"] = svgIcons[15][2];
+    localVar["alt"] = svgIcons[15][1];
+  }
   serializeJson(doc, jsonOutput);
   return jsonOutput;
 }
@@ -118,7 +127,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <img id="wifi" alt="" src="" />
             <img id="meter" alt="" src="" />
             <img id="cloud" alt="" src="" />
-            <img id="externalio" alt="" src="" />
+            <img id="broker" alt="" src="" />
         </div>
     
         <button class="collapsible" id="realTimeDataCollapsible">Real-time data</button>
@@ -170,6 +179,27 @@ const char index_html[] PROGMEM = R"rawliteral(
             <button type="button" class="collapsible">EnergieID</button>
             <div class="content">
             Coming soon
+            </div>
+
+            <button type="button" class="collapsible">Advanced network settings</button>
+            <div class="content">
+            <label for="FIP_EN">Use fixed IP address</label>
+            <input type="checkbox" id="FIP_EN" name="FIP_EN">
+            <!-- IP Address -->
+            <label for="FIPADDR">IP Address:</label>
+            <input type="text" id="FIPADDR" name="FIPADDR">
+            <!-- Default Gateway -->
+            <label for="FDEFGTW">Default Gateway:</label>
+            <input type="text" id="FDEFGTW" name="FDEFGTW">
+            <!-- Subnet Mask -->
+            <label for="FSUBN">Subnet Mask:</label>
+            <input type="text" id="FSUBN" name="FSUBN" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" title="Enter a valid subnet mask" required>
+            <!-- Primary DNS Server -->
+            <label for="FDNS1">Primary DNS Server:</label>
+            <input type="text" id="FDNS1" name="FDNS1" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" title="Enter a valid IP address" required>
+            <!-- Secondary DNS Server -->
+            <label for="FDNS2">Secondary DNS Server:</label>
+            <input type="text" id="FDNS2" name="FDNS2" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" title="Enter a valid IP address">
             </div>
 
             <button type="button" class="collapsible">Telegram settings</button>
@@ -268,14 +298,14 @@ const char index_html[] PROGMEM = R"rawliteral(
                 .then(data => {
                     const wifiImg = document.getElementById('wifi');
                     const meterImg = document.getElementById('meter');
-                    const cloudImg = document.getElementById('cloud'); // New
-                    const externalioImg = document.getElementById('externalio'); // New
+                    const cloudImg = document.getElementById('cloud');
+                    const brokerImg = document.getElementById('broker');
             
                     // Modify the SVG fill color to white
                     let wifiSvg = data.wifi.img.replace('<path', '<path fill="white"');
                     let meterSvg = data.meter.img.replace('<path', '<path fill="white"');
-                    let cloudSvg = data.cloud.img.replace('<path', '<path fill="white"'); // New
-                    let externalioSvg = data.externalio.img.replace('<path', '<path fill="white"'); // New
+                    let cloudSvg = data.cloud.img.replace('<path', '<path fill="white"');
+                    let brokerSvg = data.broker.img.replace('<path', '<path fill="white"');
             
                     wifiImg.src = 'data:image/svg+xml,' + encodeURIComponent(wifiSvg);
                     wifiImg.alt = data.wifi.alt;
@@ -285,13 +315,13 @@ const char index_html[] PROGMEM = R"rawliteral(
                     meterImg.alt = data.meter.alt;
                     meterImg.title = data.meter.alt;
             
-                    cloudImg.src = 'data:image/svg+xml,' + encodeURIComponent(cloudSvg); // New
-                    cloudImg.alt = data.cloud.alt; // New
-                    cloudImg.title = data.cloud.alt; // New
+                    cloudImg.src = 'data:image/svg+xml,' + encodeURIComponent(cloudSvg);
+                    cloudImg.alt = data.cloud.alt;
+                    cloudImg.title = data.cloud.alt;
             
-                    externalioImg.src = 'data:image/svg+xml,' + encodeURIComponent(externalioSvg); // New
-                    externalioImg.alt = data.externalio.alt; // New
-                    externalioImg.title = data.externalio.alt; // New
+                    brokerImg.src = 'data:image/svg+xml,' + encodeURIComponent(brokerSvg);
+                    brokerImg.alt = data.broker.alt;
+                    brokerImg.title = data.broker.alt;
             
                     return fetchWithTimeoutAndRetry('/wifi');
                 })
@@ -350,6 +380,9 @@ const char index_html[] PROGMEM = R"rawliteral(
                                 case 'uint32':
                                 case 'uint64':
                                 case 'string':
+                                    input.value = value;
+                                    break;
+                                case 'ipaddress':
                                     input.value = value;
                                     break;
                                 case 'password':

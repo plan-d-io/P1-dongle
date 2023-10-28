@@ -90,7 +90,15 @@ void initWifi(){
   scanWifi();
   if(_wifi_STA){
     syslog("WiFi mode: station", 1);
+    Serial.println(uint32ToIPAddress(_fipaddr));
+    Serial.println(uint32ToIPAddress(_fdefgtw));
+    Serial.println(uint32ToIPAddress(_fsubn));
     WiFi.mode(WIFI_STA);
+    if(_fip_en){
+      if (!WiFi.config(_fipaddr, _fdefgtw, _fsubn, _fdns1, _fdns2)) {
+        syslog("Failed to set static IP", 2);
+      }
+    }
     WiFi.begin(_wifi_ssid.c_str(), _wifi_password.c_str());
     WiFi.setHostname("p1dongle");
     elapsedMillis startAttemptTime;
@@ -103,6 +111,12 @@ void initWifi(){
     if(WiFi.status() == WL_CONNECTED){
       syslog("Connected to the WiFi network " + _wifi_ssid, 1);
       syslog("Local IP: " + WiFi.localIP().toString(), 0);
+      _fipaddr = WiFi.localIP();
+      Serial.println(uint32ToIPAddress(_fipaddr));
+      _fdefgtw = (uint32_t) WiFi.gatewayIP();
+      _fsubn = (uint32_t) WiFi.subnetMask();
+      _fdns1 = WiFi.dnsIP();
+      _fdns2 = WiFi.dnsIP(1);
       MDNS.begin("p1dongle");
       if(spiffsMounted) unitState = 4;
       else unitState = 7;
@@ -205,8 +219,7 @@ unsigned long printUnixTime(){
   return(time(&now));
 }
 
-void setClock(boolean firstSync)
-{  
+void setClock(boolean firstSync){
   time_t nowSecs = time(nullptr);
   if(firstSync){
     syslog("Configuring NTP time sync", 0);
@@ -282,6 +295,27 @@ void forcedReset(){
 
 double round2(double value) {
    return (int)(value * 100 + 0.05) / 100.0;
+}
+
+uint32_t reverseBytes(uint32_t value) {
+    return ((value & 0xFF) << 24) |
+           ((value & 0xFF00) << 8) |
+           ((value & 0xFF0000) >> 8) |
+           ((value & 0xFF000000) >> 24);
+}
+
+IPAddress uint32ToIPAddress(uint32_t ipInt) {
+    byte octet4 = (byte)(ipInt >> 24);
+    byte octet3 = (byte)(ipInt >> 16);
+    byte octet2 = (byte)(ipInt >> 8);
+    byte octet1 = (byte)ipInt;
+    return IPAddress(octet1, octet2, octet3, octet4);
+}
+
+uint32_t ipStringToUint32(String ipStr) {
+    IPAddress ip;
+    ip.fromString(ipStr);
+    return (uint32_t)ip[3] << 24 | (uint32_t)ip[2] << 16 | (uint32_t)ip[1] << 8 | ip[0];
 }
 
 /*SPIFFS file utilities*/

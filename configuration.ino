@@ -31,6 +31,10 @@ boolean restoreConfig(){
     if(preferences.isKey(configPass[i].configName.c_str())) *configPass[i].var = preferences.getString(configPass[i].configName.c_str());
     else *configPass[i].var = configPass[i].defaultValue;
   }
+  for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
+    if(preferences.isKey(configIP[i].configName.c_str())) *configIP[i].var = preferences.getUInt(configIP[i].configName.c_str());
+    else *configIP[i].var = configIP[i].defaultValue;
+  }
   preferences.end();
   /*Temp bootstrap for pre-V2.0 compatibility*/
   if(_dev_fleet) _rel_chan = "develop";
@@ -87,6 +91,9 @@ boolean saveConfig(){
   for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
     preferences.putString(configPass[i].configName.c_str(), *configPass[i].var);
   }
+  for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
+    preferences.putUInt(configIP[i].configName.c_str(), *configIP[i].var);
+  }
   preferences.end();
   return true;
 }
@@ -113,6 +120,7 @@ boolean resetConfig() {
     preferences.remove("WIFI_SSID");
     preferences.remove("WIFI_PASSWD");
     preferences.remove("WIFI_STA");
+    preferences.remove("FIP_EN");
   }
   else if(factoryReset){
     syslog("Factory reset by user", 2);
@@ -192,6 +200,15 @@ bool findInConfig(String param, int &varType, int &varNum){
       }
     }
   }
+  if(!found){
+    for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
+      if(configIP[i].configName == param){
+        found = true;
+        varType = 6;
+        varNum = i;
+      }
+    }
+  }
   return found;
 }
 
@@ -250,6 +267,11 @@ String returnConfigVar(String varName, int varType, int varNum, int level){
       configVar["varName"] = configPass[varNum].varName;
       configVar["type"] = "password";
       configVar["value"] = *configPass[varNum].var;
+    }
+    else if(varType == 6){
+      configVar["varName"] = configIP[varNum].varName;
+      configVar["type"] = "ipaddress";
+      configVar["value"] = uint32ToIPAddress(*configIP[varNum].var);
     }
     serializeJson(doc, jsonOutput);
     if(level == 2){
@@ -315,6 +337,9 @@ boolean storeConfigVar(String keyValue, int varType, int varNum){
   }
   else if(varType == 5){
     *configPass[varNum].var = keyValue;
+  }
+  else if(varType == 6){
+    *configIP[varNum].var = ipStringToUint32(keyValue);
   }
   saveConfig();
   return true;
@@ -402,6 +427,14 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
               Serial.println("check");
               String testVar = keyValue.value().as<const char*>();
               *configPass[retVarNum].var = testVar;
+            }
+          }
+          else if(retVarType == 6){
+            Serial.println("ip");
+            if (keyValue.value().is<const char*>()){
+              Serial.println("check");
+              String testVar = keyValue.value().as<const char*>();
+              *configIP[retVarNum].var = ipStringToUint32(testVar);
             }
           }
         }
@@ -519,8 +552,6 @@ boolean isNumeric(String &varValue, long &longValue, unsigned long &ulongValue, 
 
 String returnConfig(){
   /*Return the entire NVS configuration as one single JSON string*/
-  //syslog("Compiling config", 1);
-  Serial.println("Compiling config");
   String jsonOutput;
   DynamicJsonDocument doc(5120);
   JsonObject hostVar  = doc.createNestedObject("HOSTNAME");
@@ -574,6 +605,13 @@ String returnConfig(){
     configVar["varName"] = configPass[i].varName;
     configVar["type"] = "password";
     if(*configPass[i].var != "") configVar["filled"] = true;
+  }
+  for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
+    JsonObject configVar  = doc.createNestedObject(configIP[i].configName);
+    configVar["varName"] = configIP[i].varName;
+    configVar["type"] = "ipaddress";
+    configVar["value"] = uint32ToIPAddress(*configIP[i].var);
+    configVar["defaultValue"] = String(uint32ToIPAddress(configIP[i].defaultValue));
   }
   serializeJson(doc, jsonOutput);
   return jsonOutput;

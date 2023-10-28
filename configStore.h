@@ -29,6 +29,13 @@ struct ulongStore{
    unsigned long defaultValue;
 };
 
+struct ipStore{
+   String varName;
+   uint32_t* var;
+   String configName;
+   unsigned long defaultValue;
+};
+
 struct stringStore{
    String varName;
    String* var;
@@ -45,8 +52,9 @@ struct floatStore{
 
 /*Declaration of global variables retrieved from NVS config storage, denoted by a leading _*/
 /*Wifi*/
-bool _wifi_STA;
+bool _wifi_STA, _fip_en;
 String _wifi_ssid, _wifi_password;
+uint32_t _fipaddr, _fdefgtw, _fsubn, _fdns1, _fdns2;
 /*User*/
 String _user_email;
 /*MQTT*/
@@ -79,7 +87,8 @@ String _tempString;
  * Format: { "User-readable name", global variable name (reference), "NVS key name", default value }
  */
 static const boolStore configBool[] PROGMEM = {
-  {"WiFi Station mode", &_wifi_STA, "WIFI_STA", false}, 
+  {"WiFi Station mode", &_wifi_STA, "WIFI_STA", false},
+  {"Use fixed IP", &_fip_en, "FIP_EN", false},
   {"MQTT enabled", &_mqtt_en, "MQTT_EN", false},
   {"MQTT secure", &_mqtt_tls, "MQTT_TLS", false},
   {"MQTT auth", &_mqtt_auth, "MQTT_AUTH", false},
@@ -135,8 +144,16 @@ static const stringStore configPass[] PROGMEM = {
     This store can also be used for GDPR sensitive information, e.g. user e-mails.*/
   {"WiFi password", &_wifi_password, "WIFI_PASSWD", ""},
   {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""},
-  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", ""},
-  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", ""}
+  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "B3184173261C3"},
+  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "JQKF4e1rdwdrjMMdMwyciN6sj5oUZ0w1"}
+};
+
+static const ipStore configIP[] PROGMEM = {
+  {"IP address", &_fipaddr, "FIPADDR", 0},
+  {"Default gateway", &_fdefgtw, "FDEFGTW", 0},
+  {"Subnet mask", &_fsubn, "FSUBN", 0},
+  {"Primary DNS", &_fdns1, "FDNS1", 0},
+  {"Secondary DNS", &_fdns2, "FDNS2", 0}
 };
 
 static const floatStore configFloat[] PROGMEM = {

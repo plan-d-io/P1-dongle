@@ -208,7 +208,6 @@ void loop(){
     /*If dongle is connected to wifi*/
     if(!bundleLoaded) restoreSPIFFS();
     if(_mqtt_en){
-      //if(!mqttPaused && !clientSecureBusy) proccessSyslogBuffer();
       if(_mqtt_tls){
         mqttclientSecure.loop();
       }
@@ -217,8 +216,13 @@ void loop(){
       }
       if(_realto_en) realtoUpload();
     }
+    if(lastEIDcheck >= EIDcheckInterval){
+      eidHello();
+    }
+    if(lastEIDupload > EIDuploadInterval){
+      eidUpload();
+    }
     if(_update_autoCheck && sinceUpdateCheck >= 86400000){
-      //eidHello();
       updateAvailable = checkUpdate();
       if(updateAvailable) startUpdate();
       sinceUpdateCheck = 0;
