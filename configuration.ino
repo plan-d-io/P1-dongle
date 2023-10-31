@@ -45,6 +45,7 @@ boolean restoreConfig(){
   else if(_alpha_fleet) _rel_chan = "alpha";
   else if(_v2_fleet) _rel_chan = "V2";
   else _rel_chan = "main";
+  if(_mqtt_id == "") _mqtt_id = String(apSSID);
   /*End temp bootstrap*/
   return true;
 }

@@ -176,11 +176,18 @@ const char index_html[] PROGMEM = R"rawliteral(
             <br><br>
             </div>
 
+            <button type="button" class="collapsible">Home Assistant</button>
+            <div class="content">
+            <label for="HA_EN">Use Home Assistant</label>
+            <input type="checkbox" id="HA_EN" name="HA_EN">
+            <p style="text-align: left;">To use Home Assistant, please ensure you have an MQTT broker running on your Home Assistant server, and that you have configured it in the MQTT settings of the dongle (see above). The dongle uses the Home Assistant MQTT autodiscovery feature.</p>
+            </div>
+
             <button type="button" class="collapsible">EnergieID</button>
             <div class="content">
             <label for="EID_EN">Use EnergieID</label>
             <input type="checkbox" id="EID_EN" name="EID_EN">
-            <p style="text-align: left;">To use the EnergieID integration, just copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID file, and claim your dongle using this claim code.</p>
+            <p style="text-align: left;">To use the EnergieID integration, just copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID account, and claim your dongle using this claim code.</p>
             <label for="HOSTNAME">Claim code</label>
             <input type="text" id="HOSTNAME" name="HOSTNAME" disabled><br>
             <label for="EID_PROVKEY">EnergieID provisioning key</label>
