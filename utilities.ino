@@ -57,20 +57,23 @@ void initSPIFFS(){
   else{
     /*Check if SPIFFS contains files*/
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
-    listDir(SPIFFS, "/", 0);
-    File file = SPIFFS.open("/index.html"); //test a file
+    listDir(SPIFFS, "/", 3);
+/*
     if(!file || file.isDirectory() || file.size() == 0) {
         syslog("Could not load files from SPIFFS", 3);
         spiffsMounted = false;
     }
+    file.close();
+*/
+    
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
-    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt")){
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") ){ //|| !deleteFile(SPIFFS, "/test.txt"
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
     else spiffsMounted = true;
-    file.close();
+    //file.close();
   }
   syslog("----------------------------", 0);
   if(spiffsMounted){
@@ -127,9 +130,8 @@ void initWifi(){
       printLocalTime(true);
       if(client){
         syslog("Setting up TLS/SSL client", 0);
-        //client->setCACertBundle(true);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin", "r");
+        File file = SPIFFS.open("/x509_crt_bundle.bin", "r");
         if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 3);
             //client->setCACertBundle(false);
@@ -332,7 +334,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
             Serial.print("  DIR : ");
             Serial.println(file.name());
             if(levels){
-                listDir(fs, file.path(), levels -1);
+                listDir(fs, file.name(), levels -1);
             }
         } else {
             Serial.print("  FILE: ");
@@ -341,6 +343,23 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
             Serial.println(file.size());
         }
         file = root.openNextFile();
+    }
+}
+
+void createDir(fs::FS &fs, const char * path){
+    Serial.printf("Creating Dir: %s\n", path);
+    if(fs.mkdir(path)){
+        Serial.println("Dir created");
+    } else {
+        Serial.println("mkdir failed");
+    }
+}
+void removeDir(fs::FS &fs, const char * path){
+    Serial.printf("Removing Dir: %s\n", path);
+    if(fs.rmdir(path)){
+        Serial.println("Dir removed");
+    } else {
+        Serial.println("rmdir failed");
     }
 }
 

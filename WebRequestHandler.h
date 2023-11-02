@@ -1,5 +1,5 @@
 /*The webserver client and its handlers live here*/
-#include "SPIFFS.h"
+#include <LittleFS.h>
 extern bool findInConfig(String, int&, int&), processConfigJson(String, String&, bool), processConfigString(String, String&, bool), storeConfigVar(String, int, int);
 extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), httpTelegramValues(String option), infoMsg, _user_email, configBuffer;
 extern const char index_html[], reboot_html[], test_html[], css[];
