@@ -106,7 +106,7 @@ boolean startUpdate(){
                     saveResetReason("Firmware upgrade successfully completed. Rebooting to finish update");
                     fw_ver = onlineVersion;
                     _update_start = false;
-                    _update_finish = true;
+                    //_update_finish = true;
                     saveConfig();
                     preferences.end();
                     SPIFFS.end();

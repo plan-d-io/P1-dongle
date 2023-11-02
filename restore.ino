@@ -69,14 +69,14 @@ void restoreSPIFFS(){
   }*/
   if(repoOK){
     /*Reformat the SPIFFS*/
-    /*syslog("Formatting", 0);
+    syslog("Formatting", 0);
     bool formatted = SPIFFS.format();
     if(formatted){
       syslog("Success formatting", 0);
     }
     else{
       syslog("Error formatting", 3);
-    }*/
+    }
     File f;
     if(SPIFFS.exists(FILENAME)){
       Serial.println("Removing old bundle");
@@ -126,7 +126,7 @@ void restoreSPIFFS(){
     file.close();
     bundleLoaded = true;
     /*Download the other static files*/
-    _restore_finish = true;
+    //_restore_finish = true;
     saveResetReason("Rebooting after SPIFFS restore");
     saveConfig();
     SPIFFS.end();
