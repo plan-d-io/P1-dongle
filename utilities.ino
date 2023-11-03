@@ -124,7 +124,7 @@ void initWifi(){
         syslog("Setting up TLS/SSL client", 0);
         // Load certbundle from SPIFFS
         File file = SPIFFS.open(TLSBUNDLE, "r");
-        if(!file || file.isDirectory()) {
+        if(!file || file.isDirectory() || file.size() < 100) {
             syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
             unitState = 7;

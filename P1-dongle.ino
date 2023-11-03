@@ -1,5 +1,3 @@
-
-
 #include "rom/rtc.h"
 #include <esp_int_wdt.h>
 #include <esp_task_wdt.h>
@@ -17,7 +15,6 @@
 #include <Preferences.h>
 #include <PubSubClient.h>
 #include <time.h>
-
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>

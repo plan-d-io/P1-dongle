@@ -44,13 +44,13 @@ void restoreSPIFFS(){
   }
   boolean repoOK = true;
   syslog("Checking remote repository", 0);
-  String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
-  if(_dev_fleet) baseUrl += "develop";
-  else if(_alpha_fleet) baseUrl += "alpha";
-  else if(_v2_fleet) baseUrl += "V2-0";
-  else baseUrl += "main";
-  String fileUrl = baseUrl + "/data/cert/x509_crt_bundle.bin";
-  String s = "/cert/x509_crt_bundle.bin";/*
+  String baseUrl = "https://github.com/plan-d-io/P1-dongle/raw/";
+  if(_dev_fleet) baseUrl += "develop/data/x509_crt_bundle.bin";
+  else if(_alpha_fleet) baseUrl += "alpha/data/cert/x509_crt_bundle.bin";
+  else if(_v2_fleet) baseUrl += "V2-0/data/x509_crt_bundle.bin";
+  else baseUrl += "main/data/cert/x509_crt_bundle.bin";
+  String fileUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/data/cert/x509_crt_bundle.bin";//"https://github.com/plan-d-io/P1-dongle/raw/develop/data/x509_crt_bundle.bin";
+  String s = "/x509_crt_bundle.bin";/*
   Serial.println(fileUrl);
   if (https.begin(*client, fileUrl)) {
     int httpCode = https.GET();
@@ -93,7 +93,7 @@ void restoreSPIFFS(){
         int httpCode = https.GET();
         Serial.println(httpCode);
         if (httpCode > 0) {
-          if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+          if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
             long contentLength = https.getSize();
             Serial.print("File size: ");
             Serial.println(contentLength);
