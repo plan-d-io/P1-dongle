@@ -61,7 +61,7 @@ void initSPIFFS(){
     if(SPIFFS.exists(TLSBUNDLE)) syslog("TLS bundle found", 0);
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
-    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt"){
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt")){
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
