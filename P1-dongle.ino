@@ -92,6 +92,7 @@ HTTPClient https;
 bool bundleLoaded = true;
 bool clientSecureBusy, mqttPaused;
 bool updateAvailable;
+String eidUploadInterval = "Not yet set";
 
 #define TRIGGER 25 //Pin to trigger meter telegram request
 //Global timing vars
@@ -149,7 +150,7 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
-  if(_wifi_STA) eidHello();
+  //if(_wifi_STA) eidHello();
   Serial.println("Done");
   
 }

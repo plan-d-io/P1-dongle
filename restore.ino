@@ -50,25 +50,7 @@ void restoreSPIFFS(){
   else if(_v2_fleet) baseUrl += "V2-0/data/x509_crt_bundle.bin";
   else baseUrl += "main/data/cert/x509_crt_bundle.bin";
   String fileUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/data/cert/x509_crt_bundle.bin";//"https://github.com/plan-d-io/P1-dongle/raw/develop/data/x509_crt_bundle.bin";
-  String s = "/x509_crt_bundle.bin";/*
-  Serial.println(fileUrl);
-  if (https.begin(*client, fileUrl)) {
-    int httpCode = https.GET();
-    Serial.println(httpCode);
-    if (httpCode > 0) {
-      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        syslog("Found remote TLS bundle", 0);
-        repoOK = true;
-      }
-      else{
-        syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);
-      }
-    } 
-    else {
-      syslog("Could not connect to repository, HTTPS code " + String(httpCode) +" " + String(https.errorToString(httpCode)), 2);
-    }
-    https.end();
-  }*/
+  String s = "/x509_crt_bundle.bin";
   if(repoOK){
     /*Reformat the SPIFFS*/
     syslog("Formatting", 0);

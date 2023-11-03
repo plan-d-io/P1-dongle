@@ -587,6 +587,7 @@ String returnConfig(){
   /*Return the entire NVS configuration as one single JSON string*/
   String jsonOutput;
   DynamicJsonDocument doc(5120);
+  /*Runtime vars*/
   JsonObject hostVar  = doc.createNestedObject("HOSTNAME");
   hostVar["varName"] = "Dongle hostname";
   hostVar["type"] = "string";
@@ -595,6 +596,11 @@ String returnConfig(){
   fwVar["varName"] = "Firmware version";
   fwVar["type"] = "numeric";
   fwVar["value"] = round2(fw_ver/100.0);
+  JsonObject eidintVar  = doc.createNestedObject("EID_INTV");
+  eidintVar["varName"] = "Allowed upload interval";
+  eidintVar["type"] = "string";
+  eidintVar["value"] = eidUploadInterval;
+  /*Stored config vars*/
   for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
     JsonObject configVar  = doc.createNestedObject(configBool[i].configName);
     configVar["varName"] = configBool[i].varName;

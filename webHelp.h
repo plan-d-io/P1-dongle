@@ -187,9 +187,11 @@ const char index_html[] PROGMEM = R"rawliteral(
             <div class="content">
             <label for="EID_EN">Use EnergieID</label>
             <input type="checkbox" id="EID_EN" name="EID_EN">
-            <p style="text-align: left;">To use the EnergieID integration, just copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID account, and claim your dongle using this claim code.</p>
+            <p style="text-align: left;">To use the EnergieID integration, copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID account, and claim your dongle using this claim code.</p>
             <label for="HOSTNAME">Claim code</label>
             <input type="text" id="HOSTNAME" name="HOSTNAME" disabled><br>
+            <label for="EID_INTV">Allowed upload interval</label>
+            <input type="text" id="EID_INTV" name="EID_INTV" disabled><br>
             <label for="EID_PROVKEY">EnergieID provisioning key</label>
             <input type="password" id="EID_PROVKEY" name="EID_PROVKEY"><br>
             <label for="EID_PROVSEC">EnergieID provisioning secret</label>
@@ -232,7 +234,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </form>
         <a href="/reboot.html" class="reboot">Reboot</a>
         <footer>
-            <a href='https://plan-d.io' target='_blank' id="footerLink">Digital meter dongle by plan-d.io</a>
+            <a href='https://www.plan-d.io' target='_blank' id="footerLink">Digital meter dongle by plan-d.io</a>
         </footer>
     </div>
 
@@ -539,7 +541,7 @@ const char reboot_html[] PROGMEM = R"rawliteral(
             <h3>You can close this window.</h3></p>  
             </div>
         <footer>
-            <a href='https://plan-d.io' target='_blank' id="footerLink">Digital meter dongle by plan-d.io</a>
+            <a href='https://www.plan-d.io' target='_blank' id="footerLink">Digital meter dongle by plan-d.io</a>
         </footer>
         </div>
     </div>

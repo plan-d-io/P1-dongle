@@ -149,89 +149,98 @@ void eidUpload(){
 }
 
 void eidHello(){
-  syslog("Preparing EID hello", 0);
-  clientSecureBusy = true;
-  if(_mqtt_tls){
-    if(mqttclientSecure.connected()){
-      syslog("Disconnecting TLS MQTT connection", 0);
-      String mqtt_topic = "plan-d/" + String(apSSID);
-      mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
-      mqttclientSecure.disconnect();
-      mqttPaused = true;
+  if(_eid_en){
+    syslog("Preparing EID hello", 0);
+    clientSecureBusy = true;
+    if(_mqtt_tls){
+      if(mqttclientSecure.connected()){
+        syslog("Disconnecting TLS MQTT connection", 0);
+        String mqtt_topic = "plan-d/" + String(apSSID);
+        mqttclientSecure.publish(mqtt_topic.c_str(), "offline", true);
+        mqttclientSecure.disconnect();
+        mqttPaused = true;
+      }
     }
-  }
-  if(bundleLoaded){
-    syslog("Performing EID hello", 0);
-    String checkUrl = "https://hooks.energyid.eu/hello";
-    Serial.println(_eid_provkey);
-    Serial.println(_eid_provsec);
-    syslog("Connecting to " + checkUrl, 0);
-    if (https.begin(*client, checkUrl)) {  
-      https.addHeader("X-Provisioning-Key", _eid_provkey);
-      https.addHeader("X-Provisioning-Secret", _eid_provsec);
-      https.addHeader("Content-Type", "application/json");
-      int httpCode = https.POST(eidHelloMsg());
-      if (httpCode > 0) {
-        Serial.println(httpCode);
-        String payload = https.getString();
-        Serial.println(payload);
-        if(httpCode == 200 || httpCode == 201){
-          DynamicJsonDocument doc(1048);
-          deserializeJson(doc, payload);
-          JsonObject obj = doc.as<JsonObject>();
-          JsonVariant jclaimUrl = obj["claimUrl"];
-          JsonVariant jallowedInterval = obj["webhookPolicy"]["allowedInterval"];
-          String claimUrl;
-          if(!jallowedInterval.isNull()){
-            String webhookUrl = obj["webhookUrl"];
-            EIDwebhookUrl = webhookUrl;
-            String authorization = obj["headers"]["authorization"];
-            EIDauthorization = authorization;
-            String xtwinid = obj["headers"]["x-twin-id"];
-            EIDxtwinid = xtwinid ;
-            String allowedInterval = obj["webhookPolicy"]["allowedInterval"];
-            int multi = 1;
-            int len = allowedInterval.length();
-            char intervalUnit = allowedInterval.charAt(len-1);
-            if(intervalUnit == 'S' || intervalUnit == 's') multi = 1000;
-            else if(intervalUnit == 'M' || intervalUnit == 'm'){
-              multi = 60000;
+    if(bundleLoaded){
+      syslog("Performing EID hello", 0);
+      String checkUrl = "https://hooks.energyid.eu/hello";
+      Serial.println(_eid_provkey);
+      Serial.println(_eid_provsec);
+      syslog("Connecting to " + checkUrl, 0);
+      if (https.begin(*client, checkUrl)) {  
+        https.addHeader("X-Provisioning-Key", _eid_provkey);
+        https.addHeader("X-Provisioning-Secret", _eid_provsec);
+        https.addHeader("Content-Type", "application/json");
+        int httpCode = https.POST(eidHelloMsg());
+        if (httpCode > 0) {
+          Serial.println(httpCode);
+          String payload = https.getString();
+          Serial.println(payload);
+          if(httpCode == 200 || httpCode == 201){
+            DynamicJsonDocument doc(1048);
+            deserializeJson(doc, payload);
+            JsonObject obj = doc.as<JsonObject>();
+            JsonVariant jclaimUrl = obj["claimUrl"];
+            JsonVariant jallowedInterval = obj["webhookPolicy"]["allowedInterval"];
+            String claimUrl;
+            if(!jallowedInterval.isNull()){
+              String webhookUrl = obj["webhookUrl"];
+              EIDwebhookUrl = webhookUrl;
+              String authorization = obj["headers"]["authorization"];
+              EIDauthorization = authorization;
+              String xtwinid = obj["headers"]["x-twin-id"];
+              EIDxtwinid = xtwinid ;
+              String allowedInterval = obj["webhookPolicy"]["allowedInterval"];
+              int multi = 1000;
+              int len = allowedInterval.length();
+              char intervalUnit = allowedInterval.charAt(len-1);
+              if(intervalUnit == 'S' || intervalUnit == 's') multi = 1000;
+              else if(intervalUnit == 'M' || intervalUnit == 'm') multi = 60* 1000;
+              else if(intervalUnit == 'H' || intervalUnit == 'h') multi = 60 * 60* 1000;
+              else if(intervalUnit == 'D' || intervalUnit == 'd') multi = 24 * 60 * 60* 1000;
+              else multi = 1000;
+              allowedInterval = allowedInterval.substring(2, len-1);
+              EIDuploadInterval = allowedInterval.toInt();
+              EIDuploadInterval = EIDuploadInterval * multi;
+              EIDcheckInterval = 24*60*1000;
+              EIDuploadEn = true;
+              eidUploadInterval = allowedInterval + String(intervalUnit);
+              if(intervalUnit == 'S' || intervalUnit == 'M' || intervalUnit == 'H') eidUploadInterval.toLowerCase();
+              Serial.println(allowedInterval);
+              Serial.println(intervalUnit);
+              if(EIDuploadEn) syslog("EID can upload, setting interval to " + allowedInterval, 0);
+              lastEIDupload = EIDuploadInterval;
+              configBuffer = returnConfig();
+              Serial.println(eidUploadInterval);
             }
-            allowedInterval = allowedInterval.substring(2, len);
-            EIDuploadInterval = allowedInterval.toInt();
-            EIDuploadInterval = EIDuploadInterval * multi;
-            EIDcheckInterval = 24*60*1000;
-            EIDuploadEn = true;
-            if(EIDuploadEn) syslog("EID can upload, setting interval to " + allowedInterval, 0);
-            lastEIDupload = EIDuploadInterval;
-          }
-          else{
-            EIDuploadEn = false;
-            EIDcheckInterval = 150000;
-            syslog("EID cannot yet upload", 0);
+            else{
+              EIDuploadEn = false;
+              EIDcheckInterval = 150000;
+              syslog("EID cannot yet upload", 0);
+            }
           }
         }
+        else{
+          syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          EIDuploadEn = false;
+          EIDcheckInterval = 150000;
+        }
+        https.end();
+        client->stop();
       }
-      else{
-        syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+      else {
+        syslog("Unable to connect to EID", 2);
         EIDuploadEn = false;
         EIDcheckInterval = 150000;
       }
-      https.end();
-      client->stop();
-    }
-    else {
-      syslog("Unable to connect to EID", 2);
-      EIDuploadEn = false;
-      EIDcheckInterval = 150000;
-    }
-    lastEIDcheck = 0;
-    clientSecureBusy = false;
-    if(mqttPaused){
-      sinceConnCheck = 10000;
-      mqttPaused = false;
+      clientSecureBusy = false;
+      if(mqttPaused){
+        sinceConnCheck = 10000;
+        mqttPaused = false;
+      }
     }
   }
+  lastEIDcheck = 0;
 }
 
 String eidHelloMsg(){
