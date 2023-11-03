@@ -5,7 +5,6 @@
 #include <esp_task_wdt.h>
 #include "M5Atom.h"
 #include <LittleFS.h>
-//#include "SPIFFS.h"
 #define SPIFFS LittleFS
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -22,10 +21,6 @@
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
-
-#define FILENAME "/x509_crt_bundle.bin"
-#define URL "https://epyon.be/DL/x509_crt_bundle.bin"
-File f;
 
 unsigned int fw_ver = 207;
 

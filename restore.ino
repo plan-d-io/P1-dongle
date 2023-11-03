@@ -30,6 +30,8 @@ const char* github_root_ca= \
      "CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=\n" \
      "-----END CERTIFICATE-----\n";
 
+#define TLSBUNDLE "/x509_crt_bundle.bin"
+
 void restoreSPIFFS(){
   listDir(SPIFFS, "/", 3);
   /*Load the static cert into the https client*/
@@ -78,14 +80,14 @@ void restoreSPIFFS(){
       syslog("Error formatting", 3);
     }
     File f;
-    if(SPIFFS.exists(FILENAME)){
+    if(SPIFFS.exists(TLSBUNDLE)){
       Serial.println("Removing old bundle");
-      SPIFFS.remove(FILENAME);
+      SPIFFS.remove(TLSBUNDLE);
     }
     /*Next, store a file to SPIFFS*/
     syslog("Downloading cert bundle", 0);
     Serial.println(fileUrl);
-    f = LittleFS.open(FILENAME, "w");
+    f = LittleFS.open(TLSBUNDLE, "w");
     if(f){
       if (https.begin(*client, fileUrl)) {
         int httpCode = https.GET();
@@ -116,7 +118,7 @@ void restoreSPIFFS(){
       syslog("Could not open cert bundle file for writing", 2);
     }
     /*Check if the cert bundle is present*/
-    File file = LittleFS.open(FILENAME, "r");
+    File file = LittleFS.open(TLSBUNDLE, "r");
     if(file && file.size() > 0){
       syslog("Cert bundle present on SPIFFS", 1);
     }

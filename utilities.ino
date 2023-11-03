@@ -58,22 +58,14 @@ void initSPIFFS(){
     /*Check if SPIFFS contains files*/
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
     listDir(SPIFFS, "/", 3);
-/*
-    if(!file || file.isDirectory() || file.size() == 0) {
-        syslog("Could not load files from SPIFFS", 3);
-        spiffsMounted = false;
-    }
-    file.close();
-*/
-    
+    if(SPIFFS.exists(TLSBUNDLE)) syslog("TLS bundle found", 0);
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
-    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") ){ //|| !deleteFile(SPIFFS, "/test.txt"
+    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt"){
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
     else spiffsMounted = true;
-    //file.close();
   }
   syslog("----------------------------", 0);
   if(spiffsMounted){
@@ -131,27 +123,25 @@ void initWifi(){
       if(client){
         syslog("Setting up TLS/SSL client", 0);
         // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/x509_crt_bundle.bin", "r");
+        File file = SPIFFS.open(TLSBUNDLE, "r");
         if(!file || file.isDirectory()) {
             syslog("Could not load cert bundle from SPIFFS", 3);
-            //client->setCACertBundle(false);
             bundleLoaded = false;
             unitState = 7;
         }
         // Load loadCertBundle into WiFiClientSecure
         else {
-                size_t fileSize = file.size();
-                uint8_t *certData = new uint8_t[fileSize];
-                memset(certData, 0, fileSize);
-                file.read(certData, fileSize);
-                client->setCACertBundle(certData);
-                //delete[] certData;
+          size_t fileSize = file.size();
+          uint8_t *certData = new uint8_t[fileSize];
+          memset(certData, 0, fileSize);
+          file.read(certData, fileSize);
+          client->setCACertBundle(certData);
+          //delete[] certData;
         }
         file.close();
       } 
       else {
         syslog("Unable to create SSL client", 2);
-        //client->setCACertBundle(false);
         unitState = 7;
         httpsError = true;
       }
