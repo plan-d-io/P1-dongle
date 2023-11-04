@@ -160,7 +160,7 @@ void loop(){
       else{
         mqttclient.loop();
       }
-      if(_realto_en) realtoUpload();
+      //if(_realto_en) realtoUpload();
     }
     if(lastEIDcheck >= EIDcheckInterval){
       eidHello();
