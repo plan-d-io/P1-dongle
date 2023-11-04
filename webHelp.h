@@ -181,6 +181,9 @@ const char index_html[] PROGMEM = R"rawliteral(
             <label for="HA_EN">Use Home Assistant</label>
             <input type="checkbox" id="HA_EN" name="HA_EN">
             <p style="text-align: left;">To use Home Assistant, please ensure you have an MQTT broker running on your Home Assistant server, and that you have configured it in the MQTT settings of the dongle (see above). The dongle uses the Home Assistant MQTT autodiscovery feature.</p>
+            <label for="HA_DEVICE">Home Assistant device name</label>
+            <input type="text" id="HA_DEVICE" name="HA_DEVICE"><br>
+            <br><br>
             </div>
 
             <button type="button" class="collapsible">EnergieID</button>
@@ -196,6 +199,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <input type="password" id="EID_PROVKEY" name="EID_PROVKEY"><br>
             <label for="EID_PROVSEC">EnergieID provisioning secret</label>
             <input type="password" id="EID_PROVSEC" name="EID_PROVSEC"><br>
+            <br><br>
             </div>
 
             <button type="button" class="collapsible">Advanced network settings</button>
@@ -217,11 +221,14 @@ const char index_html[] PROGMEM = R"rawliteral(
             <!-- Secondary DNS Server -->
             <label for="FDNS2">Secondary DNS Server:</label>
             <input type="text" id="FDNS2" name="FDNS2" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" title="Enter a valid IP address">
+            <br><br>
             </div>
 
             <button type="button" class="collapsible">Telegram settings</button>
             <div class="content">
-            Coming soon
+            <label for="PUSH_FULL">Push complete telegram over MQTT</label>
+            <input type="checkbox" id="PUSH_FULL" name="PUSH_FULL">
+            <p style="text-align: left;">Pushes the complete P1 telegram, as received from the meter, over MQTT. WARNING: your MQTT broker must be able to receive large MQTT messages.</p>
             </div>
 
             <button type="button" class="collapsible">Dongle settings</button>

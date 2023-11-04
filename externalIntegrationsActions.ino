@@ -164,8 +164,6 @@ void eidHello(){
     if(bundleLoaded){
       syslog("Performing EID hello", 0);
       String checkUrl = "https://hooks.energyid.eu/hello";
-      Serial.println(_eid_provkey);
-      Serial.println(_eid_provsec);
       syslog("Connecting to " + checkUrl, 0);
       if (https.begin(*client, checkUrl)) {  
         https.addHeader("X-Provisioning-Key", _eid_provkey);

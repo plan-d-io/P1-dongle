@@ -18,71 +18,19 @@
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
-
-unsigned int fw_ver = 207;
-
-/*V2.0 declarations*/
 #include "configStore.h"
 #include "ledControl.h"
 #include "externalIntegrations.h"
-#include "WebRequestHandler.h" //
+#include "WebRequestHandler.h"
 #include "webHelp.h"
+#define HWSERIAL Serial1
+#define TRIGGER 25 //Pin to trigger meter telegram request
 
-bool resetWifi, factoryReset; 
-Preferences preferences; //
-AsyncWebServer server(80); //
-#define HWSERIAL Serial1 //
+unsigned int fw_ver = 208;
 
-/*Debug*/
-bool serialDebug = true;
-bool telegramDebug = false;
-bool mqttDebug = false;
-bool extendedTelegramDebug = false;
-
-bool ha_metercreated;
-unsigned int mqttPushCount, mqttPushFails;
-
-time_t meterTimestamp;
-
-String configBuffer;
-
-String mbusTempKey = "0-1:24.2.1";
-
-struct mbusMeterType {
-      String mbusKey;
-      int type = 0; //3 = gas meter, 4 = heat/cold, 7 = water meter
-      int measurementType = 0; //1 = base value, 3 = non-temperature compensated
-      String id;
-      float keyValueFloat;
-      unsigned long keyTimeStamp;
-      bool enabled;
-      bool keyFound;
-};
-mbusMeterType mbusMeter[4];
-
-struct keyConfig {
-  String dsmrKey;
-  float* keyValueFloat;
-  unsigned long* keyValueLong;
-  String* keyValueString;
-  uint8_t keyType;
-  String deviceType;
-  String  keyName;
-  String  keyTopic;
-  bool retain;
-  bool* keyFound;
-};
-
-struct mbusConfig {
-  int keyType; //3 = gas meter, 4 = heat/cold, 7 = water meter
-  String deviceType;
-  String  keyName;
-  String  keyTopic;
-  bool retain;
-};
-/*Legacy declarations*/
-unsigned int onlineVersion, fw_new;
-
+//General global vars
+Preferences preferences;
+AsyncWebServer server(80);
 DNSServer dnsServer;
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
@@ -90,15 +38,16 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 bool bundleLoaded = true;
-bool clientSecureBusy, mqttPaused;
-bool updateAvailable;
+bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable ;
+String configBuffer;
 String eidUploadInterval = "Not yet set";
-
-#define TRIGGER 25 //Pin to trigger meter telegram request
+unsigned int mqttPushCount, mqttPushFails, onlineVersion, fw_new;
+bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted;
+bool haDiscovered = false;
+time_t meterTimestamp;
+uint8_t prevButtonState = false;
 //Global timing vars
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceDebugUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
-//LED state machine vars
-
 //General housekeeping vars
 unsigned int reconncount, remotehostcount, telegramCount;
 int wifiRSSI;
@@ -108,14 +57,11 @@ String ssidList;
 char apSSID[] = "P1000000";
 byte mac[6];
 bool rebootInit;
-
-
-bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured;
-bool haDiscovered = false;
-
-boolean timeSet, spiffsMounted;
-
-uint8_t prevButtonState = false;
+/*Debug*/
+bool serialDebug = true;
+bool telegramDebug = false;
+bool mqttDebug = false;
+bool extendedTelegramDebug = false;
 
 void setup(){
   M5.begin(true, false, true);

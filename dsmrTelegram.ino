@@ -1,5 +1,38 @@
 /*Configure and process the meter telegram*/
 
+struct mbusMeterType {
+      String mbusKey;
+      int type = 0; //3 = gas meter, 4 = heat/cold, 7 = water meter
+      int measurementType = 0; //1 = base value, 3 = non-temperature compensated
+      String id;
+      float keyValueFloat;
+      unsigned long keyTimeStamp;
+      bool enabled;
+      bool keyFound;
+};
+mbusMeterType mbusMeter[4];
+
+struct keyConfig {
+  String dsmrKey;
+  float* keyValueFloat;
+  unsigned long* keyValueLong;
+  String* keyValueString;
+  uint8_t keyType;
+  String deviceType;
+  String  keyName;
+  String  keyTopic;
+  bool retain;
+  bool* keyFound;
+};
+
+struct mbusConfig {
+  int keyType; //3 = gas meter, 4 = heat/cold, 7 = water meter
+  String deviceType;
+  String  keyName;
+  String  keyTopic;
+  bool retain;
+};
+
 float dummyFloat, totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, totWatCon, totHeatCon, volt1, volt2, volt3, current1, current2, current3, avgDem, maxDemM;
 unsigned long dummyInt, actTarrif, maxDemTime;
 String dummyString, p1Version, meterId;
@@ -246,7 +279,9 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
   if(_push_full_telegram){
     String tempTopic = _mqtt_prefix;
     tempTopic = tempTopic + "telegram";
-    if(!pubMqtt(tempTopic, rawTelegram, false)) syslog("Could not perform MQTT push", 3); //throttlen!
+    if(sinceLastUpload > _upload_throttle*1000){
+      if(!pubMqtt(tempTopic, rawTelegram, false)) syslog("Could not perform MQTT push", 3);
+    }
   }
   if(extendedTelegramDebug) Serial.println("finished telegram");
   telegramCount++;
