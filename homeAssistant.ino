@@ -5,6 +5,9 @@ void doHaAutoDiscovery() {
    * by sending a HA autodiscovery payload for each key.
    * This only needs to be done once, but it can't hurt repeating it from time to time (e.g. to overcome broker reboots).
    */
+  if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
+    return;
+  }
   for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
     if(dsmrKeys[i].keyFound){
       syslog("Performing Home Assistant MQTT autodiscovery for key " + dsmrKeys[i].keyName, 0);

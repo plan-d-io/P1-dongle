@@ -72,7 +72,7 @@ String returnSvg(){
     meterVar["alt"] = svgIcons[11][1];
   }  
   JsonObject cloudVar  = doc.createNestedObject("cloud");
-  if(_wifi_STA && !mqttHostError && !mqttClientError && !httpsError){
+  if(_wifi_STA && EIDuploadEn && !httpsError){
     cloudVar["img"] = svgIcons[7][2];
     cloudVar["alt"] = svgIcons[7][1];
   }
