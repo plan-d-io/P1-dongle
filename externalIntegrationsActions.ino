@@ -206,12 +206,9 @@ void eidHello(){
               EIDuploadEn = true;
               eidUploadInterval = allowedInterval + String(intervalUnit);
               if(intervalUnit == 'S' || intervalUnit == 'M' || intervalUnit == 'H') eidUploadInterval.toLowerCase();
-              Serial.println(allowedInterval);
-              Serial.println(intervalUnit);
-              if(EIDuploadEn) syslog("EID can upload, setting interval to " + allowedInterval, 0);
+              if(EIDuploadEn) syslog("EID can upload, setting interval to " + allowedInterval + String(intervalUnit), 0);
               lastEIDupload = EIDuploadInterval;
               configBuffer = returnConfig();
-              Serial.println(eidUploadInterval);
             }
             else{
               EIDuploadEn = false;

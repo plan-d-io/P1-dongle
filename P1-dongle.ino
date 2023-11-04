@@ -36,7 +36,7 @@ AsyncWebServer server(80); //
 /*Debug*/
 bool serialDebug = true;
 bool telegramDebug = false;
-bool mqttDebug = true;
+bool mqttDebug = false;
 bool extendedTelegramDebug = false;
 
 bool ha_metercreated;

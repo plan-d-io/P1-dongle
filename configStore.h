@@ -120,7 +120,7 @@ static const uintStore configUInt[] PROGMEM = {
 };
 
 static const ulongStore configULong[] PROGMEM = {
-  {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 65534},
+  {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 65535},
   //{"New firmware version", &_fw_new, "FW_NEW", 0},
   {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 0},
   {"Re.alto throttle", &_realtoThrottle, "RLT_THROTTLE", 60}

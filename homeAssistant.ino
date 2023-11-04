@@ -1,10 +1,41 @@
 /*Home Assistant functions, e.g. MQTT autodiscovery*/
 
-void haAutoDiscovery(String key, String unit, String deviceType, String friendlyName, String mqttTopic) {
+void doHaAutoDiscovery() {
   /*Create an MQTT device "Utility meter" in Home Assistant and register the enabled DSMR keys as entities
    * by sending a HA autodiscovery payload for each key.
    * This only needs to be done once, but it can't hurt repeating it from time to time (e.g. to overcome broker reboots).
    */
+  for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
+    if(dsmrKeys[i].keyFound){
+      syslog("Performing Home Assistant MQTT autodiscovery for key " + dsmrKeys[i].keyName, 0);
+      String keyUnit;
+      if(dsmrKeys[i].deviceType == "energy") keyUnit = "kWh";
+      else if(dsmrKeys[i].deviceType == "power") keyUnit = "kW";
+      else if(dsmrKeys[i].deviceType == "voltage") keyUnit = "V";
+      else if(dsmrKeys[i].deviceType == "current") keyUnit = "A";
+      else if(dsmrKeys[i].deviceType == "gas" || dsmrKeys[i].deviceType == "water") keyUnit = "m³";
+      else keyUnit = "";
+      haAutoDiscovery(dsmrKeys[i].keyName, keyUnit, dsmrKeys[i].deviceType, dsmrKeys[i].keyTopic);
+    }
+  }
+  for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+    String friendlyName;
+    if(mbusMeter[i].keyFound == true){
+      for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
+        if(mbusKeys[j].keyType == mbusMeter[i].type){
+          String keyUnit;
+          syslog("Performing Home Assistant MQTT autodiscovery for key " + mbusKeys[j].keyName, 0);
+          if(mbusMeter[i].type == 3 || mbusMeter[i].type == 7) keyUnit = "m³";
+          else if (mbusMeter[i].type == 7) keyUnit = "kWh";
+          haAutoDiscovery(mbusKeys[j].keyName, keyUnit, mbusKeys[j].deviceType, mbusKeys[j].keyTopic);
+        }
+      }
+    }
+  }
+}
+
+
+void haAutoDiscovery(String friendlyName, String unit, String deviceType, String mqttTopic) {
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
   }
@@ -19,10 +50,6 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
     tempTopic += mqttTopic;
     tempTopic.replace(" ", "_");
     tempTopic.toLowerCase();
-  }
-  if(!haDiscovered){
-    syslog("Performing Home Assistant MQTT autodiscovery", 0);
-    haDiscovered = true;
   }
   DynamicJsonDocument doc(1024);
   doc["name"] = friendlyName;
@@ -52,10 +79,10 @@ void haAutoDiscovery(String key, String unit, String deviceType, String friendly
   serializeJson(doc, jsonOutput);
   bool pushSuccess = pubMqtt(configTopic, jsonOutput, true);
   if(mqttDebug && pushSuccess){
-    Serial.println("");
     Serial.print(configTopic);
     Serial.print(" ");
     serializeJson(doc, Serial);
+    Serial.println("");
   }
   if(mqttPushCount < 4) delay(100);
 }
