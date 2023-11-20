@@ -17,33 +17,31 @@ void get_reset_reason(RESET_REASON reason){
     case 16 : resetReason = "RTCWDT_RTC_RESET";break;      /**<16, RTC Watch dog reset digital core and rtc module*/
     default : resetReason = "NO_MEAN";
   }
-  last_reset_verbose = last_reset;
-  last_reset = "";
-  preferences.putString("LAST_RESET", last_reset);
 }
 
 void getHeapDebug(){
   freeHeap = ESP.getFreeHeap()/1000.0;
   minFreeHeap = ESP.getMinFreeHeap()/1000.0;
   maxAllocHeap = ESP.getMaxAllocHeap()/1000.0;
-  if(mqtt_en && debugInfo) pushDebugValues();
+  Serial.println(freeHeap);
+  if(_mqtt_en && debugInfo) pushDebugValues();
 }
 
 void pushDebugValues(){
   time_t now;
   unsigned long dtimestamp = time(&now);
-  for(int i = 0; i < 9; i++){
+  for(int i = 0; i < 11; i++){
     String chanName = "";
     String dtopic = "";
     DynamicJsonDocument doc(1024);
     if(i == 0){
       chanName = "reboots";
       doc["friendly_name"] = "Reboots";
-      doc["value"] = bootcount;
+      doc["value"] = _bootcount;
     }
     else if(i == 1){
-      chanName = "last_reset_reason";
-      doc["friendly_name"] = "Last reset reason";
+      chanName = "last_reset_reason_hw";
+      doc["friendly_name"] = "Last reset reason (hardware)";
       doc["value"] = resetReason;
     }
     else if(i == 2){
@@ -65,9 +63,9 @@ void pushDebugValues(){
       doc["value"] = minFreeHeap;
     }
     else if(i == 5){
-      chanName = "last_reset_reason_verbose";
-      doc["friendly_name"] = "Last reset reason (verbose)";
-      doc["value"] = last_reset_verbose;
+      chanName = "last_reset_reason_fw";
+      doc["friendly_name"] = "Last reset reason (firmware)";
+      doc["value"] = _last_reset;
     }
     else if(i == 6){
       chanName = "ip";
@@ -82,19 +80,30 @@ void pushDebugValues(){
     else if(i == 8){
       chanName = "release_channel";
       doc["friendly_name"] = "Release channel";
-      if(alpha_fleet) doc["value"] = "alpha";
-      else if(dev_fleet) doc["value"] = "development";
+      if(_alpha_fleet) doc["value"] = "alpha";
+      else if(_dev_fleet) doc["value"] = "development";
       else doc["value"] = "main";
+    }
+    else if(i == 9){
+      chanName = "email";
+      doc["friendly_name"] = "Email";
+      doc["value"] = _user_email;
+    }
+    else if(i == 10){
+      chanName = "rssi";
+      doc["friendly_name"] = "RSSI";
+      doc["value"] = wifiRSSI;
     }
     doc["entity"] = apSSID;
     doc["sensorId"] = chanName;
     doc["timestamp"] = dtimestamp;
-    dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
+    if(_realto_en) dtopic = _mqtt_prefix + "sys/" + chanName;
+    else dtopic = "sys/devices/" + String(apSSID) + "/" + chanName;
     String jsonOutput;
     serializeJson(doc, jsonOutput);
-    if(mqtt_en){
-      if(sinceLastUpload >= upload_throttle){
-       pubMqtt(dtopic, jsonOutput, false);
+    if(_mqtt_en){
+      if(sinceLastUpload >= _upload_throttle){
+       pubMqtt(dtopic, jsonOutput, true);
       }
     }
   }

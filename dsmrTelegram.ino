@@ -1,237 +1,406 @@
-void splitTelegram(String rawTelegram){
-  sinceMeterCheck = 0;
-  jsonData = "[";
-  mTimeFound = false;
-  meterError = true;
+/*Configure and process the meter telegram*/
+
+struct mbusMeterType {
+      String mbusKey;
+      int type = 0; //3 = gas meter, 4 = heat/cold, 7 = water meter
+      int measurementType = 0; //1 = base value, 3 = non-temperature compensated
+      String id;
+      float keyValueFloat;
+      unsigned long keyTimeStamp;
+      bool enabled;
+      bool keyFound;
+};
+mbusMeterType mbusMeter[4];
+
+struct keyConfig {
+  String dsmrKey;
+  float* keyValueFloat;
+  unsigned long* keyValueLong;
+  String* keyValueString;
+  uint8_t keyType;
+  String deviceType;
+  String  keyName;
+  String  keyTopic;
+  bool retain;
+  bool* keyFound;
+};
+
+struct mbusConfig {
+  int keyType; //3 = gas meter, 4 = heat/cold, 7 = water meter
+  String deviceType;
+  String  keyName;
+  String  keyTopic;
+  bool retain;
+};
+
+float dummyFloat, totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, totWatCon, totHeatCon, volt1, volt2, volt3, current1, current2, current3, avgDem, maxDemM;
+unsigned long dummyInt, actTarrif, maxDemTime;
+String dummyString, p1Version, meterId;
+bool dummyBool, totConFound, totInFound, netPowConFound, totConT1Found, totConT2Found, totInT1Found, totInT2Found, actTarrifFound, powConFound, powInFound, avgDemFound, maxDemMFound, volt1Found, current1Found, volt2Found, volt3Found, current2Found, current3Found;
+static const keyConfig dsmrKeys[] PROGMEM = {
+  /*The list of all possible DSMR keys and how to parse them.
+   * { "DSMR key code", key type, "HA device type", "user-readable name", "mqtt topic", retain }
+   * Key types:
+   *  0: other
+   *  1: numeric (floating point) without unit, e.g. 0-0:96.14.0(0002)
+   *  2: numeric (floating point) with unit, e.g. 1-0:1.4.0(02.351*kW)
+   *  3: timestamped (Mbus) message, e.g. 0-1:24.2.3(200512134558S)(00112.384*m3)
+   *  4: string, e.g. 0-0:96.13.0(3031323334353)
+   *  5: integer
+   *  The key type determines how the associated value will be parsed.
+   * Home Assistant device types: see https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes
+   *  Examples: "" (none), power, energy, voltage, current, natural gas, water, heat.
+   *  The device type determines how the value will be registered and represented in Home Assistant. You can leave this to "" (none) if you don't use HA.
+   * Mqtt topic:
+   *  The MQTT topic to post the measurement to. Will be prefixed by mqtt_prefix (standard: data/devices/utility_meter/).
+   *  If left empty, the firmware will use the user readable name cast to lowercase with spaces replaced by _
+   * Retain:
+   *  If the MQTT payload should be sent with the retain flag.
+   * IMPORTANT
+   *  DSMR keys are adressed in the firmware by their order in this array. DO NOT rearrange keys.
+   *  If you want to add new keys, add them to the bottom of the array.
+   */
+    /*The first three keys are custom keys, required for dongle operation*/
+    { "A-0:0.0.1", &totCon, &dummyInt, &dummyString, 2, "energy", "Total energy consumed",  "",  false, &totConFound},
+    { "A-0:0.0.2", &totIn, &dummyInt, &dummyString, 2, "energy", "Total energy injected",  "",  false, &totInFound},
+    { "A-0:0.0.3", &netPowCon, &dummyInt, &dummyString, 2, "power", "Total active power",  "",  false, &netPowConFound},
+    /*Standard keys (required)*/
+    { "1-0:1.8.1", &totConT1, &dummyInt, &dummyString, 2, "energy", "Total consumption T1",  "",  false, &totConT1Found},
+    { "1-0:1.8.2", &totConT2, &dummyInt, &dummyString, 2, "energy", "Total consumption T2",  "",  false, &totConT2Found},
+    { "1-0:2.8.1", &totInT1, &dummyInt, &dummyString, 2, "energy", "Total injection T1",  "",  false, &totInT1Found},
+    { "1-0:2.8.2", &totInT2, &dummyInt, &dummyString, 2, "energy", "Total injection T2",  "",  false, &totInT2Found},
+    { "0-0:96.14.0", &dummyFloat, &actTarrif, &dummyString, 5, "", "Active tariff period",  "",  false, &actTarrifFound},
+    { "1-0:1.7.0", &powCon, &dummyInt, &dummyString, 2, "power", "Active power consumption",  "",  false, &powConFound},
+    { "1-0:2.7.0", &powIn, &dummyInt, &dummyString, 2, "power", "Active power injection",  "",  false, &powInFound},
+    { "1-0:1.4.0", &avgDem, &dummyInt, &dummyString, 2,"power", "Current average demand",  "",  false, &avgDemFound},
+    { "1-0:1.6.0", &maxDemM, &maxDemTime, &dummyString, 3, "power", "Maximum demand current month",  "",  false, &maxDemMFound},
+    { "1-0:32.7.0", &volt1, &dummyInt, &dummyString, 2, "voltage", "Voltage phase 1", "",  false, &volt1Found},
+    { "1-0:31.7.0", &current1, &dummyInt, &dummyString, 2, "current", "Current phase 1", "",  false, &current1Found},
+    /*Custom keys, add your own here (optional)*/
+    { "1-0:52.7.0", &volt2, &dummyInt, &dummyString, 2, "voltage", "Voltage phase 2", "",  false, &volt2Found},
+    { "1-0:72.7.0", &volt3, &dummyInt, &dummyString, 2, "voltage", "Voltage phase 3", "",  false, &volt3Found},
+    { "1-0:51.7.0", &current2, &dummyInt, &dummyString, 2, "current", "Current phase 2", "",  false, &current2Found},
+    { "1-0:71.7.0", &current3, &dummyInt, &dummyString, 2, "current", "Current phase 3", "",  false, &current3Found},
+    { "0-0:96.13.0", &dummyFloat, &dummyInt, &dummyString, 4, "", "Text message", "",  false, &dummyBool}
+};
+
+float gasValue, heatValue, waterValue;
+unsigned long gasTime, heatTime, waterTime;
+static const mbusConfig mbusKeys[] PROGMEM = {
+  /*The availability and id of M-bus meters (water, gas, heat, ...) is dependent on your type of installation, so you can't set the Mbus OBIS keys to be extracted
+   * from the telegram beforehand.
+   * The dongle will automatically detect the type and id of connected M-bus meter and process the data according to the fields in this list (e.g. MQTT topic).
+   * If the M-bus meter reports both temperature (base) and non-temperature corrected values, the temperature corrected value will be used.
+   * If you want to extract a specific M-bus key, add it to the dsmrKeys list above.
+   * Format: { Mbus meter type, HA device type, "user-readable name", "mqtt topic", retain }
+   * Mqtt topic: see note in dsmrKeys above
+   * Mbus meter types:
+   *  3: natural gas
+   *  4: heat/cold
+   *  7: water
+   * Note: multiple M-bus meters from the same type are currently not supported
+   */
+    { 3, "gas", "Natural gas consumption", "",  false},
+    { 4, "", "heat", "",  false},
+    { 7, "water", "Water consumption", "",  false}
+};
+
+void processMeterTelegram(String rawTelegram, String rawCRC){
+  /*The meter telegram consists of multiple lines with a key(value) pair, e.g. 1-0:2.7.0(01.100*kW) etc.
+  /* Every key starts on a newline. First we split up the meter telegram per line into its key(value) pairs.*/
   int delimStart = 0;
   int delimEnd = 0;
   int eof = rawTelegram.lastIndexOf('\n');
-  //Serial.println(rawTelegram);
+  boolean meterIdFound, meterTimeFound;
+  if(extendedTelegramDebug) Serial.println(rawTelegram);
+  int pass = 0;
   while(delimEnd < eof){
-    delimEnd = rawTelegram.indexOf('\n', delimStart);
-    String s = rawTelegram.substring(delimStart, delimEnd);
-    delimStart = delimEnd+1;
-    byte starts = s.indexOf('(');
-    String key = s.substring(0, starts);
+    pass = pass + 1;
+    delimEnd = rawTelegram.indexOf('\n', delimStart);       //Get the location of the newline char at the end of the line
+    String s = rawTelegram.substring(delimStart, delimEnd); //Extract one line from the telegram
+    delimStart = delimEnd+1;                                //Set the start of the next line (for the next iteration)
+    /*Every line contains a key(value) pair, e.g. 1-0:2.7.0(01.100*kW)*/
+    byte valueStart = s.indexOf('(');                       //The key is the part before the first bracket, e.g. 1-0:2.7.0
+    String key = s.substring(0, valueStart);
+    byte valueEnd = s.lastIndexOf(')');                     //The value is the part between the brackets, e.g. 01.100*kW
+    String value = s.substring(valueStart+1, valueEnd);
+    /*We now have every key(value) pair, so lets do something with them*/
+    float splitValue;
+    String splitUnit, splitString;
+    struct tm splitTime;
+    time_t splitTimestamp;
+    if(telegramDebug){
+      Serial.print(key);
+      Serial.print(": ");
+      Serial.print(value);
+    }
+    /* First, we extract the base keys we always need (hardcoded) and which should always be present in any type of DSMR telegram
+     * These keys are needed for dongle operation (e.g. metertime) or to calculate values displayed in the webmin
+     * We don't do any other processing, like MQTT push, in this part */
+    if(key == "0-0:96.1.1"){
+      meterId = value;
+      meterIdFound = true;
+    }
+    /*Flemish DSMR*/
+    if(key == "0-0:96.1.4"){
+      p1Version = value;
+      if(telegramDebug){
+        Serial.print(": Found Belgian DSMR version");
+      }
+    }
+    /*Dutch DSMR*/
+    if(key == "1-3:0.2.8"){ 
+      p1Version = value;
+      if(telegramDebug){
+        Serial.print(": Found Dutch DSMR version");
+      }
+    }
+    /*Metertime*/
     if(key == "0-0:1.0.0"){
-      byte ends = s.indexOf(')');  
-      String sub = s.substring(starts+1, ends);
-      int yeari = 2000 + sub.substring(0, 2).toInt();
-      int monthi = sub.substring(2, 4).toInt();
-      int dayi = sub.substring(4, 6).toInt();
-      int houri = sub.substring(6, 8).toInt();
-      int minutei = sub.substring(8, 10).toInt();
-      int secondi = sub.substring(10, 12).toInt();
-      String DST = sub.substring(12);
-      dm_time.tm_sec = secondi;
-      dm_time.tm_hour = houri;
-      dm_time.tm_min = minutei;
-      dm_time.tm_mday = dayi;
-      dm_time.tm_mon = monthi - 1;      // months start from 0, so deduct 1
-      dm_time.tm_year = yeari - 1900; // years since 1900, so deduct 1900
-      dm_timestamp =  mktime(&dm_time);
-      if(DST == "S"){
-        dm_timestamp = dm_timestamp-(2*3600);
+      splitMeterTime(value, splitTime, splitTimestamp);
+      meterTimestamp = splitTimestamp;
+      meterTimeFound = true;
+      if(telegramDebug){
+        Serial.print(": Meter time: ");
+        Serial.print(splitTimestamp);
+        char timeStringBuff[30];
+        strftime(timeStringBuff, sizeof(timeStringBuff), " %Y/%m/%d %H:%M:%S", &splitTime);
+        Serial.print(timeStringBuff);
+      }
+      if(!timeSet && !timeconfigured){ //If no NTP service configured (or resync required), use meter time to set internal clock
+        Serial.println("");
+        syslog("Syncing to to metertime", 0);
+        localtime(&splitTimestamp);
+        timeSet = true;
+        sinceClockCheck = 0;
+      }
+      sinceMeterCheck = 0; //The metertime key is used to check for the presence of the digital meter
+      if(meterError){
+        if(_wifi_STA) unitState = 4;
+        else unitState = 0;
+        syslog("Meter reconnected", 1);
+        meterError = false;
+      }
+      if(meterIdFound){
+        for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
+          *dsmrKeys[i].keyFound = false; //we've got a valid telegram, so mark previous values as outdated
+        }
+      }
+    }
+    /*If both meterID and meterTime are found, we're pretty sure we have a valid telegram*/
+    if(meterIdFound && meterTimeFound){
+      /*Next, we crossreference keys in the dsmrKeys[] list so we know if and how to process it*/
+      for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
+        if(key == dsmrKeys[i].dsmrKey){
+          *dsmrKeys[i].keyValueString =  value; //store the raw key
+          if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
+            /*"Other" or "string" values (currently handled the same) just get their raw value forwarded, so no need to do any processing.
+            Might change in the future.*/
+          }
+          else if(dsmrKeys[i].keyType == 1 || dsmrKeys[i].keyType == 5){
+            /*Numeric value with no unit*/
+            splitNoUnit(value, splitValue);
+            if(dsmrKeys[i].keyType == 1) *dsmrKeys[i].keyValueFloat = splitValue;
+            if(dsmrKeys[i].keyType == 5) *dsmrKeys[i].keyValueLong = int(splitValue);
+          }
+          else if(dsmrKeys[i].keyType == 2){
+            /*Numeric value with unit*/
+            splitWithUnit(value, splitValue, splitUnit);
+            *dsmrKeys[i].keyValueFloat = splitValue;
+          }
+          else if(dsmrKeys[i].keyType == 3){
+            /*timestamped (Mbus) message*/
+            splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
+            *dsmrKeys[i].keyValueFloat = splitValue;
+            *dsmrKeys[i].keyValueLong = time(&splitTimestamp);
+          }
+          else{
+            //No need for any processing
+          }
+          *dsmrKeys[i].keyFound = true;
+        }
+      }
+      /*Process minimum required readings*/
+      totCon = totConT1 + totConT2;
+      totConFound = true;
+      totIn = totInT1 + totInT2;
+      totInFound = true;
+      netPowCon = powCon - powIn;
+      netPowConFound = true; 
+      /* We do not know how many, and which, M-bus meters are connected to the digtial meter ex-ante. We analyse the first three telegrams to 
+       * check which M-Bus meters are present and register them into the mbusMeter array. This array is then used for further telegram parsing.
+       * We only do this check during startup (first 3 telegrams), as M-bus meters do not change during later operation.
+       */
+      if(telegramCount < 3){
+        registerMbusMeter(key, value);
       }
       else{
-        dm_timestamp = dm_timestamp-(3600);
-      }
-      mTimeFound = true;
-      if(!wifiSTA) unitState = 2;
-      else unitState = 4;
-      meterError = false;
-    }
-    else{
-      //Serial.println(key);
-      for(int i = 0; i < sizeof(dsmrKeys) / sizeof(dsmrKeys[0]); i++){
-        if(key == dsmrKeys[i][0]){
-          if(dsmrKeys[i][1] == "0"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-          }
-          else if(dsmrKeys[i][1] == "1"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            int value = sub.toInt();
-            processMeterValue(i, value, 0, false, "", dm_timestamp);
-          }
-          else if(dsmrKeys[i][1] == "2"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            float value = sub.toFloat();
-            processMeterValue(i, 0, value, true, "", dm_timestamp);
-          }
-          else if(dsmrKeys[i][1] == "3"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            int value = valuetext.toInt();
-            String unit = sub.substring(units+1);
-            processMeterValue(i, value, 0, false, unit, dm_timestamp);
-          }
-          else if(dsmrKeys[i][1] == "4"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            float value = valuetext.toFloat();
-            String unit = sub.substring(units+1);
-            processMeterValue(i, 0, value, true, unit, dm_timestamp);
-          }
-          else if(dsmrKeys[i][1] == "5"){
-            byte ends = s.indexOf(')');  
-            String sub = s.substring(starts+1, ends);
-            int yeari = 2000 + sub.substring(0, 2).toInt();
-            int monthi = sub.substring(2, 4).toInt();
-            int dayi = sub.substring(4, 6).toInt();
-            int houri = sub.substring(6, 8).toInt();
-            int minutei = sub.substring(8, 10).toInt();
-            int secondi = sub.substring(10, 12).toInt();
-            String DST = sub.substring(12);
-            mb1_time.tm_sec = secondi;
-            mb1_time.tm_hour = houri;
-            mb1_time.tm_min = minutei;
-            mb1_time.tm_mday = dayi;
-            mb1_time.tm_mon = monthi;      // months start from 0, so deduct 1
-            mb1_time.tm_year = yeari - 1900; // years since 1970, so deduct 1970
-            mb1_timestamp =  mktime(&mb1_time);
-            if(DST == "S"){
-              mb1_timestamp = mb1_timestamp-(2*3600);
+        /*Parse the Mbus OBIS key,value pairs according to the parameters set for each detected Mbus meter in the mbusMeter array */
+        for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+          if(key == mbusMeter[i].mbusKey){  //check if the key matches a key stored in the mbusMeter array
+            for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){  //if so, process the key according the parameters set for that key
+              if(mbusMeter[i].type == mbusKeys[j].keyType){
+                splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
+                mbusMeter[i].keyValueFloat = splitValue;
+                mbusMeter[i].keyTimeStamp = time(&splitTimestamp);
+                if(telegramDebug){
+                  String tempTopic = _mqtt_prefix;
+                  if(mbusKeys[j].keyTopic == ""){
+                    tempTopic += mbusKeys[j].keyName;
+                    tempTopic.replace(" ", "_");
+                    tempTopic.toLowerCase();
+                  }
+                  else{
+                    tempTopic += mbusKeys[j].keyTopic;
+                    tempTopic.replace(" ", "_");
+                    tempTopic.toLowerCase();
+                  }
+                  Serial.print(" - ");
+                  Serial.print(mbusKeys[j].keyName);
+                  Serial.print(": ");
+                  if(fmodf(splitValue, 1.0) == 0) Serial.print(int(splitValue));
+                  else Serial.print(round2(splitValue));
+                  Serial.print(" ");
+                  Serial.print(splitUnit);
+                  Serial.print(" (");
+                  Serial.print(splitTimestamp);
+                  Serial.print("), ");
+                  Serial.print(tempTopic);
+                }
+              }
             }
-            else{
-              mb1_timestamp = mb1_timestamp-(3600);
-            }
-            sub = s.substring(ends+2);
-            ends = sub.indexOf(')');
-            sub = sub.substring(0, ends);
-            byte units = sub.indexOf('*');
-            String valuetext = sub.substring(0, units);
-            float value = valuetext.toFloat();
-            String unit = sub.substring(units+1);
-            if(unit == "m3") unit = "m³";
-            processMeterValue(i, 0, value, true, unit, mb1_timestamp);
           }
         }
-      } 
+      }
+      if(telegramDebug) Serial.println("");
     }
   }
-  if(!meterError) sumMeterTotals();
+  onTelegram();
+  if(_push_full_telegram){
+    String tempTopic = _mqtt_prefix;
+    tempTopic = tempTopic + "telegram";
+    if(sinceLastUpload > _upload_throttle*1000){
+      if(!pubMqtt(tempTopic, rawTelegram, false)) syslog("Could not perform MQTT push", 3);
+    }
+  }
+  if(extendedTelegramDebug) Serial.println("finished telegram");
+  telegramCount++;
 }
 
-void processMeterValue(int dsmrKey, int imeasurement, float fmeasurement, boolean floatValue, String unit, unsigned long meterTime){
-  //fmeasurement = round2(fmeasurement);
-  if(dsmrKeys[dsmrKey][0] == "1-0:1.8.1") totConDay = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.8.2") totConNight = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.1") totInDay = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.8.2") totInNight = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.7.0") totPowCon = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:2.7.0") totPowIn = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "0-1:24.2.3") totGasCon = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:32.7.0") volt1 = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:52.7.0") volt2 = fmeasurement;
-  else if(dsmrKeys[dsmrKey][0] == "1-0:72.7.0") volt3 = fmeasurement; 
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.4.0") avgDem = fmeasurement;  
-  else if(dsmrKeys[dsmrKey][0] == "1-0:1.6.0") maxDemM = fmeasurement;  
-  String jsonOutput;
-  DynamicJsonDocument doc(1024);
-  doc["sensorId"] = "utility_meter." + dsmrKeys[dsmrKey][3].substring(dsmrKeys[dsmrKey][3].lastIndexOf('/')+1);
-  if(floatValue) doc["value"] = round2(fmeasurement);
-  else doc["value"] = imeasurement;
-  if(unit != "") doc["unit"] = unit;
-  doc["timestamp"] = meterTime;
-  if(meterConfig[dsmrKey] == "1"){
-    serializeJson(doc, jsonOutput);
-    jsonData += jsonOutput;
-    jsonData += ",";
-    jsonOutput = "";
-  }
-  doc["entity"] = "utility_meter";
-  String friendly_name = String(dsmrKeys[dsmrKey][2]);
-  friendly_name.toLowerCase();
-  friendly_name = "Utility meter " + friendly_name;
-  doc["friendly_name"] = friendly_name;
-  if(dsmrKeys[dsmrKey][4] != "") doc["metric"] = dsmrKeys[dsmrKey][4];
-  doc["metricKind"] = dsmrKeys[dsmrKey][5];
-  serializeJson(doc, jsonOutput);
-  if(meterConfig[dsmrKey] == "1"){
-    if(mqtt_en) {
-      if(sinceLastUpload >= (upload_throttle * 1000)){
-        pubMqtt(dsmrKeys[dsmrKey][3], jsonOutput, false);
-      }
-    }
-  }
+/*The following helper functions split the value part of each key,value pair according to the type of value*/
+void splitToString(String &value, String &splitString){
+  //Nothing to see here (yet)
 }
 
-void sumMeterTotals(){
-  totCon = (totConDay + totConNight)*1.0;
-  totConToday = totCon - totConYesterday;
-  totIn = (totInDay + totInNight)*1.0;
-  netPowCon = (totPowCon - totPowIn)*1.0;
-  gasConToday = totGasCon - gasConYesterday;
-  if(dm_time.tm_mday != prevDay){
-    totConYesterday = totCon;
-    gasConYesterday = totGasCon;
-    prevDay = dm_time.tm_mday ;
+void splitWithUnit(String &value, float &splitValue, String &splitUnit){
+  /*Split a value containing a unit*/
+  int unitStart = value.indexOf('*');
+  splitValue = value.substring(0, unitStart).toFloat();
+  splitUnit = value.substring(unitStart+1);
+}
+
+void splitNoUnit(String &value, float &splitValue){
+  /*Split a value containing no unit*/
+  splitValue = value.toFloat();
+}
+
+void splitMeterTime(String &value, struct tm &splitTime, time_t &splitTimestamp){
+  /*Split a timestamp, returning a tm struct and a time_t object*/
+  splitTime.tm_year = (2000 + value.substring(0, 2).toInt()) - 1900; //Time.h years since 1900, so deduct 1900
+  splitTime.tm_mon = (value.substring(2, 4).toInt()) - 1; //Time.h months start from 0, so deduct 1
+  splitTime.tm_mday = value.substring(4, 6).toInt();
+  splitTime.tm_hour = value.substring(6, 8).toInt();
+  splitTime.tm_min = value.substring(8, 10).toInt();
+  splitTime.tm_sec = value.substring(10, 12).toInt();
+  splitTimestamp =  mktime(&splitTime);
+  /*Metertime is in local time. DST shows the difference in hours to UTC*/
+  if(value.substring(12) == "S"){
+    splitTime.tm_isdst = 1;
+    splitTimestamp = splitTimestamp - (2*3600);
   }
-  if(mqtt_en){
-    for(int i = 0; i < 3; i++){
-      String totalsTopic = "";
-      String jsonOutput;
-      DynamicJsonDocument doc(1024);
-      if(i == 0){
-        totalsTopic = "total_energy_consumed";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(totCon);
-        doc["unit"] = "kWh";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += ",";
-        jsonOutput = "";
-        doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total energy consumed";
-        doc["metric"] = "GridElectricityImport";
-        doc["metricKind"] = "cumulative";
+  else if(value.substring(12) == "W"){
+    splitTime.tm_isdst = 0;
+    splitTimestamp = splitTimestamp - (1*3600);
+  }
+  else splitTime.tm_isdst = -1;
+}
+
+void splitWithTimeAndUnit(String &value, float &splitValue, String &splitUnit, struct tm &splitTime, time_t &splitTimestamp){
+  /*Split a timestamped value containing a unit (e.g. Mbus value)*/
+  String buf = value;
+  int timeEnd = value.indexOf(')');
+  int valueStart = value.indexOf('(')+1;
+  value = buf.substring(0, timeEnd);
+  splitMeterTime(value, splitTime, splitTimestamp);
+  value = buf.substring(valueStart);
+  splitWithUnit(value, splitValue, splitUnit);
+}
+
+String getUnit(String deviceType){
+  String unit;
+  if(deviceType == "energy") unit = "kWh";
+  else if(deviceType == "power") unit = "kW";
+  else if(deviceType == "voltage") unit = "V";
+  else if(deviceType == "current") unit = "A";
+  return unit;
+}
+
+void registerMbusMeter(String &key, String &value){
+  /*The number and type of connected Mbus meters, as well as their Mbus ID and value type they report (standard or non-temperature compensated)
+   * can only be determined during runtime by parsing the meter telegram. This function does just that. It scans the telegram for Mbus
+   * OBIS codes. The detected meters and their parameters are then stored in the mbusMeter array.
+   * During telegram processing, the mbusMeter array is cross referenced with the mbusConfig array to determine how the value should be pushed
+   * to the data broker.
+   */
+  for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
+    String tempMbusKey = "0-" + String(i+1) + ":24.1.0";
+    if(key == tempMbusKey){
+      mbusMeter[i].type = value.toInt();
+      mbusMeter[i].keyFound = true;
+      /*Check if the Mbus key,value pair needs to be pushed.
+       * This uses the same method as the regular DSMR keys, but with a 16-bit integer instead of a 32-bit long
+       */
+      if(mbusMeter[i].type >=0 && mbusMeter[i].type <= 16){
+        unsigned int mask = 1;
+        mask <<= mbusMeter[i].type;
+        unsigned long test = _mbus_pushlist & mask;
+        if(test > 0){
+          mbusMeter[i].enabled = true;
+        }
       }
-      else if(i == 1){
-        totalsTopic = "total_energy_injected";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(totIn);
-        doc["unit"] = "kWh";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += ",";
-        jsonOutput = "";
-        doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total energy injected";
-        doc["metric"] = "GridElectricityExport";
-        doc["metricKind"] = "cumulative";
-      }
-      else{
-        totalsTopic = "total_active_power";
-        doc["sensorId"] = "utility_meter." + totalsTopic;
-        doc["value"] = round2(netPowCon);
-        doc["unit"] = "kW";
-        doc["timestamp"] = dm_timestamp;
-        serializeJson(doc, jsonOutput);
-        jsonData += jsonOutput;
-        jsonData += "]";
-        jsonOutput = "";
-        doc["entity"] = "utility_meter";
-        doc["friendly_name"] = "Utility meter total active power";
-        doc["metric"] = "GridElectricityPower";
-        doc["metricKind"] = "gauge";
-      }
-      totalsTopic = "data/devices/utility_meter/" + totalsTopic;
-      serializeJson(doc, jsonOutput);
-      if(sinceLastUpload >= (upload_throttle*1000)){
-        pubMqtt(totalsTopic, jsonOutput, false);
+      if(telegramCount < 3 && telegramDebug){
+        Serial.print(" Found ");
+        Serial.print(tempMbusKey);
+        Serial.print(", meter of type ");
+        Serial.print(mbusMeter[i].type);
+        if(mbusMeter[i].type == 3) Serial.print(" (gas)");
+        else if(mbusMeter[i].type == 7) Serial.print(" (water)");
+        else Serial.print(" (other)");
+        Serial.print(", registering");
+        if (mbusMeter[i].enabled == true) Serial.print(" and enabling");
       }
     }
-    if(sinceLastUpload >= (upload_throttle*1000)){
-      sinceLastUpload = 0;
+    /*Meter ID can be reported in regular (Dutch) or DIN43863-5 (Fluvius) format*/
+    tempMbusKey = "0-" + String(i+1) + ":96.1.0";
+    if(key == tempMbusKey){ //regular
+      mbusMeter[i].id = value;
+    }
+    tempMbusKey = "0-" + String(i+1) + ":96.1.1";
+    if(key == tempMbusKey){ //DIN43863-5
+      mbusMeter[i].id = value;
+    }
+    /*Value can be reported in base or non-temperature compensated format. Priority to base*/
+    tempMbusKey = "0-" + String(i+1) + ":24.2.3";
+    if(key == tempMbusKey){ //non-temperature compensated
+      if(mbusMeter[i].measurementType != 1){
+        mbusMeter[i].measurementType = 3;
+        mbusMeter[i].mbusKey = tempMbusKey;
+      }
+    }
+    tempMbusKey = "0-" + String(i+1) + ":24.2.1";
+    if(key == tempMbusKey){ //base
+      mbusMeter[i].measurementType = 1;
+      mbusMeter[i].mbusKey = tempMbusKey;
     }
   }
 }
