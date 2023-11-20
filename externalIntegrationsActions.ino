@@ -188,7 +188,7 @@ void eidHello(){
 String eidHelloMsg(){
   String jsonOutput;
   DynamicJsonDocument doc(1024);
-  doc["claimCode"] = String(apSSID);
+  doc["claimCode"] = _uuid;
   doc["deviceId"] = String(apSSID);
   doc["deviceName"] = "P1 dongle by Plan-D";
   doc["firmwareVersion"] = String(fw_ver/100.0);

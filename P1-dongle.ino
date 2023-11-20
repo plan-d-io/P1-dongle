@@ -18,6 +18,7 @@
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <elapsedMillis.h>
+#include "UUID.h"
 #include "configStore.h"
 #include "ledControl.h"
 #include "externalIntegrations.h"
@@ -26,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 209;
+unsigned int fw_ver = 210;
 
 //General global vars
 Preferences preferences;
@@ -37,6 +38,7 @@ PubSubClient mqttclient(wificlient);
 WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
+UUID uuid;
 bool bundleLoaded = true;
 bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
 String configBuffer;

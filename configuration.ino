@@ -47,6 +47,20 @@ boolean restoreConfig(){
   else _rel_chan = "main";
   if(_mqtt_id == "") _mqtt_id = String(apSSID);
   /*End temp bootstrap*/
+  if(_uuid == ""){
+    syslog("No UUID found, generating new one", 1);
+    byte mac[6];
+    WiFi.macAddress(mac);
+    uint32_t macPart = ((uint32_t)mac[2] << 24) | ((uint32_t)mac[3] << 16) | ((uint32_t)mac[4] << 8) | (uint32_t)mac[5];
+    uuid.seed(macPart);
+    uuid.generate();
+    char* uuidCharArray = uuid.toCharArray();
+    char newArray[9]; 
+    memcpy(newArray, uuidCharArray, 8);
+    newArray[8] = '\0';
+    _uuid = String(newArray);
+    syslog("Generated new UUID: " + _uuid, 1);
+  }
   return true;
 }
 

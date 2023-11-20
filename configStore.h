@@ -51,6 +51,8 @@ struct floatStore{
 };
 
 /*Declaration of global variables retrieved from NVS config storage, denoted by a leading _*/
+/*Dongle*/
+String _uuid;
 /*Wifi*/
 bool _wifi_STA, _fip_en;
 String _wifi_ssid, _wifi_password;
@@ -127,6 +129,7 @@ static const ulongStore configULong[] PROGMEM = {
 };
 
 static const stringStore configString[] PROGMEM = {
+  {"UUID", &_uuid, "UUID", ""},
   {"WiFi network", &_wifi_ssid, "WIFI_SSID", ""},
   {"MQTT hostname", &_mqtt_host, "MQTT_HOST", "10.42.0.1"},
   {"MQTT ID", &_mqtt_id, "MQTT_ID", ""},
