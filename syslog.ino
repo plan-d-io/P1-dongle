@@ -44,8 +44,6 @@ void syslog(String msg, int level){
     appendFile(SPIFFS, "/syslog.txt", logmsg.c_str());
   }
 }
-<<<<<<< HEAD
-=======
 
 void saveResetReason(String rReason){
   if(timeSet){
@@ -121,4 +119,3 @@ void pushSyslog(int numLines) {
     file.close();
     Serial.println(" ----End");
 }
->>>>>>> develop

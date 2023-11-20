@@ -57,38 +57,15 @@ void initSPIFFS(){
   else{
     /*Check if SPIFFS contains files*/
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
-<<<<<<< HEAD
-    listDir(SPIFFS, "/", 0);
-    File file = SPIFFS.open("/index.html"); //test a file
-    if(!file || file.isDirectory() || file.size() == 0) {
-        syslog("Could not load files from SPIFFS", 3);
-        spiffsMounted = false;
-    }
-    /*Check SPIFFS file I/O*/
-    syslog("Testing SPIFFS file I/O... ", 0);
-    if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt")){
-=======
     listDir(SPIFFS, "/", 3);
     if(SPIFFS.exists(TLSBUNDLE)) syslog("TLS bundle found", 0);
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
     if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt")){
->>>>>>> develop
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
     else spiffsMounted = true;
-<<<<<<< HEAD
-    file.close();
-  }
-  syslog("----------------------------", 1);
-  if(spiffsMounted){
-    reinit_spiffs = false;
-    saveConfig();
-  }
-  else if(!reinit_spiffs && !spiffsMounted){ //if SPIFFS couldn't be mounted, try a restart first
-    reinit_spiffs = true;
-=======
   }
   syslog("----------------------------", 0);
   if(spiffsMounted){
@@ -98,7 +75,6 @@ void initSPIFFS(){
   else if(!_reinit_spiffs && !spiffsMounted){ //if SPIFFS couldn't be mounted, try a restart first
     _reinit_spiffs = true;
     saveResetReason("Rebooting to retry SPIFFS access");
->>>>>>> develop
     saveConfig();
     delay(500);
     ESP.restart();
@@ -106,15 +82,6 @@ void initSPIFFS(){
 }
 
 void initWifi(){
-<<<<<<< HEAD
-  if(wifiSTA){
-    syslog("WiFi mode: station", 1);
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
-    WiFi.setHostname("p1dongle");
-    elapsedMillis startAttemptTime;
-    syslog("Attempting connection to WiFi network " + wifi_ssid, 0);
-=======
   scanWifi();
   if(_wifi_STA){
     syslog("WiFi mode: station", 1);
@@ -128,19 +95,12 @@ void initWifi(){
     WiFi.setHostname("p1dongle");
     elapsedMillis startAttemptTime;
     syslog("Attempting connection to WiFi network " + _wifi_ssid, 0);
->>>>>>> develop
     while (WiFi.status() != WL_CONNECTED && startAttemptTime < 20000) {
       delay(200);
       Serial.print(".");
     }
     Serial.println("");
     if(WiFi.status() == WL_CONNECTED){
-<<<<<<< HEAD
-      syslog("Connected to the WiFi network " + wifi_ssid, 1);
-      MDNS.begin("p1dongle");
-      if(spiffsMounted) unitState = 4;
-      else unitState = 7;
-=======
       syslog("Connected to the WiFi network " + _wifi_ssid, 1);
       syslog("Local IP: " + WiFi.localIP().toString(), 0);
       _fipaddr = WiFi.localIP();
@@ -156,36 +116,20 @@ void initWifi(){
       WiFi.onEvent(WiFiEvent, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE);
       WiFi.onEvent(WiFiEvent, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
       /*Advertise over mDNS this dongle can be accessed at port 80*/
->>>>>>> develop
       MDNS.addService("http", "tcp", 80);
       /*Start NTP time sync*/
       setClock(true);
       printLocalTime(true);
       if(client){
         syslog("Setting up TLS/SSL client", 0);
-<<<<<<< HEAD
-        client->setUseCertBundle(true);
-        // Load certbundle from SPIFFS
-        File file = SPIFFS.open("/cert/x509_crt_bundle.bin");
-        if(!file || file.isDirectory()) {
-=======
         // Load certbundle from SPIFFS
         File file = SPIFFS.open(TLSBUNDLE, "r");
         if(!file || file.isDirectory() || file.size() < 100) {
->>>>>>> develop
             syslog("Could not load cert bundle from SPIFFS", 3);
             bundleLoaded = false;
             unitState = 7;
         }
         // Load loadCertBundle into WiFiClientSecure
-<<<<<<< HEAD
-        if(file && file.size() > 0) {
-            if(!client->loadCertBundle(file, file.size())){
-                syslog("WiFiClientSecure: could not load cert bundle", 3);
-                bundleLoaded = false;
-                unitState = 7;
-            }
-=======
         else {
           size_t fileSize = file.size();
           uint8_t *certData = new uint8_t[fileSize];
@@ -193,7 +137,6 @@ void initWifi(){
           file.read(certData, fileSize);
           client->setCACertBundle(certData);
           //delete[] certData;
->>>>>>> develop
         }
         file.close();
       } 
@@ -202,28 +145,6 @@ void initWifi(){
         unitState = 7;
         httpsError = true;
       }
-<<<<<<< HEAD
-      if(update_start){
-        unitState = -1;
-        startUpdate();
-      }
-      if(update_finish){
-        unitState = -1;
-        finishUpdate(false);
-      }
-      if(restore_finish || !spiffsMounted){
-        unitState = -1;
-        finishUpdate(true);
-      }
-      if(mqtt_en) setupMqtt();
-      sinceConnCheck = 60000;
-      server.addHandler(new WebRequestHandler());
-      update_autoCheck = true;
-      if(update_autoCheck) {
-        sinceUpdateCheck = 86400000-60000;
-      }
-      syslog("Local IP: " + WiFi.localIP().toString(), 0);
-=======
       if(_update_start){
         unitState = -1;
         startUpdate();
@@ -242,33 +163,20 @@ void initWifi(){
       if(_update_autoCheck) {
         sinceUpdateCheck = 86400000-60000;
       }
->>>>>>> develop
     }
     else{
       syslog("Could not connect to the WiFi network", 2);
       wifiError = true;
-<<<<<<< HEAD
-      wifiSTA = false;
-      unitState = 1;
-    }
-  }
-  if(!wifiSTA){
-=======
       _wifi_STA = false;
       unitState = 1;
     }
   }
   if(!_wifi_STA){
->>>>>>> develop
     syslog("WiFi mode: access point", 1);
     WiFi.mode(WIFI_AP);
     WiFi.softAP("p1dongle");
     dnsServer.start(53, "*", WiFi.softAPIP());
     MDNS.begin("p1dongle");
-<<<<<<< HEAD
-    server.addHandler(new WebRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-=======
->>>>>>> develop
     syslog("AP set up", 1);
     unitState = 0;
   }
@@ -364,11 +272,6 @@ void setReboot(){
   syslog("Rebooting", 2);
 }
 
-<<<<<<< HEAD
-double round2(double value) {
-   return (int)(value * 100 + 0.05) / 100.0;
-}
-=======
 void forcedReset(){
 // use the watchdog timer to do a hard restart
 // It sets the wdt to 1 second, adds the current process and then starts an
@@ -404,7 +307,6 @@ uint32_t ipStringToUint32(String ipStr) {
 }
 
 /*SPIFFS file utilities*/
->>>>>>> develop
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\r\n", dirname);
     File root = fs.open(dirname);
@@ -434,8 +336,6 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-<<<<<<< HEAD
-=======
 void createDir(fs::FS &fs, const char * path){
     Serial.printf("Creating Dir: %s\n", path);
     if(fs.mkdir(path)){
@@ -453,7 +353,6 @@ void removeDir(fs::FS &fs, const char * path){
     }
 }
 
->>>>>>> develop
 bool writeFile(fs::FS &fs, const char * path, const char * message){
    File file = fs.open(path, FILE_WRITE);
    if(!file){
@@ -487,17 +386,11 @@ bool renameFile(fs::FS &fs, const char * path1, const char * path2){
     }
 }
 
-<<<<<<< HEAD
-void deleteFile(fs::FS &fs, const char * path){
-    if(fs.remove(path)){
-    } else {
-=======
 bool deleteFile(fs::FS &fs, const char * path){
     if(fs.remove(path)){
       return true;
     } else {
       return false;
->>>>>>> develop
     }
 }
 

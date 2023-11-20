@@ -137,32 +137,20 @@ boolean startUpdate(){
             }
             else{
               syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
-<<<<<<< HEAD
-              update_start = false;
-=======
               _update_start = false;
->>>>>>> develop
               if(unitState < 6) unitState = 5;
             }
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
-<<<<<<< HEAD
-            update_start = false;
-=======
             _update_start = false;
->>>>>>> develop
             if(unitState < 6) unitState = 5;
           }
           https.end(); 
         } 
         else {
           Serial.print("Unable to connect");
-<<<<<<< HEAD
-          update_start = false;
-=======
           _update_start = false;
->>>>>>> develop
           if(unitState < 6) unitState = 5;
         }
       }
@@ -176,11 +164,7 @@ boolean startUpdate(){
     }
     else{
       syslog("No firmware upgrade available", 0);
-<<<<<<< HEAD
-      update_start = false;
-=======
       _update_start = false;
->>>>>>> develop
       if(unitState < 5) unitState = 4;
       return false;
     }
@@ -221,44 +205,6 @@ boolean finishUpdate(bool restore){
         else {
           syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
         }
-<<<<<<< HEAD
-      } 
-      else {
-        syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
-      }
-      https.end();
-      unsigned long eof = payload.lastIndexOf('\n');
-      if(eof > 0){
-        syslog("Downloading static files", 2);
-        unitState = -1;
-        blinkLed();
-        unsigned long delimStart = 0;
-        unsigned long delimEnd = 0;
-        while(delimEnd < eof){
-          delimEnd = payload.indexOf('\n', delimStart);
-          String s = "/";
-          String temp = payload.substring(delimStart, delimEnd);
-          if(restore) s += payload.substring(delimStart, delimEnd-1);
-          else s += payload.substring(delimStart, delimEnd-1);
-          delimStart = delimEnd+1;
-          fileUrl = baseUrl + "/data" + s;
-          Serial.println(fileUrl);
-          if (s) {
-            if (https.begin(*client, fileUrl)) {
-              int httpCode = https.GET();
-              if (httpCode > 0) {
-                if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-                  SPIFFS.remove(s);
-                  File f = SPIFFS.open(s, FILE_WRITE);
-                  long contentLength = https.getSize();
-                  Serial.print("File size: ");
-                  Serial.println(contentLength);
-                  Serial.println("Begin download");
-                  size_t written = https.writeToStream(&f);
-                  if (written == contentLength) {
-                    Serial.println("Written : " + String(written) + " successfully");
-                    filesUpdated = true;
-=======
         https.end();
         unsigned long eof = payload.lastIndexOf('\n');
         if(eof > 0){
@@ -293,7 +239,6 @@ boolean finishUpdate(bool restore){
                       filesUpdated = true;
                     }
                     f.close();
->>>>>>> develop
                   }
                   else{
                     syslog("Could not fetch file, HTTPS code " + String(httpCode), 2);

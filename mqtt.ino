@@ -1,14 +1,7 @@
 void setupMqtt() {
-<<<<<<< HEAD
-  String mqttinfo = "MQTT enabled! Will connect as " + mqtt_id;
-  mqttHostError = false;
-  if (mqtt_auth) {
-    mqttinfo = mqttinfo + " using authentication, with username " + mqtt_user;
-=======
   String mqttinfo = "MQTT enabled! Will connect as " + _mqtt_id;
   if (_mqtt_auth) {
     mqttinfo = mqttinfo + " using authentication, with username " + _mqtt_user;
->>>>>>> develop
   }
   syslog(mqttinfo, 1);
   if(_mqtt_tls){
@@ -82,10 +75,7 @@ void setupMqtt() {
         }
         else{
           mqttHostError = true;
-<<<<<<< HEAD
-=======
           syslog("MQTT host IP resolving failed", 3);
->>>>>>> develop
           if(unitState < 6) unitState = 5;
         } 
       }
@@ -115,15 +105,10 @@ void connectMqtt() {
       if(!mqttclientSecure.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-<<<<<<< HEAD
-          if(!mqttPaused) syslog("Lost connection to secure MQTT broker", 2);
-          if(unitState < 6) unitState = 5;
-=======
           if(!mqttPaused){
             syslog("Lost connection to secure MQTT broker", 4);
             if(unitState < 6) unitState = 5;
           }
->>>>>>> develop
         }
         syslog("Trying to connect to secure MQTT broker", 0);
         while(!mqttclientSecure.connected() && mqttretry < 2){
@@ -132,7 +117,7 @@ void connectMqtt() {
           if (_mqtt_auth) mqttclientSecure.connect(_mqtt_id.c_str(), _mqtt_user.c_str(), _mqtt_pass.c_str(), mqtt_topic.c_str(), 1, true, "offline");
           else mqttclientSecure.connect(_mqtt_id.c_str());
           mqttretry++;
-          remotehostcount++;
+          reconncount++;
           delay(250);
         }
         Serial.println("");
@@ -143,14 +128,8 @@ void connectMqtt() {
       if(!mqttclient.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-<<<<<<< HEAD
-          //reconncount++;
-          if(!mqttPaused){
-            syslog("Lost connection to MQTT broker", 2);
-=======
           if(!mqttPaused){
             syslog("Lost connection to MQTT broker", 4);
->>>>>>> develop
             if(unitState < 6) unitState = 5;
           }
         }
@@ -170,11 +149,7 @@ void connectMqtt() {
     if(disconnected){
       if(mqttretry < 2){
         syslog("Connected to MQTT broker", 1);
-<<<<<<< HEAD
-        if(unitState < 5) unitState = 4;
-=======
         if(unitState < 6) unitState = 4;
->>>>>>> develop
         if(mqttPaused) mqttPaused = false;
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
         if(_mqtt_tls){

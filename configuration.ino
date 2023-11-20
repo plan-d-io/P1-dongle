@@ -1,86 +1,3 @@
-<<<<<<< HEAD
-boolean restoreConfig() {
-  wifi_ssid = preferences.getString("WIFI_SSID");
-  wifi_password = preferences.getString("WIFI_PASSWD"); 
-  wifiSTA = preferences.getBool("WIFI_STA");
-  mqtt_en = preferences.getBool("MQTT_EN");
-  mqtt_tls = preferences.getBool("MQTT_TLS");
-  mqtt_host = preferences.getString("MQTT_HOST");
-  mqtt_id = preferences.getString("MQTT_ID");
-  mqtt_auth = preferences.getBool("MQTT_AUTH");
-  mqtt_user = preferences.getString("MQTT_USER");
-  mqtt_pass = preferences.getString("MQTT_PASS");
-  mqtt_port = preferences.getUInt("MQTT_PORT");
-  upload_throttle = preferences.getULong("UPL_THROTTLE");
-  update_auto = preferences.getBool("UPD_AUTO");
-  update_autoCheck = preferences.getBool("UPD_AUTOCHK");
-  dev_fleet = preferences.getBool("BETA_FLT");
-  alpha_fleet = preferences.getBool("ALPHA_FLT");
-  fw_new = preferences.getUInt("FW_NEW");
-  update_start = preferences.getBool("UPD_START");
-  update_finish = preferences.getBool("UPD_FINISH");
-  restore_finish = preferences.getBool("RST_FINISH");
-  eid_en = preferences.getBool("EID_EN");
-  eid_webhook = preferences.getString("EID_HOOK");
-  ha_en = preferences.getBool("HA_EN");
-  counter = preferences.getUInt("counter", 0);
-  bootcount = preferences.getUInt("reboots", 0);
-  refbootcount = preferences.getUInt("refboots", 0);
-  last_reset = preferences.getString("LAST_RESET");
-  dsmrVersion = preferences.getUInt("DM_DSMRV");
-  trigger_interval = preferences.getUInt("TRG_INT");
-  trigger_type = preferences.getUInt("TRG_TYPE");
-  reinit_spiffs = preferences.getBool("RINT_SPIFFS");
-  pls_en = preferences.getBool("PLS_EN");
-  pls_mind1 = preferences.getInt("PLS_MIND1");
-  pls_mind2 = preferences.getInt("PLS_MIND2");
-  pls_multi1 = preferences.getInt("PLS_MULTI1");
-  pls_multi2 = preferences.getInt("PLS_MULTI2");
-  pls_type1 = preferences.getInt("PLS_TYPE1");
-  pls_type2 = preferences.getInt("PLS_TYPE2");
-  pls_unit1 = preferences.getString("PLS_UNT1");
-  pls_unit2 = preferences.getString("PLS_UNT2");
-  pls_off1 = preferences.getUInt("PLS_OFF1");
-  pls_off2 = preferences.getUInt("PLS_OFF2");
-  if(preferences.getBool("DM_AVDEM") == true) dmAvDem = "1";
-  else dmAvDem = "0";
-  if(preferences.getBool("DM_MAXDEMM") == true) dmMaxDemM = "1";
-  else dmMaxDemM = "0";
-  if(preferences.getBool("DM_POWIN") == true) dmPowIn = "1";
-  else dmPowIn = "0";
-  if(preferences.getBool("DM_POWCON") == true) dmPowCon = "1";
-  else dmPowCon = "0";
-  if(preferences.getBool("DM_TOTCONT1") == true) dmTotCont1 = "1";
-  else dmTotCont1 = "0";
-  if(preferences.getBool("DM_TOTCONT2") == true) dmTotCont2 = "1";
-  else dmTotCont2 = "0";
-  if(preferences.getBool("DM_TOTINT1") == true) dmTotInt1 = "1";
-  else dmTotInt1 = "0";
-  if(preferences.getBool("DM_TOTINT2") == true) dmTotInt2 = "1";
-  else dmTotInt2 = "0";
-  if(preferences.getBool("DM_ACTTAR") == true) dmActiveTariff = "1";
-  else dmActiveTariff = "0";
-  if(preferences.getBool("DM_VOLT1") == true) dmVoltagel1 = "1";
-  else dmVoltagel1 = "0";
-  if(preferences.getBool("DM_VOLT2") == true) dmVoltagel2 = "1";
-  else dmVoltagel2 = "0";
-  if(preferences.getBool("DM_VOLT3") == true) dmVoltagel3 = "1";
-  else dmVoltagel3 = "0";
-  if(preferences.getBool("DM_CUR1") == true) dmCurrentl1 = "1";
-  else dmCurrentl1 = "0";
-  if(preferences.getBool("DM_CUR2") == true) dmCurrentl2 = "1";
-  else dmCurrentl2 = "0";
-  if(preferences.getBool("DM_CUR3") == true) dmCurrentl3 = "1";
-  else dmCurrentl3 = "0";
-  if(preferences.getBool("DM_GAS") == true) dmGas = "1";
-  else dmGas = "0";
-  if(preferences.getBool("DM_TXT") == true) dmText = "1";
-  else dmText = "0";
-  configMeter();
-  if(mqtt_en) mqttSave = true;
-  if(eid_en) eidSave = true;
-  if(ha_en) haSave = true;
-=======
 /*The configuration module stores and retrieves key,value pairs from non-volatile (NVS) storage,
   processes configuration strings/JSON coming in through the API or MQTT, and generates JSON response strings.*/
   
@@ -130,7 +47,6 @@ boolean restoreConfig(){
   else _rel_chan = "main";
   if(_mqtt_id == "") _mqtt_id = String(apSSID);
   /*End temp bootstrap*/
->>>>>>> develop
   return true;
 }
 
@@ -162,73 +78,6 @@ boolean saveConfig(){
   }
   /*End temp bootstrap*/
   preferences.begin("cofy-config", false);
-<<<<<<< HEAD
-  preferences.putString("WIFI_SSID", wifi_ssid);
-  preferences.putString("WIFI_PASSWD", wifi_password);
-  if(wifiSave) preferences.putBool("WIFI_STA", true);
-  else preferences.putBool("WIFI_STA", wifiSTA);
-  preferences.putBool("MQTT_EN", mqttSave);
-  preferences.putBool("MQTT_TLS", mqtt_tls); 
-  preferences.putString("MQTT_HOST", mqtt_host);
-  preferences.putString("MQTT_ID", mqtt_id);
-  preferences.putBool("MQTT_AUTH", mqtt_auth); 
-  preferences.putString("MQTT_USER", mqtt_user);
-  preferences.putString("MQTT_PASS", mqtt_pass);
-  preferences.putUInt("MQTT_PORT", mqtt_port);
-  preferences.putULong("UPL_THROTTLE", upload_throttle);
-  preferences.putBool("UPD_AUTO", update_auto);
-  preferences.putBool("UPD_AUTOCHK", update_autoCheck);
-  preferences.putBool("ALPHA_FLT", alpha_fleet);
-  preferences.putBool("BETA_FLT", dev_fleet);
-  preferences.putUInt("FW_NEW", onlineVersion);
-  preferences.putBool("UPD_START", update_start);
-  preferences.putBool("UPD_FINISH", update_finish);
-  preferences.putBool("RST_FINISH", restore_finish);
-  preferences.putUInt("counter", counter);
-  preferences.putUInt("reboots", bootcount);
-  preferences.putBool("EID_EN", eidSave);
-  preferences.putString("EID_HOOK", eid_webhook);
-  preferences.putString("LAST_RESET", last_reset);
-  preferences.putBool("HA_EN", haSave);
-  preferences.putUInt("DM_DSMRV", dsmrVersion);
-  preferences.putUInt("TRG_INT", trigger_interval);
-  preferences.putUInt("TRG_TYPE", trigger_type);
-  preferences.putBool("RINT_SPIFFS", reinit_spiffs);
-  if (dmAvDem == "1") preferences.putBool("DM_AVDEM", true);
-  else preferences.putBool("DM_AVDEM", false);
-  if (dmMaxDemM == "1") preferences.putBool("DM_MAXDEMM", true);
-  else preferences.putBool("DM_MAXDEMM", false);
-  if (dmPowIn == "1") preferences.putBool("DM_POWIN", true);
-  else preferences.putBool("DM_POWIN", false);
-  if (dmPowCon == "1") preferences.putBool("DM_POWCON", true);
-  else preferences.putBool("DM_POWCON", false);
-  if (dmTotCont1 == "1") preferences.putBool("DM_TOTCONT1", true);
-  else preferences.putBool("DM_TOTCONT1", false);
-  if (dmTotCont2 == "1") preferences.putBool("DM_TOTCONT2", true);
-  else preferences.putBool("DM_TOTCONT2", false);
-  if (dmTotInt1 == "1") preferences.putBool("DM_TOTINT1", true);
-  else preferences.putBool("DM_TOTINT1", false);
-  if (dmTotInt2 == "1") preferences.putBool("DM_TOTINT2", true);
-  else preferences.putBool("DM_TOTINT2", false);
-  if (dmActiveTariff == "1") preferences.putBool("DM_ACTTAR", true);
-  else preferences.putBool("DM_ACTTAR", false);
-  if (dmVoltagel1 == "1") preferences.putBool("DM_VOLT1", true);
-  else preferences.putBool("DM_VOLT1", false);
-  if (dmVoltagel2 == "1") preferences.putBool("DM_VOLT2", true);
-  else preferences.putBool("DM_VOLT2", false);
-  if (dmVoltagel3 == "1") preferences.putBool("DM_VOLT3", true);
-  else preferences.putBool("DM_VOLT3", false);
-  if (dmCurrentl1 == "1") preferences.putBool("DM_CUR1", true);
-  else preferences.putBool("DM_CUR1", false);
-  if (dmCurrentl2 == "1") preferences.putBool("DM_CUR2", true);
-  else preferences.putBool("DM_CUR2", false);
-  if (dmCurrentl3 == "1") preferences.putBool("DM_CUR3", true);
-  else preferences.putBool("DM_CUR3", false);
-  if (dmGas == "1") preferences.putBool("DM_GAS", true);
-  else preferences.putBool("DM_GAS", false);
-  if (dmText == "1") preferences.putBool("DM_TXT", true);
-  else preferences.putBool("DM_TXT", false);
-=======
   for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
     preferences.putBool(configBool[i].configName.c_str(), *configBool[i].var);
   }
@@ -253,7 +102,6 @@ boolean saveConfig(){
   for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
     preferences.putUInt(configIP[i].configName.c_str(), *configIP[i].var);
   }
->>>>>>> develop
   preferences.end();
   return true;
 }
