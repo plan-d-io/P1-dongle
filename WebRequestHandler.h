@@ -1,7 +1,7 @@
 /*The webserver client and its handlers live here*/
 #include <LittleFS.h>
 extern bool findInConfig(String, int&, int&), processConfigJson(String, String&, bool), processConfigString(String, String&, bool), storeConfigVar(String, int, int);
-extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), httpTelegramValues(String option), infoMsg, _user_email, configBuffer;
+extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), payloadFormat(), httpTelegramValues(String option), infoMsg, _user_email, configBuffer;
 extern const char index_html[], reboot_html[], test_html[], css[];
 extern char apSSID[];
 extern void setReboot();
@@ -112,6 +112,9 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request){
     }
     else if(request->url() == "/releasechan" || request->url() == "/releasechan/"){
       request->send(200, "application/json", releaseChannels());
+    }
+    else if(request->url() == "/payloadformat" || request->url() == "/payloadformat/"){
+      request->send(200, "application/json", payloadFormat());
     }
     else if(request->url() == "/svg"){
       request->send(200, "application/json", returnSvg());

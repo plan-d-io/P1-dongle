@@ -71,11 +71,11 @@ boolean startUpdate(){
       }
       if(bundleLoaded){
         String baseUrl ="https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
-        if(_dev_fleet) baseUrl += "develop/bin/P1-dongle";
+        if(_dev_fleet) baseUrl += "develop/P1-dongle";
         else if(_alpha_fleet) baseUrl += "alpha/P1-dongle";
-        else if(_v2_fleet) baseUrl += "V2-0/bin/P1-dongle";
-        else baseUrl += "main/bin/P1-dongle";
-        String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
+        else if(_v2_fleet) baseUrl += "V2-0/P1-dongle";
+        else baseUrl += "main/P1-dongle";
+        String fileUrl = baseUrl + ".ino.m5stack_atom.bin"; //leaving this split up for now if we later want to do versioning in the filename
         syslog("Getting new firmware over HTTPS/TLS", 0);
         syslog("Found new firmware at "+ fileUrl, 0);
         if (https.begin(*client, fileUrl)) {  

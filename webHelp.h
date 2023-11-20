@@ -103,6 +103,12 @@ String releaseChannels(){
   return channels;
 }
 
+String payloadFormat(){
+  /*Replace with a dynamic Jsondoc*/
+  String format = "{ \"Payload format\": [ { \"value\": 0, \"description\": \"Value only\" }, { \"value\": 1, \"description\": \"Basic JSON (value, unit)\" }, { \"value\": 2, \"description\": \"Standard JSON (value, unit, timestamp)\" }, { \"value\": 3, \"description\": \"COFY JSON (as above, including metadata)\" } ] }";
+  return format;
+}
+
 /*Everything between rawliteral( ) is treated as one big string*/
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -173,6 +179,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <input type="text" id="MQTT_PFIX" name="MQTT_PFIX"><br>
             <label for="UPL_THROTTLE">Update interval (s)</label>
             <input type="number" id="UPL_THROTTLE" name="UPL_THROTTLE"><br>
+            <label for="FRMT_PYLD">Payload Format:</label>
+            <select id="FRMT_PYLD" name="FRMT_PYLD"></select><br>
             <br><br>
             </div>
 
@@ -372,7 +380,18 @@ const char index_html[] PROGMEM = R"rawliteral(
                         option.textContent = item.channel;
                         releaseChannelSelect.appendChild(option);
                     });
-
+                    // After populating the dropdowns, fetch the payload format data
+                    return fetchWithTimeoutAndRetry('/payloadformat');
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const payloadFormatSelect = document.getElementById('FRMT_PYLD');
+                    data['Payload format'].forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.value;
+                        option.textContent = item.value + ' - ' + item.description;
+                        payloadFormatSelect.appendChild(option);
+                    });
                     // After populating the dropdowns, fetch the configuration data
                     return fetchWithTimeoutAndRetry('/config');
                 })

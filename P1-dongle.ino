@@ -26,7 +26,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 208;
+unsigned int fw_ver = 209;
 
 //General global vars
 Preferences preferences;
@@ -38,7 +38,7 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 bool bundleLoaded = true;
-bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable ;
+bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
 String configBuffer;
 String eidUploadInterval = "Not yet set";
 unsigned int mqttPushCount, mqttPushFails, onlineVersion, fw_new;

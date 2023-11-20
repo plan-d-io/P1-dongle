@@ -68,7 +68,7 @@ void haAutoDiscovery(String friendlyName, String unit, String deviceType, String
   deviceName.toLowerCase();
   doc["unique_id"] = deviceName + "_" + friendlyName;
   doc["object_id"] = deviceName + "_" + friendlyName;
-  doc["value_template"] = "{{ value_json.value }}";
+  if(_payload_format > 0) doc["value_template"] = "{{ value_json.value }}";
   doc["availability_topic"] = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
   JsonObject device  = doc.createNestedObject("device");
   JsonArray identifiers = device.createNestedArray("identifiers");

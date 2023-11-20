@@ -108,7 +108,7 @@ static const boolStore configBool[] PROGMEM = {
 };
 
 static const intStore configInt[] PROGMEM = {
-  {"Data payload format", &_payload_format, "FRMT_PYLD", 2} //0 = value only, 1 = minimal json, 2 = standard json, 3 = COFY format
+  {"Data payload format", &_payload_format, "FRMT_PYLD", 3} //0 = value only, 1 = minimal json, 2 = standard json, 3 = COFY format
 };
 
 static const uintStore configUInt[] PROGMEM = {
