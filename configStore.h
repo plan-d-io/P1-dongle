@@ -105,7 +105,6 @@ static const boolStore configBool[] PROGMEM = {
   {"V2 fleet", &_v2_fleet, "V2_FLT", false},
   {"Restore finish", &_restore_finish, "RST_FINISH", false},
   {"Home Assistant enabled", &_ha_en, "HA_EN", false},
-  {"Re.alto enabled", &_realto_en, "RLT_EN", false},
   {"EnergieID enabled", &_eid_en, "EID_EN", false}
 };
 
@@ -124,8 +123,7 @@ static const uintStore configUInt[] PROGMEM = {
 static const ulongStore configULong[] PROGMEM = {
   {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 65535},
   //{"New firmware version", &_fw_new, "FW_NEW", 0},
-  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 10},
-  {"Re.alto throttle", &_realtoThrottle, "RLT_THROTTLE", 60}
+  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 10}
 };
 
 static const stringStore configString[] PROGMEM = {
@@ -138,7 +136,6 @@ static const stringStore configString[] PROGMEM = {
   {"HA device name", &_ha_device, "HA_DEVICE", "Utility meter"},
   {"Last reset reason (firmware)", &_last_reset, "LAST_RESET", ""},
   {"Release channel", &_rel_chan, "REL_CHAN", "main"},
-  {"Temp string", &_tempString, "TMP_STR", ""},
   {"User email", &_user_email, "EMAIL", ""}
 };
 
@@ -163,5 +160,5 @@ static const ipStore configIP[] PROGMEM = {
 };
 
 static const floatStore configFloat[] PROGMEM = {
-  {"tempFloat", &_tempFloat, "TMP_FLT", 1}
+  //{"tempFloat", &_tempFloat, "TMP_FLT", 1}
 };

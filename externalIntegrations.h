@@ -42,27 +42,3 @@ static const String eidDsmrKeys[][2] PROGMEM = {
 { "volt1", "1-0:32.7.0" },
 { "cur1", "1-0:31.7.0"}
 };
-
-
-/*Re.alto*/
-elapsedMillis lastRealtoUpload;
-unsigned int realtoUploadTries;
-/* Configure the keys to be included in the realto payload */
-static const String realtoKeys[] PROGMEM = {
-{ "1-0:1.8.1", },
-{ "1-0:1.8.2", },
-{ "1-0:2.8.1", }, 
-{ "1-0:2.8.2", },
-{ "1-0:1.7.0", },
-{ "1-0:2.7.0", },
-{ "1-0:1.4.0", },
-{ "1-0:1.6.0", },
-{ "1-0:32.7.0", },
-{ "1-0:52.7.0", },
-{ "1-0:72.7.0", },
-{ "1-0:31.7.0", },
-{ "1-0:51.7.0", },
-{ "1-0:71.7.0", },
-{ "0-1:24.2.3", }
-};
-   
