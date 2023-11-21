@@ -8,7 +8,7 @@ Please see the [wiki](https://github.com/plan-d-io/P1-dongle/wiki) for extended 
 ## Features
 - Professional looking yet easy DIY build
 - Cheap (<€20 DIY cost)
-- Easy to configure through web-based interface
+- Easy to configure through web-based interface or RESTful API
 - Supports MQTT, MQTT over TLS, HTTP and HTTPS data upload to local or remote servers
 - Native integration into Home Assistant (MQTT autodiscovery)
 - Open source firmware & hardware
