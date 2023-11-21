@@ -52,7 +52,8 @@ boolean restoreConfig(){
     byte mac[6];
     WiFi.macAddress(mac);
     uint32_t macPart = ((uint32_t)mac[2] << 24) | ((uint32_t)mac[3] << 16) | ((uint32_t)mac[4] << 8) | (uint32_t)mac[5];
-    uuid.seed(macPart);
+    uint32_t seed2 = random(999999999);
+    uuid.seed(seed2, macPart);
     uuid.generate();
     char* uuidCharArray = uuid.toCharArray();
     char newArray[9]; 
