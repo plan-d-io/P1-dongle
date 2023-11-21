@@ -15,12 +15,4 @@ Please see the [wiki](https://github.com/plan-d-io/P1-dongle/wiki) for extended 
 - Privacy first: cloud, or even internet access entirely optional
 - Auto-updating firmware (optional)
 
-## To-do list
-These features are partially implemented or planned to be implemented.
-- ~~P1-port passthrough (to daisy chain another P1 dongle)~~
-- Connection for up to 2 pulse inputs (e.g. gas or water meter)
-- Multiple HTTP(S) endpoints
-- Configurable data payload
-- Temperature sensor input
-
 As this is a non-commercial development, we do not provide any timelines nor guarantees for this functionality. You are however free to contribute yourself!
