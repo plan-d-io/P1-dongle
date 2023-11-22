@@ -80,8 +80,8 @@ static const keyConfig dsmrKeys[] PROGMEM = {
     { "1-0:52.7.0", &volt2, &dummyInt, &dummyString, 2, "voltage", "Voltage phase 2", "",  false, &volt2Found},
     { "1-0:72.7.0", &volt3, &dummyInt, &dummyString, 2, "voltage", "Voltage phase 3", "",  false, &volt3Found},
     { "1-0:51.7.0", &current2, &dummyInt, &dummyString, 2, "current", "Current phase 2", "",  false, &current2Found},
-    { "1-0:71.7.0", &current3, &dummyInt, &dummyString, 2, "current", "Current phase 3", "",  false, &current3Found},
-    { "0-0:96.13.0", &dummyFloat, &dummyInt, &dummyString, 4, "", "Text message", "",  false, &dummyBool}
+    { "1-0:71.7.0", &current3, &dummyInt, &dummyString, 2, "current", "Current phase 3", "",  false, &current3Found}
+    //{ "0-0:96.13.0", &dummyFloat, &dummyInt, &dummyString, 4, "", "Text message", "",  false, &dummyBool}
 };
 
 float gasValue, heatValue, waterValue;

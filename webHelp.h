@@ -234,6 +234,11 @@ const char index_html[] PROGMEM = R"rawliteral(
 
             <button type="button" class="collapsible">Telegram settings</button>
             <div class="content">
+            <label>Select meter readings to push</label><br>
+            <!-- New div for sensor checkboxes -->
+              <div id="sensorCheckboxes" class="sensor-checkboxes-container">
+                  <!-- Checkboxes will be added here by JavaScript -->
+              </div>
             <label for="PUSH_FULL">Push complete telegram over MQTT</label>
             <input type="checkbox" id="PUSH_FULL" name="PUSH_FULL">
             <p style="text-align: left;">Pushes the complete P1 telegram, as received from the meter, over MQTT. WARNING: your MQTT broker must be able to receive large MQTT messages.</p>
@@ -323,6 +328,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                 }
             });
         }
+        var configData = {};
         document.addEventListener("DOMContentLoaded", function() {
               // Fetch SVG images
               fetchWithTimeoutAndRetry('/svg')
@@ -397,6 +403,8 @@ const char index_html[] PROGMEM = R"rawliteral(
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Store the configuration data globally
+                    configData = data; 
                     // Set the hostname header
                     const hostname = data.HOSTNAME.value;
                     document.getElementById('hostnameHeader').textContent = hostname;
@@ -448,11 +456,49 @@ const char index_html[] PROGMEM = R"rawliteral(
                             }
                         }
                     });
+                    createSensorCheckboxes();
                 })
                 .catch(error => {
                     console.error('Error fetching or processing data:', error);
                     document.getElementById('infoMessage').textContent = "Error loading data, please refresh the page";
                 });
+
+                // Function to create sensor checkboxes
+                function createSensorCheckboxes() {
+                    fetchWithTimeoutAndRetry('/data')
+                        .then(response => response.json())
+                        .then(data => {
+                            const bitmask = configData.PUSH_DSMR.value;
+                            const container = document.getElementById('sensorCheckboxes');
+                            container.innerHTML = ''; // Clear previous checkboxes
+                
+                            data.forEach((sensor, index) => {
+                                const isChecked = (bitmask & (1 << index)) !== 0;
+                                const checkbox = createCheckbox(sensor.friendly_name, isChecked);
+                                container.appendChild(checkbox);
+                            });
+                        })
+                        .catch(error => console.error('Error fetching sensor data:', error));
+                }
+                
+              function createCheckbox(name, isChecked) {
+                  const container = document.createElement('div');
+                  container.className = 'sensor-checkbox';
+              
+                  const sensorName = document.createElement('span');
+                  sensorName.textContent = name; // Set sensor name as text
+                  sensorName.style.textAlign = 'left'; // Align text to the left
+              
+                  const checkbox = document.createElement('input');
+                  checkbox.type = 'checkbox';
+                  checkbox.name = 'sensor';
+                  checkbox.value = name;
+                  checkbox.checked = isChecked;
+              
+                  container.appendChild(checkbox);
+                  container.appendChild(sensorName); // Append sensor name text
+                  return container;
+              }
 
               // Real-time data collapsible
               const realTimeDataCollapsible = document.getElementById('realTimeDataCollapsible');
@@ -487,11 +533,27 @@ const char index_html[] PROGMEM = R"rawliteral(
                 const formData = new FormData(form);
                 const jsonData = {};
 
-                // Handle unchecked checkboxes
+                // Handle unchecked checkboxes (outside sensorCheckboxes div)
                 const checkboxes = document.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(checkbox => {
-                    jsonData[checkbox.name] = checkbox.checked;
+                    if (!checkbox.closest('.sensor-checkboxes-container')) {
+                        jsonData[checkbox.name] = checkbox.checked;
+                    }
                 });
+
+                // Handle checkboxes within the sensorCheckboxes div and translate to bitmask
+                let bitmask = 0;
+                const sensorCheckboxes = document.querySelectorAll('.sensor-checkboxes-container input[type="checkbox"]');
+                sensorCheckboxes.forEach((checkbox, index) => {
+                    jsonData[checkbox.name] = checkbox.checked;
+                    // Calculate bitmask based on checkbox status
+                    if (checkbox.checked) {
+                        bitmask |= 1 << index;
+                    }
+                });
+            
+                // Include the PUSH_DSMR bitmask in the JSON data
+                jsonData['PUSH_DSMR'] = bitmask;
 
                 formData.forEach((value, key) => {
                     const inputElement = document.querySelector(`[name="${key}"]`);
@@ -813,7 +875,16 @@ const char css[] PROGMEM = R"rawliteral(
             -webkit-animation: spin 1s linear infinite; /* Safari and Chrome */
             -moz-animation: spin 1s linear infinite; /* Firefox */
         }
-        
+        .sensor-checkboxes-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Two columns */
+            gap: 10px; /* Space between checkboxes */
+        }        
+        .sensor-checkbox {
+            display: flex;
+            flex-direction: column-reverse; /* Checkbox below the label */
+            align-items: left; /* Center align */
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
