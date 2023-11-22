@@ -617,61 +617,77 @@ String returnConfig(){
   eidintVar["value"] = eidUploadInterval;
   /*Stored config vars*/
   for(int i = 0; i < sizeof(configBool)/sizeof(configBool[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configBool[i].configName);
-    configVar["varName"] = configBool[i].varName;
-    configVar["type"] = "bool";
-    configVar["value"] = *configBool[i].var;
-    configVar["defaultValue"] = configBool[i].defaultValue;
+    if(configBool[i].includeInConfig) {
+      JsonObject configVar  = doc.createNestedObject(configBool[i].configName);
+      configVar["varName"] = configBool[i].varName;
+      configVar["type"] = "bool";
+      configVar["value"] = *configBool[i].var;
+      configVar["defaultValue"] = configBool[i].defaultValue;
+    }
   }
   for(int i = 0; i < sizeof(configInt)/sizeof(configInt[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configInt[i].configName);
-    configVar["varName"] = configInt[i].varName;
-    configVar["type"] = "int32";
-    configVar["value"] = *configInt[i].var;
-    configVar["defaultValue"] = configInt[i].defaultValue;
+    if(configInt[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configInt[i].configName);
+      configVar["varName"] = configInt[i].varName;
+      configVar["type"] = "int32";
+      configVar["value"] = *configInt[i].var;
+      configVar["defaultValue"] = configInt[i].defaultValue;
+    }
   }
   for(int i = 0; i < sizeof(configUInt)/sizeof(configUInt[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configUInt[i].configName);
-    configVar["varName"] = configUInt[i].varName;
-    configVar["type"] = "uint32";
-    configVar["value"] = *configUInt[i].var;
-    configVar["defaultValue"] = configUInt[i].defaultValue;
+    if(configUInt[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configUInt[i].configName);
+      configVar["varName"] = configUInt[i].varName;
+      configVar["type"] = "uint32";
+      configVar["value"] = *configUInt[i].var;
+      configVar["defaultValue"] = configUInt[i].defaultValue;
+    }
   }
   for(int i = 0; i < sizeof(configULong)/sizeof(configULong[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configULong[i].configName);
-    configVar["varName"] = configULong[i].varName;
-    configVar["type"] = "uint64";
-    configVar["value"] = *configULong[i].var;
-    configVar["defaultValue"] = configULong[i].defaultValue;
+    if(configULong[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configULong[i].configName);
+      configVar["varName"] = configULong[i].varName;
+      configVar["type"] = "uint64";
+      configVar["value"] = *configULong[i].var;
+      configVar["defaultValue"] = configULong[i].defaultValue;
+    }
   }
   for(int i = 0; i < sizeof(configString)/sizeof(configString[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configString[i].configName);
-    configVar["varName"] = configString[i].varName;
-    configVar["type"] = "string";
-    configVar["value"] = *configString[i].var;
-    configVar["defaultValue"] = configString[i].defaultValue;
+    if(configString[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configString[i].configName);
+      configVar["varName"] = configString[i].varName;
+      configVar["type"] = "string";
+      configVar["value"] = *configString[i].var;
+      configVar["defaultValue"] = configString[i].defaultValue;
+    }
   }
   /*Passwords and sensitive data (e.g. GDPR stuff) are not included in the config file, only an indication if the data is present.
    * These data can still be accessed directly.
    */
   for(int i = 0; i < sizeof(configPass)/sizeof(configPass[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configPass[i].configName);
-    configVar["varName"] = configPass[i].varName;
-    configVar["type"] = "password";
-    if(*configPass[i].var != "") configVar["filled"] = true;
+    if(configPass[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configPass[i].configName);
+      configVar["varName"] = configPass[i].varName;
+      configVar["type"] = "password";
+      if(*configPass[i].var != "") configVar["filled"] = true;
+    }
   }
   for(int i = 0; i < sizeof(configSecret)/sizeof(configSecret[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configSecret[i].configName);
-    configVar["varName"] = configSecret[i].varName;
-    configVar["type"] = "secret";
-    if(*configSecret[i].var != "") configVar["filled"] = true;
+    if(configSecret[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configSecret[i].configName);
+      configVar["varName"] = configSecret[i].varName;
+      configVar["type"] = "secret";
+      if(*configSecret[i].var != "") configVar["filled"] = true;
+    }
   }
   for(int i = 0; i < sizeof(configIP)/sizeof(configIP[0]); i++){
-    JsonObject configVar  = doc.createNestedObject(configIP[i].configName);
-    configVar["varName"] = configIP[i].varName;
-    configVar["type"] = "ipaddress";
-    configVar["value"] = uint32ToIPAddress(*configIP[i].var);
-    configVar["defaultValue"] = String(uint32ToIPAddress(configIP[i].defaultValue));
+    if(configIP[i].includeInConfig){
+      JsonObject configVar  = doc.createNestedObject(configIP[i].configName);
+      configVar["varName"] = configIP[i].varName;
+      configVar["type"] = "ipaddress";
+      configVar["value"] = uint32ToIPAddress(*configIP[i].var);
+      configVar["defaultValue"] = String(uint32ToIPAddress(configIP[i].defaultValue));
+    }
   }
   serializeJson(doc, jsonOutput);
   return jsonOutput;

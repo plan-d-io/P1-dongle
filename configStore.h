@@ -6,6 +6,7 @@ struct boolStore{
    bool* var;
    String configName;
    bool defaultValue;
+   bool includeInConfig;
 };
 
 struct intStore{
@@ -13,6 +14,7 @@ struct intStore{
    int* var;
    String configName;
    int defaultValue;
+   bool includeInConfig;
 };
 
 struct uintStore{
@@ -20,6 +22,7 @@ struct uintStore{
    unsigned int* var;
    String configName;
    unsigned int defaultValue;
+   bool includeInConfig;
 };
 
 struct ulongStore{
@@ -27,6 +30,7 @@ struct ulongStore{
    unsigned long* var;
    String configName;
    unsigned long defaultValue;
+   bool includeInConfig;
 };
 
 struct ipStore{
@@ -34,6 +38,7 @@ struct ipStore{
    uint32_t* var;
    String configName;
    unsigned long defaultValue;
+   bool includeInConfig;
 };
 
 struct stringStore{
@@ -41,6 +46,7 @@ struct stringStore{
    String* var;
    String configName;
    String defaultValue;
+   bool includeInConfig;
 };
 
 struct floatStore{
@@ -48,6 +54,7 @@ struct floatStore{
    float* var;
    String configName;
    float defaultValue;
+   bool includeInConfig;
 };
 
 /*Declaration of global variables retrieved from NVS config storage, denoted by a leading _*/
@@ -89,74 +96,73 @@ String _tempString;
  * Format: { "User-readable name", global variable name (reference), "NVS key name", default value }
  */
 static const boolStore configBool[] PROGMEM = {
-  {"WiFi Station mode", &_wifi_STA, "WIFI_STA", false},
-  {"Use fixed IP", &_fip_en, "FIP_EN", false},
-  {"MQTT enabled", &_mqtt_en, "MQTT_EN", false},
-  {"MQTT secure", &_mqtt_tls, "MQTT_TLS", false},
-  {"MQTT auth", &_mqtt_auth, "MQTT_AUTH", false},
-  {"Full DSMR telegram", &_push_full_telegram, "PUSH_FULL", false},
-  {"Update auto", &_update_auto, "UPD_AUTO", true},
-  {"Update autocheck", &_update_autoCheck, "UPD_AUTOCHK", true},
-  {"Update start", &_update_start, "UPD_START", false},
-  {"Update finish", &_update_finish, "UPD_FINISH", false},
-  {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false},
-  {"Dev fleet", &_dev_fleet, "BETA_FLT", false},
-  {"Alpha fleet", &_alpha_fleet, "ALPHA_FLT", false},
-  {"V2 fleet", &_v2_fleet, "V2_FLT", false},
-  {"Restore finish", &_restore_finish, "RST_FINISH", false},
-  {"Home Assistant enabled", &_ha_en, "HA_EN", false},
-  {"EnergieID enabled", &_eid_en, "EID_EN", false}
+  {"WiFi Station mode", &_wifi_STA, "WIFI_STA", false, false},
+  {"Use fixed IP", &_fip_en, "FIP_EN", false, true},
+  {"MQTT enabled", &_mqtt_en, "MQTT_EN", false, true},
+  {"MQTT secure", &_mqtt_tls, "MQTT_TLS", false, true},
+  {"MQTT auth", &_mqtt_auth, "MQTT_AUTH", false, true},
+  {"Full DSMR telegram", &_push_full_telegram, "PUSH_FULL", false, true},
+  {"Update auto", &_update_auto, "UPD_AUTO", true, true},
+  {"Update autocheck", &_update_autoCheck, "UPD_AUTOCHK", true, true},
+  {"Update start", &_update_start, "UPD_START", false, false},
+  {"Update finish", &_update_finish, "UPD_FINISH", false, false},
+  {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false, false},
+  {"Dev fleet", &_dev_fleet, "BETA_FLT", false, true},
+  {"Alpha fleet", &_alpha_fleet, "ALPHA_FLT", false, true},
+  {"V2 fleet", &_v2_fleet, "V2_FLT", false, true},
+  {"Restore finish", &_restore_finish, "RST_FINISH", false, false},
+  {"Home Assistant enabled", &_ha_en, "HA_EN", false, true},
+  {"EnergieID enabled", &_eid_en, "EID_EN", false, true}
 };
 
 static const intStore configInt[] PROGMEM = {
-  {"Data payload format", &_payload_format, "FRMT_PYLD", 3} //0 = value only, 1 = minimal json, 2 = standard json, 3 = COFY format
+  {"Data payload format", &_payload_format, "FRMT_PYLD", 3, true} //0 = value only, 1 = minimal json, 2 = standard json, 3 = COFY format
 };
 
 static const uintStore configUInt[] PROGMEM = {
-  {"MBus keys", &_mbus_pushlist, "PUSH_MBUS", 136},
-  {"MQTT port", &_mqtt_port, "MQTT_PORT", 1883},
-  {"Telegram trigger interval", &_trigger_interval, "TRG_INT", 10},
-  {"Telegram trigger type", &_trigger_type, "TRG_TYPE", 0},
-  {"Bootcount", &_bootcount, "reboots", 0}
+  {"MBus keys", &_mbus_pushlist, "PUSH_MBUS", 136, false},
+  {"MQTT port", &_mqtt_port, "MQTT_PORT", 1883, true},
+  {"Telegram trigger interval", &_trigger_interval, "TRG_INT", 10, false},
+  {"Telegram trigger type", &_trigger_type, "TRG_TYPE", 0, false},
+  {"Bootcount", &_bootcount, "reboots", 0, false}
 };
 
 static const ulongStore configULong[] PROGMEM = {
-  {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 1073741823},
-  //{"New firmware version", &_fw_new, "FW_NEW", 0},
-  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 10}
+  {"DSMR keys", &_key_pushlist, "PUSH_DSMR", 1073741823, true},
+  {"Upload throttle", &_upload_throttle, "UPL_THROTTLE", 10, true}
 };
 
 static const stringStore configString[] PROGMEM = {
-  {"UUID", &_uuid, "UUID", ""},
-  {"WiFi network", &_wifi_ssid, "WIFI_SSID", ""},
-  {"MQTT hostname", &_mqtt_host, "MQTT_HOST", "10.42.0.1"},
-  {"MQTT ID", &_mqtt_id, "MQTT_ID", ""},
-  {"MQTT username", &_mqtt_user, "MQTT_USER", ""},
-  {"MQTT topic prefix", &_mqtt_prefix, "MQTT_PFIX", "data/devices/utility_meter/"},
-  {"HA device name", &_ha_device, "HA_DEVICE", "Utility meter"},
-  {"Last reset reason (firmware)", &_last_reset, "LAST_RESET", ""},
-  {"Release channel", &_rel_chan, "REL_CHAN", "main"},
-  {"User email", &_user_email, "EMAIL", ""}
+  {"UUID", &_uuid, "UUID", "", true},
+  {"WiFi network", &_wifi_ssid, "WIFI_SSID", "", true},
+  {"MQTT hostname", &_mqtt_host, "MQTT_HOST", "10.42.0.1", true},
+  {"MQTT ID", &_mqtt_id, "MQTT_ID", "", true},
+  {"MQTT username", &_mqtt_user, "MQTT_USER", "", true},
+  {"MQTT topic prefix", &_mqtt_prefix, "MQTT_PFIX", "data/devices/utility_meter/", true},
+  {"HA device name", &_ha_device, "HA_DEVICE", "Utility meter", true},
+  {"Last reset reason (firmware)", &_last_reset, "LAST_RESET", "", false},
+  {"Release channel", &_rel_chan, "REL_CHAN", "main", true},
+  {"User email", &_user_email, "EMAIL", "", true}
 };
 
 static const stringStore configPass[] PROGMEM = {
   /*Although also Strings, passwords get their own data store as they are never returned as plaintext (contrary to Strings)
     This store can also be used for GDPR sensitive information, e.g. user e-mails.*/
-  {"WiFi password", &_wifi_password, "WIFI_PASSWD", ""},
-  {"MQTT password", &_mqtt_pass, "MQTT_PASS", ""}
+  {"WiFi password", &_wifi_password, "WIFI_PASSWD", "", true},
+  {"MQTT password", &_mqtt_pass, "MQTT_PASS", "", true}
 };
 
 static const stringStore configSecret[] PROGMEM = {
-  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", ""},
-  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", ""}
+  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "", true},
+  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "", true}
 };
 
 static const ipStore configIP[] PROGMEM = {
-  {"IP address", &_fipaddr, "FIPADDR", 0},
-  {"Default gateway", &_fdefgtw, "FDEFGTW", 0},
-  {"Subnet mask", &_fsubn, "FSUBN", 0},
-  {"Primary DNS", &_fdns1, "FDNS1", 0},
-  {"Secondary DNS", &_fdns2, "FDNS2", 0}
+  {"IP address", &_fipaddr, "FIPADDR", 0, true},
+  {"Default gateway", &_fdefgtw, "FDEFGTW", 0, true},
+  {"Subnet mask", &_fsubn, "FSUBN", 0, true},
+  {"Primary DNS", &_fdns1, "FDNS1", 0, true},
+  {"Secondary DNS", &_fdns2, "FDNS2", 0, true}
 };
 
 static const floatStore configFloat[] PROGMEM = {
