@@ -4,6 +4,7 @@ void externalIntegrationsBootstrap(){
   /*Put variables that need to be initted at boot here*/
   _mbus_pushlist = 136;
   _payload_format = 3;
+  _key_pushlist = 1047807; //1073741823; //1073741820;
   if(_upload_throttle == 0) _upload_throttle = 10;
   sinceLastUpload = _upload_throttle*1000;
   if(_wifi_ssid != "") _wifi_STA = true;
@@ -118,9 +119,9 @@ void eidHello(){
         https.addHeader("Content-Type", "application/json");
         int httpCode = https.POST(eidHelloMsg());
         if (httpCode > 0) {
-          Serial.println(httpCode);
+          if(httpDebug) Serial.println(httpCode);
           String payload = https.getString();
-          Serial.println(payload);
+          if(httpDebug) Serial.println(payload);
           if(httpCode == 200 || httpCode == 201){
             DynamicJsonDocument doc(1048);
             deserializeJson(doc, payload);

@@ -114,7 +114,7 @@ void mqttPushTelegramValues(){
       /*Loop over the Mbus keys found in the meter telegram and push their value over MQTT*/
       for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
         String friendlyName;
-        if(mbusMeter[i].keyFound == true){
+        if(mbusMeter[i].keyFound == true && mbusMeter[i].enabled == true){
           String tempJson = mbusKeyPayload(i);
           for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){
             if(mbusKeys[j].keyType == mbusMeter[i].type){
@@ -155,14 +155,21 @@ String httpTelegramValues(String option){
   /*Otherwise, return all enabled keys found in the telegram*/
   else{
     for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
-      if(*dsmrKeys[i].keyFound == true){
-        unsigned long mask = 1;
-        mask <<= i;
-        unsigned long test = _key_pushlist & mask;
-        if(test > 0){
-          String tempJson = dsmrKeyPayload(i);
-          tempJson += ",";
-          jsonOutput += tempJson;
+      if(option == "all"){
+        String tempJson = dsmrKeyPayload(i);
+        tempJson += ",";
+        jsonOutput += tempJson;
+      }
+      else{
+        if(*dsmrKeys[i].keyFound == true){
+          unsigned long mask = 1;
+          mask <<= i;
+          unsigned long test = _key_pushlist & mask;
+          if(test > 0){
+            String tempJson = dsmrKeyPayload(i);
+            tempJson += ",";
+            jsonOutput += tempJson;
+          }
         }
       }
     }
