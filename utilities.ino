@@ -267,9 +267,9 @@ void setReboot(){
   saveConfig();
   //preferences.end();
   SPIFFS.end();
-  delete client;
   rebootInit = true;
   sinceRebootCheck = 0;
+  delete client;
   syslog("Rebooting", 2);
 }
 

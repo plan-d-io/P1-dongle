@@ -120,6 +120,7 @@ void connectMqtt() {
           reconncount++;
           delay(250);
         }
+        secureClientError++;
         Serial.println("");
       }
     }
@@ -157,6 +158,8 @@ void connectMqtt() {
           mqttclientSecure.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
           mqttclientSecure.subscribe((availabilityTopic+"/set/reboot").c_str());
           mqttclientSecure.subscribe((availabilityTopic+"/set/config").c_str());
+          secureClientError = 0;
+          _rebootSecure = 0;
         }
         else{
           mqttclient.publish(availabilityTopic.c_str(), "online", true);

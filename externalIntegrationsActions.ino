@@ -76,9 +76,12 @@ void eidUpload(){
           if(httpCode == 200 || httpCode == 201){
             syslog("EID upload succeeded", 0);
           }
+          secureClientError = 0;
+          _rebootSecure = 0;
         }
         else{
           syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          secureClientError++;
         }
         https.end();
         client->stop();
@@ -161,10 +164,13 @@ void eidHello(){
               EIDcheckInterval = 150000;
               syslog("EID cannot yet upload", 0);
             }
+            secureClientError = 0;
+            _rebootSecure = 0;
           }
         }
         else{
           syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          secureClientError++;
           EIDuploadEn = false;
           EIDcheckInterval = 150000;
         }

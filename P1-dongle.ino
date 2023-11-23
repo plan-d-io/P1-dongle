@@ -44,6 +44,7 @@ bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
 String configBuffer;
 String eidUploadInterval = "Not yet set";
 unsigned int mqttPushCount, mqttPushFails, onlineVersion, fw_new;
+unsigned int secureClientError = 0;
 bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted;
 bool haDiscovered = false;
 time_t meterTimestamp;
@@ -110,7 +111,6 @@ void loop(){
 
   if(sinceRebootCheck > 2000){
     if(rebootInit){
-      //ESP.restart();
       forcedReset();
     }
     sinceRebootCheck = 0;
@@ -163,7 +163,6 @@ void loop(){
       else{
         mqttclient.loop();
       }
-      //if(_realto_en) realtoUpload();
     }
     if(lastEIDcheck >= EIDcheckInterval){
       eidHello();
@@ -179,10 +178,7 @@ void loop(){
     if(sinceClockCheck >= 3600){
       if(!timeconfigured) timeSet = false; //if timeConfigured = true, the NTP serivce takes care of reqular clock syncing
       sinceClockCheck = 0;
-    }/*
-    if(sinceWifiCheck >= 600000){ //rescan wifi networks every 10 minutes
-      wifiScan = true;
-    }*/
+    }
     if(sinceConnCheck >= 60000){
       if(_ha_en && debugInfo) hadebugDevice(false);
       checkConnection();
@@ -192,13 +188,29 @@ void loop(){
       getHeapDebug();
       sinceDebugUpload = 0;
     }
-    if(reconncount > 15 || remotehostcount > 60){
-      saveResetReason("Rebooting to try fix connections");
-      if(saveConfig()){
-        syslog("Rebooting to try fix connections", 2);
-        setReboot();
+    /*If no remote hosts can be reached anymore, try a reboot for up to four times*/
+    if(reconncount > 15 || remotehostcount > 60 || secureClientError > 4){
+      _rebootSecure++;
+      if(_rebootSecure < 4){
+        saveResetReason("Rebooting to try fix connections");
+        if(saveConfig()){
+          syslog("Rebooting to try fix connections", 2);
+          setReboot();
+        }
+        reconncount = 0;
       }
-      reconncount = 0;
+      else{
+        /*After four reboots, increase time between reboots drastically*/
+        if(reconncount > 150 || remotehostcount > 600 || secureClientError > 40){
+          _rebootSecure++;
+          saveResetReason("Rebooting to try fix connections");
+          if(saveConfig()){
+            syslog("Rebooting to try fix connections", 2);
+            setReboot();
+          }
+          reconncount = 0;
+        }
+      }
     }
   }
   M5.update();
