@@ -222,14 +222,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
   unsigned long dtimestamp = time(&now);
   String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
-  Serial.print("got mqtt message on ");
-  Serial.print(String(topic));
+  if(mqttDebug){
+    Serial.print("got mqtt message on ");
+    Serial.print(String(topic));
+  }
   String messageTemp;
   for (int i = 0; i < length; i++) {
     messageTemp += (char)payload[i];
   }
-  Serial.print(", ");
-  Serial.println(messageTemp);
+  if(mqttDebug){
+    Serial.print(", ");
+    Serial.println(messageTemp);
+  }
   if (String(topic) == availabilityTopic + "/set/reboot") {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
@@ -237,7 +241,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       saveResetReason("Reboot requested by MQTT");
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
-        //pubMqtt("set/devices/utility_meter/reboot", "{\"value\": \"false\"}", false);
+        pubMqtt(availabilityTopic + "/set/reboot", "{\"value\": \"false\"}", false);
         delay(500);
         setReboot();
       }
@@ -247,6 +251,5 @@ void callback(char* topic, byte* payload, unsigned int length) {
     syslog("Got config update over MQTT", 1);
     String configResponse;
     processConfigJson(messageTemp, configResponse, true);
-    
   }
 }
