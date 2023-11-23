@@ -234,7 +234,8 @@ const char index_html[] PROGMEM = R"rawliteral(
 
             <button type="button" class="collapsible">Telegram settings</button>
             <div class="content">
-            <label>Select meter readings to push</label><br>
+            <label>Select meter readings to push over MQTT</label>
+            <p style="text-align: left;">The list of all meter readings supported by the dongle. If a meter reading is not present in the meter telegram, it will not be pushed.</p>
             <!-- New div for sensor checkboxes -->
               <div id="sensorCheckboxes" class="sensor-checkboxes-container">
                   <!-- Checkboxes will be added here by JavaScript -->
@@ -465,7 +466,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
                 // Function to create sensor checkboxes
                 function createSensorCheckboxes() {
-                    fetchWithTimeoutAndRetry('/data')
+                    fetchWithTimeoutAndRetry('/data?all')
                         .then(response => response.json())
                         .then(data => {
                             const bitmask = configData.PUSH_DSMR.value;

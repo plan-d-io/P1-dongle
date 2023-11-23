@@ -404,3 +404,8 @@ void registerMbusMeter(String &key, String &value){
     }
   }
 }
+
+int numKeys(void){
+  int shifti = sizeof(dsmrKeys)/sizeof(dsmrKeys[0]);
+  return shifti;
+}

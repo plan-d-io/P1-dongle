@@ -451,6 +451,17 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
               Serial.println("check");
               unsigned long testVar = keyValue.value().as<unsigned long>();
               *configULong[retVarNum].var = testVar;
+              Serial.println(keyValue.key().c_str());
+              if(strcmp(keyValue.key().c_str(), "PUSH_DSMR") == 0){
+                Serial.println("YES");
+                Serial.println(testVar);
+                Serial.println(testVar, BIN);
+                int shift = numKeys();
+                Serial.println(shift);
+                int new_value = (testVar >> shift) & 0xFFFFFFFF;
+                Serial.println(new_value);
+                Serial.println(new_value, BIN);
+              }
             //}
           }
           else if(retVarType == 4){

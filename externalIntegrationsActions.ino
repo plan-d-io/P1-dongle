@@ -4,7 +4,7 @@ void externalIntegrationsBootstrap(){
   /*Put variables that need to be initted at boot here*/
   _mbus_pushlist = 136;
   _payload_format = 3;
-  //_key_pushlist = 1073741820; //1073741823;
+  _key_pushlist = 1073741820; //1073741823;
   if(_upload_throttle == 0) _upload_throttle = 10;
   sinceLastUpload = _upload_throttle*1000;
   if(_wifi_ssid != "") _wifi_STA = true;
