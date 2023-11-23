@@ -174,13 +174,11 @@ String httpTelegramValues(String option){
       }
     }
     for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-
-        if(mbusMeter[i].keyFound == true){
-          String tempJson = mbusKeyPayload(i);
-          tempJson += ",";
-          jsonOutput += tempJson;
-        }
-
+      if(mbusMeter[i].keyFound == true){
+        String tempJson = mbusKeyPayload(i);
+        tempJson += ",";
+        jsonOutput += tempJson;
+      }
     }
   }
   jsonOutput = jsonOutput.substring(0, jsonOutput.length()-1);

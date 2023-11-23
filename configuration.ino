@@ -414,7 +414,7 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
            * ArduinoJSON type detection is used to doublecheck the validity of the new configuration value.
            */
           if( strcmp(keyValue.key().c_str(), "WIFI_PASSWD" ) == 0 && strlen(keyValue.value().as<char*>()) == 0) {
-            Serial.println("Empty value, skipping");
+            //Serial.println("Empty value, skipping");
             continue;
           }
           if(retVarType == 0){
@@ -446,7 +446,6 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
             }
           }
           else if(retVarType == 5){
-            Serial.println("char");
             if (keyValue.value().is<const char*>()){
               String testVar = keyValue.value().as<const char*>();
               *configPass[retVarNum].var = testVar;
@@ -484,7 +483,6 @@ boolean processConfigJson(String jsonString, String &configResponse, bool update
       configResponse += "}";
     }
   }
-  else Serial.println("nope");
   configBuffer = returnConfig();
   return isJson;
 }
