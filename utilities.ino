@@ -267,6 +267,7 @@ void setReboot(){
   saveConfig();
   //preferences.end();
   SPIFFS.end();
+  delete client;
   rebootInit = true;
   sinceRebootCheck = 0;
   syslog("Rebooting", 2);
@@ -278,6 +279,7 @@ void forcedReset(){
 // infinite loop.
   esp_task_wdt_init(1, true);
   esp_task_wdt_add(NULL);
+  delete client;
   while(true);  // wait for watchdog timer to be triggered
 }
 
