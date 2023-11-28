@@ -27,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 211;
+unsigned int fw_ver = 212;
 
 //General global vars
 Preferences preferences;
@@ -100,7 +100,6 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
-  //if(_wifi_STA) eidHello();
   Serial.println("Done");
   
 }
