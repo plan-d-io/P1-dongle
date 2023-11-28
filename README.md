@@ -14,5 +14,13 @@ Please see the [wiki](https://github.com/plan-d-io/P1-dongle/wiki) for extended 
 - Open source firmware & hardware
 - Privacy first: cloud, or even internet access entirely optional
 - Auto-updating firmware (optional)
+- Easy to use as a basis for other (professional) projects
 
-As this is a non-commercial development, we do not provide any timelines nor guarantees for this functionality. You are however free to contribute yourself!
+I do not provide any guarantees nor timelines for developing functionality. I am however available for specific functionality or developments at request. 
+And, as this is an open-source project, you are free to contribute yourself!
+
+## Basic installation
+1. Plug the P1-dongle into the P1 port of your digital meter
+2. When the LED turns greens, connect to the `p1-dongle` access point
+3. When connected, open the login page or go to `192.168.4.1`
+4. Complete the configuration, and click the reboot button at the bottom of the webpage
