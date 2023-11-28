@@ -76,7 +76,7 @@ unsigned long _fw_new;
 String _rel_chan;
 /*Debug*/
 bool _reinit_spiffs;
-unsigned int _bootcount;
+unsigned int _rebootSecure, _bootcount;
 String _last_reset;
 /*DSMR processing*/
 bool _push_full_telegram;
@@ -124,6 +124,7 @@ static const uintStore configUInt[] PROGMEM = {
   {"MQTT port", &_mqtt_port, "MQTT_PORT", 1883, true},
   {"Telegram trigger interval", &_trigger_interval, "TRG_INT", 10, false},
   {"Telegram trigger type", &_trigger_type, "TRG_TYPE", 0, false},
+  {"Reboots secureClient", &_rebootSecure, "RBT_SEC", 0, false},
   {"Bootcount", &_bootcount, "reboots", 0, false}
 };
 

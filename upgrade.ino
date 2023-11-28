@@ -28,9 +28,11 @@ boolean checkUpdate(){
             String payload = https.getString();
             onlineVersion = atoi(payload.c_str());
           }
+          secureClientError = 0;
         }
         else{
           syslog("Could not connect to update repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          secureClientError++;
         }
         https.end();
       } 
@@ -143,6 +145,7 @@ boolean startUpdate(){
           } 
           else {
             syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
+            secureClientError++;
             _update_start = false;
             if(unitState < 6) unitState = 5;
           }
