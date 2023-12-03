@@ -4,7 +4,7 @@ extern bool findInConfig(String, int&, int&), processConfigJson(String, String&,
 extern String returnConfigVar(String, int, int, int), returnConfig(), returnBasicConfig(), returnSvg(), ssidList, releaseChannels(), payloadFormat(), httpTelegramValues(String option), infoMsg, _user_email, configBuffer;
 extern const char index_html[], reboot_html[], test_html[], css[];
 extern char apSSID[];
-extern void setReboot();
+extern void setReboot(), saveResetReason(String);
 class WebRequestHandler : public AsyncWebHandler {
 public:
   WebRequestHandler() {}
@@ -141,6 +141,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request){
     }
     else if(request->url() == "/reboot"){
       request->send_P(200, "text/html", reboot_html);
+      saveResetReason("Rebooting requested from webmin");
       setReboot();
     }
     else if(request->url() == "/style.css"){
