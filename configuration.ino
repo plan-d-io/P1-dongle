@@ -137,22 +137,42 @@ boolean resetConfig() {
     syslog("WiFi credentials reset by user", 2);
     saveResetReason("Rebooting for WiFi reset");
     if(saveConfig()){
-      delay(200);
     }
-    preferences.begin("cofy-config", false);
-    preferences.remove("WIFI_SSID");
-    preferences.remove("WIFI_PASSWD");
-    preferences.remove("WIFI_STA");
-    preferences.remove("FIP_EN");
   }
   else if(factoryReset){
     syslog("Factory reset by user", 2);
     saveResetReason("Rebooting for factory reset");
     if(saveConfig()){
-      delay(200);
     }
+    preferences.remove("MQTT_EN");
+    preferences.remove("MQTT_TLS");
+    preferences.remove("MQTT_AUTH");
+    preferences.remove("PUSH_FULL");
+    preferences.remove("BETA_FLT");
+    preferences.remove("ALPHA_FLT");
+    preferences.remove("V2_FLT");
+    preferences.remove("HA_EN");
+    preferences.remove("EID_EN");
+    preferences.remove("PUSH_MBUS");
+    preferences.remove("MQTT_PORT");
+    preferences.remove("PUSH_DSMR");
+    preferences.remove("UPL_THROTTLE");
+    preferences.remove("UUID");
+    preferences.remove("MQTT_HOST");
+    preferences.remove("MQTT_ID");
+    preferences.remove("PUSH_DSMR");
+    preferences.remove("MQTT_USER");
+    preferences.remove("HA_DEVICE");
+    preferences.remove("REL_CHAN");
+    preferences.remove("EMAIL");
+    preferences.remove("MQTT_PASS");
     preferences.clear();
   }
+  preferences.begin("cofy-config", false);
+  preferences.remove("WIFI_SSID");
+  preferences.remove("WIFI_PASSWD");
+  preferences.remove("WIFI_STA");
+  preferences.remove("FIP_EN");
   preferences.end();
   delay(200);
   rebootInit = true;

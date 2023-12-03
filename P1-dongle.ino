@@ -217,6 +217,7 @@ void loop(){
     resetWifi = true;
   }
   if (M5.Btn.pressedFor(5000)) {
+    resetWifi = false;
     factoryReset = true;
   }
   if (prevButtonState != M5.Btn.isPressed()) {
