@@ -166,7 +166,6 @@ boolean resetConfig() {
     preferences.remove("REL_CHAN");
     preferences.remove("EMAIL");
     preferences.remove("MQTT_PASS");
-    preferences.clear();
   }
   preferences.begin("cofy-config", false);
   preferences.remove("WIFI_SSID");

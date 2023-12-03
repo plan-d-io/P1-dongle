@@ -83,6 +83,8 @@ void setup(){
   restoreConfig();
   initSPIFFS();
   externalIntegrationsBootstrap();
+  if(_trigger_type == 0) digitalWrite(TRIGGER, HIGH);
+  else digitalWrite(TRIGGER, LOW);
   syslog("Digital meter dongle " + String(apSSID) +" V" + String(fw_ver/100.0) + " by plan-d.io", 1);
   if(_dev_fleet) syslog("Using experimental (development) firmware", 2); //change this to one variable, but keep legacy compatibility intact
   if(_alpha_fleet) syslog("Using pre-release (alpha) firmware", 0);
