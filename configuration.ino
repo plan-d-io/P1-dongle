@@ -133,17 +133,16 @@ boolean resetConfig() {
   /*Erase the wifi configuration and put the dongle back into AP mode on next boot, 
    * or completely erase the NVS to perform a factory reset.
    */
+  preferences.begin("cofy-config", false);
+  preferences.remove("WIFI_SSID");
+  preferences.remove("WIFI_PASSWD");
+  preferences.putBool("WIFI_STA", false);
+  preferences.remove("FIP_EN");  
   if(resetWifi){
+    preferences.putString("LAST_RESET", "Rebooting for WiFi reset");
     syslog("WiFi credentials reset by user", 2);
-    saveResetReason("Rebooting for WiFi reset");
-    if(saveConfig()){
-    }
   }
   else if(factoryReset){
-    syslog("Factory reset by user", 2);
-    saveResetReason("Rebooting for factory reset");
-    if(saveConfig()){
-    }
     preferences.remove("MQTT_EN");
     preferences.remove("MQTT_TLS");
     preferences.remove("MQTT_AUTH");
@@ -166,12 +165,10 @@ boolean resetConfig() {
     preferences.remove("REL_CHAN");
     preferences.remove("EMAIL");
     preferences.remove("MQTT_PASS");
+    preferences.remove("MQTT_PFIX");
+    preferences.putString("LAST_RESET", "Rebooting for factory reset");
+    syslog("Factory reset by user", 2);
   }
-  preferences.begin("cofy-config", false);
-  preferences.remove("WIFI_SSID");
-  preferences.remove("WIFI_PASSWD");
-  preferences.remove("WIFI_STA");
-  preferences.remove("FIP_EN");
   preferences.end();
   delay(200);
   rebootInit = true;
