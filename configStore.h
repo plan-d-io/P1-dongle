@@ -154,8 +154,8 @@ static const stringStore configPass[] PROGMEM = {
 };
 
 static const stringStore configSecret[] PROGMEM = {
-  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "B3184173261C3", true},
-  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "JQKF4e1rdwdrjMMdMwyciN6sj5oUZ0w1", true}
+  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "", true},
+  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "", true}
 };
 
 static const ipStore configIP[] PROGMEM = {
