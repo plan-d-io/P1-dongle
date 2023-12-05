@@ -65,7 +65,10 @@ void initSPIFFS(){
       syslog("Could not perform file I/O on SPIFFS", 3);
       spiffsMounted = false;
     }
-    else spiffsMounted = true;
+    else{
+      if(!_reinit_spiffs) spiffsMounted = true;
+      else spiffsMounted = false;
+    }
   }
   syslog("----------------------------", 0);
   if(spiffsMounted){
@@ -153,9 +156,13 @@ void initWifi(){
         unitState = -1;
         finishUpdate(false);
       }
-      if(_restore_finish || !spiffsMounted){
+      if(_restore_finish){
         unitState = -1;
         finishUpdate(true);
+      }
+      if(!spiffsMounted){
+        unitState = 7;
+        bundleLoaded = false;
       }
       if(_mqtt_en) setupMqtt();
       sinceConnCheck = 60000;

@@ -141,7 +141,7 @@ void WebRequestHandler::handleRequest(AsyncWebServerRequest *request){
     }
     else if(request->url() == "/reboot"){
       request->send_P(200, "text/html", reboot_html);
-      saveResetReason("Rebooting requested from webmin");
+      saveResetReason("Reboot requested from webmin");
       setReboot();
     }
     else if(request->url() == "/style.css"){

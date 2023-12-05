@@ -207,7 +207,9 @@ const char index_html[] PROGMEM = R"rawliteral(
             <input type="password" id="EID_PROVKEY" name="EID_PROVKEY"><br>
             <label for="EID_PROVSEC">EnergieID provisioning secret</label>
             <input type="password" id="EID_PROVSEC" name="EID_PROVSEC"><br>
-            <br><br>
+            <label for="resetUUID">Renew claim code/unregister EnergieID</label>
+            <input type="checkbox" id="resetUUID" name="resetUUID">
+            <p style="text-align: left;">Generates a new EnergieID claim code on next boot. This will unregister this dongle from your current EnergieID account.</p>
             </div>
 
             <button type="button" class="collapsible">Advanced network settings</button>
@@ -558,6 +560,12 @@ const char index_html[] PROGMEM = R"rawliteral(
             
                 // Include the PUSH_DSMR bitmask in the JSON data
                 jsonData['PUSH_DSMR'] = bitmask;
+
+                // Handle resetUUID checkbox
+                const resetUUIDCheckbox = document.getElementById('resetUUID');
+                if (resetUUIDCheckbox.checked) {
+                    jsonData['UUID'] = ''; // Set UUID to an empty string
+                }
 
                 formData.forEach((value, key) => {
                     const inputElement = document.querySelector(`[name="${key}"]`);

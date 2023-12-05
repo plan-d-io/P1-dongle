@@ -110,7 +110,7 @@ void restoreSPIFFS(){
     file.close();
     bundleLoaded = true;
     /*Download the other static files*/
-    //_restore_finish = true;
+    _reinit_spiffs = false;
     saveResetReason("Rebooting after SPIFFS restore");
     saveConfig();
     SPIFFS.end();
