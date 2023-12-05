@@ -59,7 +59,7 @@ boolean restoreConfig(){
     char newArray[9]; 
     memcpy(newArray, uuidCharArray, 8);
     newArray[8] = '\0';
-    _uuid = String(newArray);
+    _uuid = "P1" + String(newArray);
     syslog("Generated new UUID: " + _uuid, 1);
   }
   return true;

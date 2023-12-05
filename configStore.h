@@ -86,7 +86,7 @@ int _payload_format;
 /*External services*/
 bool _ha_en, _eid_en, _realto_en;
 String _ha_device;
-String _eid_provkey, _eid_provsec;
+String _eid_provkey, _eid_provsec, _eidclaim;
 unsigned long _realtoThrottle;
 /*Placeholder vars*/
 float _tempFloat;
@@ -135,6 +135,7 @@ static const ulongStore configULong[] PROGMEM = {
 
 static const stringStore configString[] PROGMEM = {
   {"UUID", &_uuid, "UUID", "", true},
+  {"EID claim code", &_eidclaim, "EIDCLAIM", "", true},
   {"WiFi network", &_wifi_ssid, "WIFI_SSID", "", true},
   {"MQTT hostname", &_mqtt_host, "MQTT_HOST", "10.42.0.1", true},
   {"MQTT ID", &_mqtt_id, "MQTT_ID", "", true},
