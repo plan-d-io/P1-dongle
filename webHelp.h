@@ -249,7 +249,10 @@ const char index_html[] PROGMEM = R"rawliteral(
             <div class="content">
             <!-- Dropdown for Release Channel -->
             <label for="REL_CHAN">Release Channel:</label>
-            <select id="REL_CHAN" name="REL_CHAN"></select><br><br>
+            <select id="REL_CHAN" name="REL_CHAN"></select><br>
+            <label for="RINT_SPIFFS">Update TLS bundle</label>
+            <input type="checkbox" id="RINT_SPIFFS" name="RINT_SPIFFS">
+            <p style="text-align: left;">Only use when TLS certificate bundle is outdated or not present. Dongle will reboot in recovery mode, restore the TLS bundle and reboot again.</p>
             </div>
             <input type="submit" class="submit" value="Submit">
         </form>

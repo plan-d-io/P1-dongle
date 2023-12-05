@@ -93,7 +93,7 @@ float _tempFloat;
 String _tempString;
 
 /*The configuration data stores for every data type.
- * Format: { "User-readable name", global variable name (reference), "NVS key name", default value }
+ * Format: { "User-readable name", global variable name (reference), "NVS key name", default value, include in config API }
  */
 static const boolStore configBool[] PROGMEM = {
   {"WiFi Station mode", &_wifi_STA, "WIFI_STA", false, false},
@@ -106,7 +106,7 @@ static const boolStore configBool[] PROGMEM = {
   {"Update autocheck", &_update_autoCheck, "UPD_AUTOCHK", true, true},
   {"Update start", &_update_start, "UPD_START", false, false},
   {"Update finish", &_update_finish, "UPD_FINISH", false, false},
-  {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false, false},
+  {"Reinitialise SPIFFS", &_reinit_spiffs, "RINT_SPIFFS", false, true},
   {"Dev fleet", &_dev_fleet, "BETA_FLT", false, true},
   {"Alpha fleet", &_alpha_fleet, "ALPHA_FLT", false, true},
   {"V2 fleet", &_v2_fleet, "V2_FLT", false, true},
@@ -154,8 +154,8 @@ static const stringStore configPass[] PROGMEM = {
 };
 
 static const stringStore configSecret[] PROGMEM = {
-  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "", true},
-  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "", true}
+  {"EID Provisioning key", &_eid_provkey, "EID_PROVKEY", "B3184173261C3", true},
+  {"EID Provisioning secret", &_eid_provsec, "EID_PROVSEC", "JQKF4e1rdwdrjMMdMwyciN6sj5oUZ0w1", true}
 };
 
 static const ipStore configIP[] PROGMEM = {
