@@ -64,7 +64,7 @@ bool rebootInit;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = false;
+bool httpDebug = true;
 bool extendedTelegramDebug = false;
 
 void setup(){
