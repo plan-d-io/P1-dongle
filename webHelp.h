@@ -199,15 +199,15 @@ const char index_html[] PROGMEM = R"rawliteral(
             <label for="EID_EN">Use EnergieID</label>
             <input type="checkbox" id="EID_EN" name="EID_EN">
             <p style="text-align: left;">To use the EnergieID integration, copy or write down the claim code below, and connect the dongle to your WiFi network. You then have 24 hours to add the Plan-D integration to you EnergieID account, and claim your dongle using this claim code.</p>
-            <label for="UUID">Claim code</label>
-            <input type="text" id="UUID" name="UUID" disabled><br>
+            <label for="EIDCLAIM">Claim code</label>
+            <input type="text" id="EIDCLAIM" name="EIDCLAIM" disabled><br>
             <label for="EID_INTV">Allowed upload interval</label>
             <input type="text" id="EID_INTV" name="EID_INTV" disabled><br>
             <label for="EID_PROVKEY">EnergieID provisioning key</label>
             <input type="password" id="EID_PROVKEY" name="EID_PROVKEY"><br>
             <label for="EID_PROVSEC">EnergieID provisioning secret</label>
             <input type="password" id="EID_PROVSEC" name="EID_PROVSEC"><br>
-            <label for="resetUUID">Renew claim code/unregister EnergieID</label>
+            <label for="resetUUID">Renew/unregister EnergieID</label>
             <input type="checkbox" id="resetUUID" name="resetUUID">
             <p style="text-align: left;">Generates a new EnergieID claim code on next boot. This will unregister this dongle from your current EnergieID account.</p>
             </div>

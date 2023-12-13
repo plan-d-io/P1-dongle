@@ -1,4 +1,4 @@
-#include "rom/rtc.h"
+  #include "rom/rtc.h"
 #include <esp_int_wdt.h>
 #include <esp_task_wdt.h>
 #include "M5Atom.h"
@@ -64,7 +64,7 @@ bool rebootInit;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = true;
+bool httpDebug = false;
 bool extendedTelegramDebug = false;
 
 void setup(){

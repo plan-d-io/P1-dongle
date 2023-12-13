@@ -73,7 +73,11 @@ void eidUpload(){
             syslog("EID upload succeeded", 0);
           }
           secureClientError = 0;
-          _rebootSecure = 0;
+          if(_rebootSecure > 0){
+            _rebootSecure = 0;
+            saveConfig();
+          }
+          
         }
         else{
           syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
@@ -125,6 +129,7 @@ void eidHello(){
             DynamicJsonDocument doc(1048);
             deserializeJson(doc, payload);
             JsonObject obj = doc.as<JsonObject>();
+            JsonVariant jclaimCode = obj["claimCode"];
             JsonVariant jclaimUrl = obj["claimUrl"];
             JsonVariant jallowedInterval = obj["webhookPolicy"]["allowedInterval"];
             String claimUrl;
@@ -160,8 +165,15 @@ void eidHello(){
               EIDcheckInterval = 150000;
               syslog("EID cannot yet upload", 0);
             }
+            if(!jclaimCode.isNull()){
+              String claimTest = obj["claimCode"];
+              _eidclaim = claimTest;
+            }
             secureClientError = 0;
-            _rebootSecure = 0;
+            if(_rebootSecure > 0){
+              _rebootSecure = 0;
+              saveConfig();
+            }
           }
         }
         else{
@@ -191,8 +203,8 @@ void eidHello(){
 String eidHelloMsg(){
   String jsonOutput;
   DynamicJsonDocument doc(1024);
-  doc["claimCode"] = _uuid;
-  doc["deviceId"] = String(apSSID);
+  doc["claimCode"] = _eidclaim;
+  doc["deviceId"] = _uuid;
   doc["deviceName"] = "P1 dongle by Plan-D";
   doc["firmwareVersion"] = String(fw_ver/100.0);
   doc["ipAddress"] = WiFi.localIP().toString();

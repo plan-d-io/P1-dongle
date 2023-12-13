@@ -29,6 +29,10 @@ boolean checkUpdate(){
             onlineVersion = atoi(payload.c_str());
           }
           secureClientError = 0;
+          if(_rebootSecure > 0){
+            _rebootSecure = 0;
+            saveConfig();
+          }
         }
         else{
           syslog("Could not connect to update repository, HTTPS code " + String(https.errorToString(httpCode)), 2);

@@ -159,7 +159,10 @@ void connectMqtt() {
           mqttclientSecure.subscribe((availabilityTopic+"/set/reboot").c_str());
           mqttclientSecure.subscribe((availabilityTopic+"/set/config").c_str());
           secureClientError = 0;
-          _rebootSecure = 0;
+          if(_rebootSecure > 0){
+            _rebootSecure = 0;
+            saveConfig();
+          }
         }
         else{
           mqttclient.publish(availabilityTopic.c_str(), "online", true);

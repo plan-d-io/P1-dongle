@@ -61,6 +61,10 @@ boolean restoreConfig(){
     newArray[8] = '\0';
     _uuid = "P1" + String(newArray);
     syslog("Generated new UUID: " + _uuid, 1);
+    _eidclaim = "";
+  }
+  if(_eidclaim == ""){
+    _eidclaim = _uuid.substring(2);
   }
   return true;
 }
