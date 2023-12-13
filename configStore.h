@@ -91,6 +91,7 @@ unsigned long _realtoThrottle;
 /*Placeholder vars*/
 float _tempFloat;
 String _tempString;
+String eidUploadInterval = "Not yet set";
 
 /*The configuration data stores for every data type.
  * Format: { "User-readable name", global variable name (reference), "NVS key name", default value, include in config API }

@@ -39,27 +39,23 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 UUID uuid;
-bool bundleLoaded = true;
 bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
-String configBuffer;
-String eidUploadInterval = "Not yet set";
+bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted,rebootInit;
+bool bundleLoaded = true;
+bool haDiscovered = false;
+String configBuffer, resetReason, infoMsg, ssidList;
+char apSSID[] = "P1000000";
 unsigned int mqttPushCount, mqttPushFails, onlineVersion, fw_new;
 unsigned int secureClientError = 0;
-bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted;
-bool haDiscovered = false;
 time_t meterTimestamp;
-uint8_t prevButtonState = false;
 //Global timing vars
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceDebugUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 //General housekeeping vars
 unsigned int reconncount, remotehostcount, telegramCount;
 int wifiRSSI;
-String resetReason, infoMsg;
 float freeHeap, minFreeHeap, maxAllocHeap;
-String ssidList;
-char apSSID[] = "P1000000";
 byte mac[6];
-bool rebootInit;
+uint8_t prevButtonState = false;
 /*Debug*/
 bool serialDebug = true;
 bool telegramDebug = false;
@@ -103,13 +99,11 @@ void setup(){
   server.begin();
   configBuffer = returnConfig();
   Serial.println("Done");
-  
 }
 
 void loop(){
   blinkLed();
   if(wifiScan) scanWifi();
-
   if(sinceRebootCheck > 2000){
     if(rebootInit){
       forcedReset();
