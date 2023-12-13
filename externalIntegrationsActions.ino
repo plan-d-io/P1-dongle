@@ -141,15 +141,20 @@ void eidHello(){
               String xtwinid = obj["headers"]["x-twin-id"];
               EIDxtwinid = xtwinid ;
               String allowedInterval = obj["webhookPolicy"]["allowedInterval"];
+              bool daily = false;
               int multi = 1000;
               int len = allowedInterval.length();
               char intervalUnit = allowedInterval.charAt(len-1);
               if(intervalUnit == 'S' || intervalUnit == 's') multi = 1000;
               else if(intervalUnit == 'M' || intervalUnit == 'm') multi = 60* 1000;
               else if(intervalUnit == 'H' || intervalUnit == 'h') multi = 60 * 60* 1000;
-              else if(intervalUnit == 'D' || intervalUnit == 'd') multi = 24 * 60 * 60* 1000;
+              else if(intervalUnit == 'D' || intervalUnit == 'd'){
+                multi = 24 * 60 * 60* 1000;
+                daily = true;
+              }
               else multi = 1000;
-              allowedInterval = allowedInterval.substring(2, len-1);
+              if(daily) allowedInterval = allowedInterval.substring(1, len-1);
+              else allowedInterval = allowedInterval.substring(2, len-1);
               EIDuploadInterval = allowedInterval.toInt();
               EIDuploadInterval = EIDuploadInterval * multi;
               EIDcheckInterval = 24*60*1000;
