@@ -161,6 +161,7 @@ boolean resetConfig() {
     preferences.remove("PUSH_DSMR");
     preferences.remove("UPL_THROTTLE");
     preferences.remove("UUID");
+    preferences.remove("EIDCLAIM");
     preferences.remove("MQTT_HOST");
     preferences.remove("MQTT_ID");
     preferences.remove("PUSH_DSMR");
