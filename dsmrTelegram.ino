@@ -34,7 +34,7 @@ struct mbusConfig {
 };
 
 float dummyFloat, totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, totWatCon, totHeatCon, volt1, volt2, volt3, current1, current2, current3, avgDem, maxDemM;
-unsigned long dummyInt, actTarrif, maxDemTime;
+unsigned long dummyInt, actTarrif, maxDemTime, totGasTime, totWatTime, totHeatTime;
 String dummyString, p1Version, meterId;
 bool dummyBool, totConFound, totInFound, netPowConFound, totConT1Found, totConT2Found, totInT1Found, totInT2Found, actTarrifFound, powConFound, powInFound, avgDemFound, maxDemMFound, volt1Found, current1Found, volt2Found, volt3Found, current2Found, current3Found;
 static const keyConfig dsmrKeys[] PROGMEM = {
@@ -243,6 +243,18 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
                 splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
                 mbusMeter[i].keyValueFloat = splitValue;
                 mbusMeter[i].keyTimeStamp = time(&splitTimestamp);
+                if(mbusMeter[i].type == 3){
+                  totGasCon = splitValue;
+                  totGasTime = time(&splitTimestamp);
+                }
+                else if(mbusMeter[i].type == 4){
+                  totHeatCon = splitValue;
+                  totHeatTime = time(&splitTimestamp);
+                }
+                else if(mbusMeter[i].type == 7){
+                  totWatCon = splitValue;
+                  totWatTime = time(&splitTimestamp);
+                }
                 if(telegramDebug){
                   String tempTopic = _mqtt_prefix;
                   if(mbusKeys[j].keyTopic == ""){

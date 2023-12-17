@@ -174,7 +174,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <label for="MQTT_USER">Client username</label>
             <input type="text" id="MQTT_USER" name="MQTT_USER"><br>
             <label for="MQTT_PASS">Client password</label>
-            <input type="text" id="MQTT_PASS" name="MQTT_PASS"><br>
+            <input type="password" id="MQTT_PASS" name="MQTT_PASS"><br>
             <label for="MQTT_PFIX">MQTT topic prefix</label>
             <input type="text" id="MQTT_PFIX" name="MQTT_PFIX"><br>
             <label for="UPL_THROTTLE">Update interval (s)</label>

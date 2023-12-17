@@ -8,7 +8,7 @@ void externalIntegrationsBootstrap(){
 }
 
 void eidUpload(){
-  if(EIDuploadEn && meterTimestamp > 0){
+  if(EIDuploadEn && telegramCount > 3 && meterTimestamp > 0){
     syslog("Preparing EID upload", 0);
     String tempOutput;
     String eidOutput = "[";
@@ -31,7 +31,7 @@ void eidUpload(){
     eidData.clear();
     eidOutput += tempOutput;
     eidOutput += ",";
-    tempOutput = "";
+    tempOutput = "";/*
     for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
       if(mbusMeter[i].keyFound == true){
         if(mbusMeter[i].type == 3) eidData["g"] = round2(mbusMeter[i].keyValueFloat);
@@ -44,12 +44,42 @@ void eidUpload(){
         eidOutput += ",";
         tempOutput = "";
       }
-    }
+    }*/
     eidData["ts"] = maxDemTime;
     eidData["high-pp"] = round2(maxDemM);
     serializeJson(eidData, tempOutput);
+    eidData.clear();
     eidOutput += tempOutput;
+    tempOutput = "";
+    if(totGasCon > 0 && totGasTime > 0){
+      eidOutput += ",";
+      eidData["ts"] = totGasTime;
+      eidData["g"] = round2(totGasCon);
+      serializeJson(eidData, tempOutput);
+      eidData.clear();
+      eidOutput += tempOutput;
+      tempOutput = "";
+    }
+    if(totWatCon > 0 && totWatTime > 0){
+      eidOutput += ",";
+      eidData["ts"] = totWatTime;
+      eidData["w"] = round2(totWatCon);
+      serializeJson(eidData, tempOutput);
+      eidData.clear();
+      eidOutput += tempOutput;
+      tempOutput = "";
+    }
+    if(totHeatCon > 0 && totHeatTime > 0){
+      eidOutput += ",";
+      eidData["ts"] = totHeatTime;
+      eidData["w"] = round2(totHeatCon);
+      serializeJson(eidData, tempOutput);
+      eidData.clear();
+      eidOutput += tempOutput;
+      tempOutput = "";
+    }
     eidOutput += "]";
+    if(httpDebug) Serial.println(eidOutput);
     clientSecureBusy = true;
     if(_mqtt_tls){
       if(mqttclientSecure.connected()){
