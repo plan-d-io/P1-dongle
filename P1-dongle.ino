@@ -33,6 +33,7 @@ unsigned int fw_ver = 215;
 Preferences preferences;
 AsyncWebServer server(80);
 DNSServer dnsServer;
+uint8_t* certData = nullptr; 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 WiFiClientSecure *client = new WiFiClientSecure;

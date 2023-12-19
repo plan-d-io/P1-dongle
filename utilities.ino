@@ -135,11 +135,10 @@ void initWifi(){
         // Load loadCertBundle into WiFiClientSecure
         else {
           size_t fileSize = file.size();
-          uint8_t *certData = new uint8_t[fileSize];
+          certData = new uint8_t[fileSize];
           memset(certData, 0, fileSize);
           file.read(certData, fileSize);
           client->setCACertBundle(certData);
-          //delete[] certData;
         }
         file.close();
       } 
