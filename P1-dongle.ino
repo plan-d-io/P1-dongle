@@ -38,6 +38,7 @@ WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
+WiFiClientSecure *sysclient = new WiFiClientSecure;
 HTTPClient https;
 UUID uuid;
 bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
