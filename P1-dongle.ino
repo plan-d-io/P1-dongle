@@ -62,7 +62,7 @@ uint8_t prevButtonState = false;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = false;
+bool httpDebug = true;
 bool extendedTelegramDebug = false;
 
 void setup(){

@@ -142,6 +142,7 @@ void initWifi(){
         }
         file.close();
       } 
+      if(sysclient) sysclient->setCACert(root_ca);
       else {
         syslog("Unable to create SSL client", 2);
         unitState = 7;

@@ -83,6 +83,7 @@ void printTelegramValues(){
 void mqttPushTelegramValues(){
   if(_mqtt_en){
     if(sinceLastUpload > _upload_throttle*1000){
+      Serial.println(ESP.getFreeHeap()/1000.0);
       if(mqttDebug) Serial.println("Performing MQTT push");
       String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
       pubMqtt(availabilityTopic, "online", false);

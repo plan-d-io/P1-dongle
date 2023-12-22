@@ -154,8 +154,6 @@ void connectMqtt() {
         if(mqttPaused) mqttPaused = false;
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
         if(_mqtt_tls){
-          if(mqttclientSecure.connected()) Serial.println("connected to secure mqtt");
-          else Serial.println("not connected to secure mqtt");
           mqttclientSecure.publish(availabilityTopic.c_str(), "online", true);
           mqttclientSecure.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
           mqttclientSecure.subscribe((availabilityTopic+"/set/reboot").c_str());
