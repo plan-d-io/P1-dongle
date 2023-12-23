@@ -262,6 +262,10 @@ void checkConnection(){
       }
       if(mqttHostError) setupMqtt();
       else connectMqtt();
+      if(mqttWasPaused){
+        connectMqtt();
+        mqttWasPaused = false;
+      }
     }
   }
 }

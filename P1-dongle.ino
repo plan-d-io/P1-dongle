@@ -41,7 +41,7 @@ PubSubClient mqttclientSecure(*client);
 WiFiClientSecure *sysclient = new WiFiClientSecure;
 HTTPClient https;
 UUID uuid;
-bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
+bool clientSecureBusy, mqttPaused, mqttWasPaused, resetWifi, factoryReset, updateAvailable;
 bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted,rebootInit;
 bool bundleLoaded = true;
 bool haDiscovered = false;

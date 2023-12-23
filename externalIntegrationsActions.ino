@@ -109,8 +109,9 @@ void eidUpload(){
       }
       clientSecureBusy = false;
       if(mqttPaused){
-        sinceConnCheck = 10000;
+        sinceConnCheck = 60000;
         mqttPaused = false;
+        mqttWasPaused = true;
       }
     }
     lastEIDupload = 0;
@@ -215,8 +216,9 @@ void eidHello(){
       }
       clientSecureBusy = false;
       if(mqttPaused){
-        sinceConnCheck = 10000;
+        sinceConnCheck = 60000;
         mqttPaused = false;
+        mqttWasPaused = true;
       }
     }
   }

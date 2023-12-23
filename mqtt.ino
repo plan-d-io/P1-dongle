@@ -105,7 +105,7 @@ void connectMqtt() {
       if(!mqttclientSecure.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          if(!mqttPaused){
+          if(!mqttPaused && !mqttWasPaused){
             syslog("Lost connection to secure MQTT broker", 4);
             if(unitState < 6) unitState = 5;
           }
@@ -129,7 +129,7 @@ void connectMqtt() {
       if(!mqttclient.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          if(!mqttPaused){
+          if(!mqttPaused && !mqttWasPaused){
             syslog("Lost connection to MQTT broker", 4);
             if(unitState < 6) unitState = 5;
           }
@@ -149,7 +149,7 @@ void connectMqtt() {
     }
     if(disconnected){
       if(mqttretry < 2){
-        syslog("Connected to MQTT broker", 1);
+        if(!mqttPaused) syslog("Connected to MQTT broker", 1);
         if(unitState < 6) unitState = 4;
         if(mqttPaused) mqttPaused = false;
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
@@ -207,7 +207,6 @@ bool pubMqtt(String topic, String payload, boolean retain){
         else mqttPushFails++;
       }
       else{
-        Serial.println("MQTT secure not connected");
         mqttClientError = true;
         sinceConnCheck = 60000;
       }

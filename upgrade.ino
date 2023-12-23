@@ -60,6 +60,8 @@ boolean checkUpdate(){
       if(_mqtt_en) connectMqtt();
     }
     mqttPaused = false;
+    mqttWasPaused = true;
+    sinceConnCheck = 60000;
     return needUpdate;
   }
 }
