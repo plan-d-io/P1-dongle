@@ -8,6 +8,12 @@ void doHaAutoDiscovery() {
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
   }
+  if(_mqtt_tls){
+    if(!mqttclientSecure.connected()) return;
+  }
+  else{
+    if(!mqttclient.connected()) return;
+  }
   for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
     if(dsmrKeys[i].keyFound){
       syslog("Performing Home Assistant MQTT autodiscovery for key " + dsmrKeys[i].keyName, 0);
@@ -35,6 +41,7 @@ void doHaAutoDiscovery() {
       }
     }
   }
+  haDiscovered = true;
 }
 
 

@@ -3,6 +3,7 @@
 void externalIntegrationsBootstrap(){
   /*Put variables that need to be initted at boot here*/
   sinceLastUpload = _upload_throttle*1000;
+  _key_pushlist = 4294967295;
   if(_wifi_ssid != "") _wifi_STA = true;
   if(_eid_en) lastEIDcheck = EIDcheckInterval;
 }
@@ -31,20 +32,7 @@ void eidUpload(){
     eidData.clear();
     eidOutput += tempOutput;
     eidOutput += ",";
-    tempOutput = "";/*
-    for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-      if(mbusMeter[i].keyFound == true){
-        if(mbusMeter[i].type == 3) eidData["g"] = round2(mbusMeter[i].keyValueFloat);
-        else if(mbusMeter[i].type == 7) eidData["w"] = round2(mbusMeter[i].keyValueFloat);
-        else if(mbusMeter[i].type == 4) eidData["h"] = round2(mbusMeter[i].keyValueFloat);
-        eidData["ts"] = mbusMeter[i].keyTimeStamp;
-        serializeJson(eidData, tempOutput);
-        eidData.clear();
-        eidOutput += tempOutput;
-        eidOutput += ",";
-        tempOutput = "";
-      }
-    }*/
+    tempOutput = "";
     eidData["ts"] = maxDemTime;
     eidData["high-pp"] = round2(maxDemM);
     serializeJson(eidData, tempOutput);
@@ -114,7 +102,7 @@ void eidUpload(){
           secureClientError++;
         }
         https.end();
-        client->stop();
+        //client->stop();
       }
       else {
         syslog("Unable to connect to EID", 2);
@@ -218,7 +206,7 @@ void eidHello(){
           EIDcheckInterval = 150000;
         }
         https.end();
-        client->stop();
+        //client->stop();
       }
       else {
         syslog("Unable to connect to EID", 2);

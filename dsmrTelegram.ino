@@ -212,7 +212,7 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
             /*timestamped (Mbus) message*/
             splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
             *dsmrKeys[i].keyValueFloat = splitValue;
-            *dsmrKeys[i].keyValueLong = time(&splitTimestamp);
+            *dsmrKeys[i].keyValueLong = splitTimestamp;
           }
           else{
             //No need for any processing
@@ -239,21 +239,23 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
         for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
           if(key == mbusMeter[i].mbusKey){  //check if the key matches a key stored in the mbusMeter array
             for(int j = 0; j < sizeof(mbusKeys)/sizeof(mbusKeys[0]); j++){  //if so, process the key according the parameters set for that key
+              //Serial.println(value);
               if(mbusMeter[i].type == mbusKeys[j].keyType){
+                //Serial.println(value);                
                 splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
                 mbusMeter[i].keyValueFloat = splitValue;
-                mbusMeter[i].keyTimeStamp = time(&splitTimestamp);
+                mbusMeter[i].keyTimeStamp = splitTimestamp;
                 if(mbusMeter[i].type == 3){
                   totGasCon = splitValue;
-                  totGasTime = time(&splitTimestamp);
+                  totGasTime = mbusMeter[i].keyTimeStamp;
                 }
                 else if(mbusMeter[i].type == 4){
                   totHeatCon = splitValue;
-                  totHeatTime = time(&splitTimestamp);
+                  totHeatTime = mbusMeter[i].keyTimeStamp;
                 }
                 else if(mbusMeter[i].type == 7){
                   totWatCon = splitValue;
-                  totWatTime = time(&splitTimestamp);
+                  totWatTime = mbusMeter[i].keyTimeStamp;
                 }
                 if(telegramDebug){
                   String tempTopic = _mqtt_prefix;

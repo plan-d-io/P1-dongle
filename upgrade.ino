@@ -44,7 +44,7 @@ boolean checkUpdate(){
         syslog("Unable to connect to update repository", 2);
       }
     }
-    client->stop();
+    //client->stop();
     clientSecureBusy = false;
     if(mqttPaused){
       sinceConnCheck = 10000;

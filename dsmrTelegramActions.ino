@@ -6,7 +6,8 @@ void onTelegram(){
    */
   //printTelegramValues();
   if(telegramCount < 4) haEraseDevice();
-  if(telegramCount == 4) doHaAutoDiscovery();
+  if(telegramCount == 4) haDiscovered = false;
+  if(!haDiscovered && telegramCount > 4) doHaAutoDiscovery();
   if(telegramCount > 600) telegramCount = 3;
   mqttPushTelegramValues();
 }
