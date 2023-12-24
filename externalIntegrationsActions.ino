@@ -235,6 +235,6 @@ String eidHelloMsg(){
   doc["ipAddress"] = WiFi.localIP().toString();
   doc["lcoalDeviceUrl"] = "http://" + WiFi.localIP().toString();
   serializeJson(doc, jsonOutput);
-  Serial.println(jsonOutput);
+  if(httpDebug) Serial.println(jsonOutput);
   return jsonOutput;
 }
