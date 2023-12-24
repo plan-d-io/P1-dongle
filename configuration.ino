@@ -693,7 +693,7 @@ String returnConfig(){
 
 String returnBasicConfig(){
   /*Return a JSON string containing some basic config settings, useful to send over MQTT*/
-  String basicParameters[] = {"REL_CHAN", "reboots", "UPD_AUTO", "UPD_AUTOCHK", "RLT_EN", "RLT_THROTTLE", "EMAIL", "WIFI_SSID", "MQTT_HOST", "MQTT_PORT", "MQTT_ID", "MQTT_USER", "MQTT_PFIX"};
+  String basicParameters[] = {"REL_CHAN", "reboots", "UPD_AUTO", "UPD_AUTOCHK", "RLT_EN", "RLT_THROTTLE", "EMAIL", "WIFI_SSID", "MQTT_HOST", "MQTT_PORT", "MQTT_ID", "MQTT_USER", "MQTT_PFIX", "UUID"};
   String response = "{\"HOSTNAME\":\"" + String(apSSID) + "\",";
   response += "\"FW_VER\":\"" + String(round2(fw_ver/100.0)) + "\",";
   for(int i = 0; i < sizeof(basicParameters)/sizeof(basicParameters[0]); i++){

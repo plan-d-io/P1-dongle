@@ -22,7 +22,8 @@ void syslog(String msg, int level){
         doc["entity"] = apSSID;
         doc["sensorId"] = "syslog";
         doc["timestamp"] = dtimestamp;
-        String dtopic = "plan-d/" + String(apSSID) + "/sys/syslog"; 
+        //String dtopic = "plan-d/" + String(apSSID) + "/sys/syslog"; 
+        String dtopic = "sys/devices/" + String(apSSID) + "/syslog"; 
         String jsonOutput;
         serializeJson(doc, jsonOutput);
         if(pubMqtt(dtopic, jsonOutput, false)) logmsg += ", 1";
@@ -97,7 +98,6 @@ void pushSyslog(int numLines) {
                     String dtopic = "plan-d/" + String(apSSID) + "/sys/syslog";
                     String jsonOutput;
                     serializeJson(doc, jsonOutput);
-
                     if (pubMqtt(dtopic, jsonOutput, false)) {
                         // Seek back to the position of the '0' and replace it with '1'
                         file.seek(zeroPos);
@@ -115,7 +115,6 @@ void pushSyslog(int numLines) {
             lineBuf += c;
         }
     }
-
     file.close();
     Serial.println(" ----End");
 }

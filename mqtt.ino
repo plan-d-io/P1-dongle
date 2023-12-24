@@ -231,7 +231,8 @@ bool pubMqtt(String topic, String payload, boolean retain){
 void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
   unsigned long dtimestamp = time(&now);
-  String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+  //String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+  String dtopic = "set/devices/" + _ha_device;
   if(mqttDebug){
     Serial.print("got mqtt message on ");
     Serial.print(String(topic));
@@ -244,20 +245,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print(", ");
     Serial.println(messageTemp);
   }
-  if (String(topic) == availabilityTopic + "/set/reboot") {
+  if (String(topic) == dtopic + "/reboot") {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
     if(doc["value"] == "true"){
       saveResetReason("Reboot requested by MQTT");
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
-        pubMqtt(availabilityTopic + "/set/reboot", "{\"value\": \"false\"}", false);
+        pubMqtt(dtopic + "/set/reboot", "{\"value\": \"false\"}", false);
+        pubMqtt("sys/devices/" + String(apSSID) + "/reboot", "{\"value\": \"true\"}", false);
         delay(500);
         setReboot();
       }
     }
   }
-  if (String(topic) == availabilityTopic + "/set/config") {
+  if (String(topic) == dtopic + "/config") {
     syslog("Got config update over MQTT", 1);
     String configResponse;
     processConfigJson(messageTemp, configResponse, true);

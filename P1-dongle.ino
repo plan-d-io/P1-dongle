@@ -38,7 +38,6 @@ WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
-WiFiClientSecure *sysclient = new WiFiClientSecure;
 HTTPClient https;
 UUID uuid;
 bool clientSecureBusy, mqttPaused, mqttWasPaused, resetWifi, factoryReset, updateAvailable;
@@ -53,7 +52,7 @@ time_t meterTimestamp;
 //Global timing vars
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceDebugUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 //General housekeeping vars
-unsigned int reconncount, remotehostcount, telegramCount;
+unsigned int reconncount, remotehostcount, telegramCount, telegramAction;
 int wifiRSSI;
 float freeHeap, minFreeHeap, maxAllocHeap;
 byte mac[6];
@@ -62,7 +61,7 @@ uint8_t prevButtonState = false;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = true;
+bool httpDebug = false;
 bool extendedTelegramDebug = false;
 
 void setup(){
@@ -100,6 +99,8 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
+  String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+  Serial.println(availabilityTopic);
   Serial.println("Done");
 }
 
