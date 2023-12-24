@@ -34,12 +34,13 @@ struct mbusConfig {
 };
 
 float dummyFloat, totConT1, totConT2, totCon, totInT1, totInT2, totIn, powCon, powIn, netPowCon, totGasCon, totWatCon, totHeatCon, volt1, volt2, volt3, current1, current2, current3, avgDem, maxDemM;
+float prevtotConT1, prevtotConT2, prevtotCon, prevtotIntT1, prevtotIntT2, prevtotIn;
 unsigned long dummyInt, actTarrif, maxDemTime, totGasTime, totWatTime, totHeatTime;
 String dummyString, p1Version, meterId;
 bool dummyBool, totConFound, totInFound, netPowConFound, totConT1Found, totConT2Found, totInT1Found, totInT2Found, actTarrifFound, powConFound, powInFound, avgDemFound, maxDemMFound, volt1Found, current1Found, volt2Found, volt3Found, current2Found, current3Found;
 static const keyConfig dsmrKeys[] PROGMEM = {
   /*The list of all possible DSMR keys and how to parse them.
-   * { "DSMR key code", key type, "HA device type", "user-readable name", "mqtt topic", retain }
+   * { "DSMR key code", key type, "HA device type", "user-readable name", "mqtt topic", retain, key found in telegram }
    * Key types:
    *  0: other
    *  1: numeric (floating point) without unit, e.g. 0-0:96.14.0(0002)
@@ -206,13 +207,15 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
           else if(dsmrKeys[i].keyType == 2){
             /*Numeric value with unit*/
             splitWithUnit(value, splitValue, splitUnit);
-            *dsmrKeys[i].keyValueFloat = splitValue;
+            if(checkFloat(key, dsmrKeys[i].deviceType, splitValue)) *dsmrKeys[i].keyValueFloat = splitValue;
           }
           else if(dsmrKeys[i].keyType == 3){
             /*timestamped (Mbus) message*/
             splitWithTimeAndUnit(value, splitValue, splitUnit, splitTime, splitTimestamp);
-            *dsmrKeys[i].keyValueFloat = splitValue;
-            *dsmrKeys[i].keyValueLong = splitTimestamp;
+            if(checkFloat(key, dsmrKeys[i].deviceType, splitValue)){
+              *dsmrKeys[i].keyValueFloat = splitValue;
+              *dsmrKeys[i].keyValueLong = splitTimestamp;
+            }
           }
           else{
             //No need for any processing
@@ -417,6 +420,46 @@ void registerMbusMeter(String &key, String &value){
       mbusMeter[i].mbusKey = tempMbusKey;
     }
   }
+}
+
+bool checkFloat(String floatKey, String floatType, float floatValue){
+  /*Hardcoded check to filter spurious meter readings*/
+  bool floatValid = true;
+  if(floatType == "energy"){
+    if(floatValue > 999999.9 || floatValue < -1.0) floatValid = false;
+    if(floatKey == "A-0:0.0.1"){
+      if(floatValue < prevtotCon) floatValid = false;
+      else if(floatValid = true) prevtotCon = floatValue;
+    }
+    if(floatKey == "A-0:0.0.2"){
+      if(floatValue < prevtotIn) floatValid = false;
+      else if(floatValid = true) prevtotIn = floatValue;
+    }
+    if(floatKey == "1-0:1.8.1"){
+      if(floatValue < prevtotConT1) floatValid = false;
+      else if(floatValid = true) prevtotConT1 = floatValue;
+    }
+    if(floatKey == "1-0:1.8.2"){
+      if(floatValue < prevtotConT2) floatValid = false;
+      else if(floatValid = true) prevtotConT2 = floatValue;
+    }
+    if(floatKey == "1-0:2.8.1"){
+      if(floatValue < prevtotIntT1) floatValid = false;
+      else if(floatValid = true) prevtotIntT1 = floatValue;
+    }
+    if(floatKey == "1-0:2.8.2"){
+      if(floatValue < prevtotIntT2) floatValid = false;
+      else if(floatValid = true) prevtotIntT2 = floatValue;
+    }
+  }
+  else if(floatType == "power"){
+    if(floatValue > 99.9 || floatValue < -1.0) floatValid = false;
+  }
+  else if(floatType == "voltage"){
+    if(floatValue > 430.0 || floatValue < -1.0) floatValid = false;
+  }
+  if(!floatValid) syslog("Spurious value for DSMR key " + floatKey, 2);
+  return floatValid;
 }
 
 int numKeys(void){

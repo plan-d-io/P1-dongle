@@ -100,7 +100,6 @@ void setup(){
   server.begin();
   configBuffer = returnConfig();
   String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
-  Serial.println(availabilityTopic);
   Serial.println("Done");
 }
 

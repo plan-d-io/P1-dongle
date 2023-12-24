@@ -254,8 +254,8 @@ void hadebugDevice(bool eraseMeter){
       doc["name"] = "Reboot";
       doc["payload_on"] = "{\"value\": \"true\"}";
       doc["payload_off"] = "{\"value\": \"false\"}";
-      doc["command_topic"] = "set/devices/utility_meter/reboot"; 
-      doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboot";; 
+      doc["command_topic"] = "set/devices/" + _ha_device;
+      doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboot";
     }
     doc["unique_id"] = chanName;
     doc["object_id"] = chanName;
@@ -281,7 +281,6 @@ void hadebugDevice(bool eraseMeter){
         Serial.println(configTopic);
       }
     }
-    
     serializeJson(doc, jsonOutput);
     if(!eraseMeter){
       bool pushSuccess;
