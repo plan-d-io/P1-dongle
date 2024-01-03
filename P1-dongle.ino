@@ -27,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 217;
+unsigned int fw_ver = 218;
 
 //General global vars
 Preferences preferences;
@@ -61,7 +61,7 @@ uint8_t prevButtonState = false;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = false;
+bool httpDebug = true;
 bool extendedTelegramDebug = false;
 
 void setup(){

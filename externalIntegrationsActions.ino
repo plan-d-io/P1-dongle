@@ -5,7 +5,7 @@ void externalIntegrationsBootstrap(){
   sinceLastUpload = _upload_throttle*1000;
   _key_pushlist = 4294967295;
   if(_wifi_ssid != "") _wifi_STA = true;
-  if(_eid_en) lastEIDcheck = EIDcheckInterval;
+  if(_eid_en) lastEIDcheck = EIDcheckInterval-60000;
 }
 
 void eidUpload(){
@@ -81,7 +81,7 @@ void eidUpload(){
     if(bundleLoaded){
       syslog("Performing EID upload", 0);
       syslog("Connecting to " + EIDwebhookUrl, 0);
-      if (https.begin(*client, EIDwebhookUrl)) { 
+      if (https.begin(*client, EIDwebhookUrl)) {
         https.addHeader("Authorization", EIDauthorization);
         https.addHeader("x-twin-id", EIDxtwinid);
         https.addHeader("Content-Type", "application/json");
@@ -91,21 +91,24 @@ void eidUpload(){
             syslog("EID upload succeeded", 0);
           }
           secureClientError = 0;
+          lastEIDupload = 0;
           if(_rebootSecure > 0){
             _rebootSecure = 0;
             saveConfig();
           }
-          
         }
         else{
           syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          lastEIDupload = EIDuploadInterval - 60000;
           secureClientError++;
         }
         https.end();
-        //client->stop();
+        while(client->read() != -1);
+        client->stop();
       }
       else {
         syslog("Unable to connect to EID", 2);
+        lastEIDupload = EIDuploadInterval - 60000;
       }
       clientSecureBusy = false;
       if(mqttPaused){
@@ -114,7 +117,6 @@ void eidUpload(){
         mqttWasPaused = true;
       }
     }
-    lastEIDupload = 0;
   }
 }
 
@@ -131,11 +133,11 @@ void eidHello(){
         mqttPaused = true;
       }
     }
-    if(bundleLoaded){
+    if(client && bundleLoaded){
       syslog("Performing EID hello", 0);
       String checkUrl = "https://hooks.energyid.eu/hello";
       syslog("Connecting to " + checkUrl, 0);
-      if (https.begin(*client, checkUrl)) {  
+      if (https.begin(*client, checkUrl)) {
         https.addHeader("X-Provisioning-Key", _eid_provkey);
         https.addHeader("X-Provisioning-Secret", _eid_provsec);
         https.addHeader("Content-Type", "application/json");
@@ -207,7 +209,8 @@ void eidHello(){
           EIDcheckInterval = 150000;
         }
         https.end();
-        //client->stop();
+        while(client->read() != -1);
+        client->stop();
       }
       else {
         syslog("Unable to connect to EID", 2);
