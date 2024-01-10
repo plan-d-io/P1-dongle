@@ -224,11 +224,14 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
         }
       }
       /*Process minimum required readings*/
-      totCon = totConT1 + totConT2;
+      float tempFloat = totConT1 + totConT2;
+      if(checkFloat("A-0:0.0.1", "energy", tempFloat)) totCon = tempFloat;   
       totConFound = true;
-      totIn = totInT1 + totInT2;
+      tempFloat = totInT1 + totInT2;
+      if(checkFloat("A-0:0.0.2", "energy", tempFloat)) totIn = tempFloat;
       totInFound = true;
-      netPowCon = powCon - powIn;
+      tempFloat = powCon - powIn;
+      if(checkFloat("A-0:0.0.3", "power", tempFloat)) netPowCon = tempFloat;
       netPowConFound = true; 
       /* We do not know how many, and which, M-bus meters are connected to the digtial meter ex-ante. We analyse the first three telegrams to 
        * check which M-Bus meters are present and register them into the mbusMeter array. This array is then used for further telegram parsing.
