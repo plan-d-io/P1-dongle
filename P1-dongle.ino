@@ -27,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 218;
+unsigned int fw_ver = 219;
 
 //General global vars
 Preferences preferences;
@@ -61,7 +61,7 @@ uint8_t prevButtonState = false;
 bool serialDebug = true;
 bool telegramDebug = false;
 bool mqttDebug = false;
-bool httpDebug = true;
+bool httpDebug = false;
 bool extendedTelegramDebug = false;
 
 void setup(){
@@ -142,7 +142,13 @@ void loop(){
     if(sinceWifiCheck >= 600000){
       /*If dongle is in AP mode, check every once in a while if the configured wifi SSID can't be detected
        * If so, reboot so the dongle starts up again in connected STA mode. */
-      if(scanWifi()) rebootInit = true;
+      if(scanWifi()){
+        saveResetReason("Found saved WiFi SSID, rebooting to reconnect");
+        if(saveConfig()){
+          syslog("Found saved WiFi SSID, rebooting to reconnect", 1);
+          setReboot();
+        }
+      }
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 600000){

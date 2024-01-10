@@ -237,10 +237,8 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
        * check which M-Bus meters are present and register them into the mbusMeter array. This array is then used for further telegram parsing.
        * We only do this check during startup (first 3 telegrams), as M-bus meters do not change during later operation.
        */
-      if(telegramCount < 3){
-        registerMbusMeter(key, value);
-      }
-      else{
+      registerMbusMeter(key, value); 
+      if(telegramCount > 3){
         /*Parse the Mbus OBIS key,value pairs according to the parameters set for each detected Mbus meter in the mbusMeter array */
         for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
           if(key == mbusMeter[i].mbusKey){  //check if the key matches a key stored in the mbusMeter array
