@@ -155,7 +155,7 @@ void connectMqtt() {
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
         if(_mqtt_tls){
           mqttclientSecure.publish(availabilityTopic.c_str(), "online", true);
-          mqttclientSecure.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"false\"}");
+          mqttclientSecure.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"off\"}", false);
           mqttclientSecure.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
           mqttclientSecure.subscribe((availabilityTopic + "/set/reboot").c_str());
           mqttclientSecure.subscribe((availabilityTopic + "/set/config").c_str());
@@ -167,7 +167,7 @@ void connectMqtt() {
         }
         else{
           mqttclient.publish(availabilityTopic.c_str(), "online", true);
-          mqttclient.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"false\"}");
+          mqttclient.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"off\"}", false);
           mqttclient.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
           mqttclient.subscribe((availabilityTopic + "/set/reboot").c_str());
           mqttclient.subscribe((availabilityTopic + "/set/config").c_str());
@@ -255,7 +255,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
         pubMqtt(dtopic + "/set/reboot", "{\"value\": \"false\"}", false);
-        pubMqtt("sys/devices/" + String(apSSID) + "/reboot", "{\"value\": \"true\"}", false);
+        pubMqtt("sys/devices/" + String(apSSID) + "/reboot", "{\"value\": \"on\"}", false);
         delay(500);
         setReboot();
       }
