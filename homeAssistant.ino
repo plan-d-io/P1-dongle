@@ -253,8 +253,14 @@ void hadebugDevice(bool eraseMeter){
       chanName = String(apSSID) + "_reboot";
       doc["name"] = "Reboot";
       doc["payload_on"] = "{\"value\": \"true\"}";
+      doc["state_on"] = "{\"value\": \"true\"}";
       doc["payload_off"] = "{\"value\": \"false\"}";
-      doc["command_topic"] = "set/devices/" + _ha_device;
+      doc["state_off"] = "{\"value\": \"false\"}";
+      String tempTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+      tempTopic += "/set/reboot";
+      tempTopic.replace(" ", "_");
+      tempTopic.toLowerCase();
+      doc["command_topic"] = tempTopic;
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboot";
     }
     doc["unique_id"] = chanName;

@@ -155,9 +155,10 @@ void connectMqtt() {
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
         if(_mqtt_tls){
           mqttclientSecure.publish(availabilityTopic.c_str(), "online", true);
-          mqttclientSecure.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
-          mqttclientSecure.subscribe((availabilityTopic+"/set/reboot").c_str());
-          mqttclientSecure.subscribe((availabilityTopic+"/set/config").c_str());
+          mqttclientSecure.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"false\"}");
+          mqttclientSecure.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
+          mqttclientSecure.subscribe((availabilityTopic + "/set/reboot").c_str());
+          mqttclientSecure.subscribe((availabilityTopic + "/set/config").c_str());
           secureClientError = 0;
           if(_rebootSecure > 0){
             _rebootSecure = 0;
@@ -166,9 +167,10 @@ void connectMqtt() {
         }
         else{
           mqttclient.publish(availabilityTopic.c_str(), "online", true);
-          mqttclient.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
-          mqttclient.subscribe((availabilityTopic+"/set/reboot").c_str());
-          mqttclient.subscribe((availabilityTopic+"/set/config").c_str());
+          mqttclient.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"false\"}");
+          mqttclient.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
+          mqttclient.subscribe((availabilityTopic + "/set/reboot").c_str());
+          mqttclient.subscribe((availabilityTopic + "/set/config").c_str());
         }
         mqttClientError = false;
         pushSyslog(30);
@@ -231,7 +233,7 @@ bool pubMqtt(String topic, String payload, boolean retain){
 void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
   unsigned long dtimestamp = time(&now);
-  //String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+  String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
   String dtopic = "set/devices/" + _ha_device;
   if(mqttDebug){
     Serial.print("got mqtt message on ");
@@ -245,7 +247,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print(", ");
     Serial.println(messageTemp);
   }
-  if (String(topic) == dtopic + "/reboot") {
+  if (String(topic) == availabilityTopic + "/set/reboot") {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, messageTemp);
     if(doc["value"] == "true"){
