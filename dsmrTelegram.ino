@@ -141,6 +141,9 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
     if(key == "0-0:96.1.1"){
       meterId = value;
       meterIdFound = true;
+      for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
+        *dsmrKeys[i].keyFound = false; //we've got a valid telegram, so mark previous values as outdated
+      }
     }
     /*Flemish DSMR*/
     if(key == "0-0:96.1.4"){
@@ -182,11 +185,6 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
         syslog("Meter reconnected", 1);
         meterError = false;
       }
-      if(meterIdFound){
-        for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
-          *dsmrKeys[i].keyFound = false; //we've got a valid telegram, so mark previous values as outdated
-        }
-      }
     }
     /*If both meterID and meterTime are found, we're pretty sure we have a valid telegram*/
     if(meterIdFound && meterTimeFound){
@@ -197,17 +195,22 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
           if(dsmrKeys[i].keyType == 0 || dsmrKeys[i].keyType == 4){
             /*"Other" or "string" values (currently handled the same) just get their raw value forwarded, so no need to do any processing.
             Might change in the future.*/
+            *dsmrKeys[i].keyFound = true;
           }
           else if(dsmrKeys[i].keyType == 1 || dsmrKeys[i].keyType == 5){
             /*Numeric value with no unit*/
             splitNoUnit(value, splitValue);
             if(dsmrKeys[i].keyType == 1) *dsmrKeys[i].keyValueFloat = splitValue;
             if(dsmrKeys[i].keyType == 5) *dsmrKeys[i].keyValueLong = int(splitValue);
+            *dsmrKeys[i].keyFound = true;
           }
           else if(dsmrKeys[i].keyType == 2){
             /*Numeric value with unit*/
             splitWithUnit(value, splitValue, splitUnit);
-            if(checkFloat(key, dsmrKeys[i].deviceType, splitValue)) *dsmrKeys[i].keyValueFloat = splitValue;
+            if(checkFloat(key, dsmrKeys[i].deviceType, splitValue)){
+              *dsmrKeys[i].keyValueFloat = splitValue;
+              *dsmrKeys[i].keyFound = true;
+            }
           }
           else if(dsmrKeys[i].keyType == 3){
             /*timestamped (Mbus) message*/
@@ -215,24 +218,39 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
             if(checkFloat(key, dsmrKeys[i].deviceType, splitValue)){
               *dsmrKeys[i].keyValueFloat = splitValue;
               *dsmrKeys[i].keyValueLong = splitTimestamp;
+              *dsmrKeys[i].keyFound = true;
             }
           }
           else{
             //No need for any processing
           }
-          *dsmrKeys[i].keyFound = true;
         }
       }
       /*Process minimum required readings*/
-      float tempFloat = totConT1 + totConT2;
-      if(checkFloat("A-0:0.0.1", "energy", tempFloat)) totCon = tempFloat;   
-      totConFound = true;
-      tempFloat = totInT1 + totInT2;
-      if(checkFloat("A-0:0.0.2", "energy", tempFloat)) totIn = tempFloat;
-      totInFound = true;
-      tempFloat = powCon - powIn;
-      if(checkFloat("A-0:0.0.3", "power", tempFloat)) netPowCon = tempFloat;
-      netPowConFound = true; 
+      float tempFloat = 0.0;
+      if(totConT1Found && totConT2Found){
+        tempFloat = totConT1 + totConT2;
+        if(checkFloat("A-0:0.0.1", "energy", tempFloat)){
+          totCon = tempFloat;
+          totConFound = true;
+        }
+      }
+      tempFloat = 0.0;
+      if(totInT1Found && totInT2Found){
+        tempFloat = totInT1 + totInT2;
+        if(checkFloat("A-0:0.0.2", "energy", tempFloat)){
+          totIn = tempFloat;
+          totInFound = true;
+        }
+      }
+      tempFloat = 0.0;
+      if(powConFound && powInFound){
+        tempFloat = powCon - powIn;
+        if(checkFloat("A-0:0.0.3", "power", tempFloat)){
+          netPowCon = tempFloat;
+          netPowConFound = true; 
+        }
+      }
       /* We do not know how many, and which, M-bus meters are connected to the digtial meter ex-ante. We analyse the first three telegrams to 
        * check which M-Bus meters are present and register them into the mbusMeter array. This array is then used for further telegram parsing.
        * We only do this check during startup (first 3 telegrams), as M-bus meters do not change during later operation.
