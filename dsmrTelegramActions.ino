@@ -5,9 +5,7 @@ void onTelegram(){
    * Use this function if you want the most recent meter updates
    */
   //printTelegramValues();
-  if(telegramCount < 4) haEraseDevice();
-  if(telegramCount == 4) doHaAutoDiscovery();
-  if(telegramCount > 600) telegramCount = 3;
+  controlHA();
   mqttPushTelegramValues();
 }
 
@@ -83,6 +81,7 @@ void printTelegramValues(){
 void mqttPushTelegramValues(){
   if(_mqtt_en){
     if(sinceLastUpload > _upload_throttle*1000){
+      Serial.println(ESP.getFreeHeap()/1000.0);
       if(mqttDebug) Serial.println("Performing MQTT push");
       String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
       pubMqtt(availabilityTopic, "online", false);

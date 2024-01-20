@@ -1,4 +1,4 @@
-  #include "rom/rtc.h"
+#include "rom/rtc.h"
 #include <esp_int_wdt.h>
 #include <esp_task_wdt.h>
 #include "M5Atom.h"
@@ -27,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 215;
+unsigned int fw_ver = 220;
 
 //General global vars
 Preferences preferences;
@@ -40,7 +40,7 @@ WiFiClientSecure *client = new WiFiClientSecure;
 PubSubClient mqttclientSecure(*client);
 HTTPClient https;
 UUID uuid;
-bool clientSecureBusy, mqttPaused, resetWifi, factoryReset, updateAvailable;
+bool clientSecureBusy, mqttPaused, mqttWasPaused, resetWifi, factoryReset, updateAvailable;
 bool wifiError, mqttWasConnected, wifiSave, wifiScan, debugInfo, timeconfigured, timeSet, spiffsMounted,rebootInit;
 bool bundleLoaded = true;
 bool haDiscovered = false;
@@ -52,7 +52,7 @@ time_t meterTimestamp;
 //Global timing vars
 elapsedMillis sinceConnCheck, sinceUpdateCheck, sinceClockCheck, sinceLastUpload, sinceDebugUpload, sinceRebootCheck, sinceMeterCheck, sinceWifiCheck, sinceTelegramRequest;
 //General housekeeping vars
-unsigned int reconncount, remotehostcount, telegramCount;
+unsigned int reconncount, remotehostcount, telegramCount, telegramAction;
 int wifiRSSI;
 float freeHeap, minFreeHeap, maxAllocHeap;
 byte mac[6];
@@ -99,6 +99,7 @@ void setup(){
   server.addHandler(new WebRequestHandler());
   server.begin();
   configBuffer = returnConfig();
+  String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
   Serial.println("Done");
 }
 
@@ -141,7 +142,13 @@ void loop(){
     if(sinceWifiCheck >= 600000){
       /*If dongle is in AP mode, check every once in a while if the configured wifi SSID can't be detected
        * If so, reboot so the dongle starts up again in connected STA mode. */
-      if(scanWifi()) rebootInit = true;
+      if(scanWifi()){
+        saveResetReason("Found saved WiFi SSID, rebooting to reconnect");
+        if(saveConfig()){
+          syslog("Found saved WiFi SSID, rebooting to reconnect", 1);
+          setReboot();
+        }
+      }
       sinceWifiCheck = 0;
     }
     if(sinceClockCheck >= 600000){

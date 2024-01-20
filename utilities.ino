@@ -59,6 +59,10 @@ void initSPIFFS(){
     syslog("SPIFFS used bytes/total bytes:" + String(SPIFFS.usedBytes()) +"/" + String(SPIFFS.totalBytes()), 0);
     listDir(SPIFFS, "/", 3);
     if(SPIFFS.exists(TLSBUNDLE)) syslog("TLS bundle found", 0);
+    if(LittleFSFilesize(TLSBUNDLE) > 48124){
+      syslog("Old TLS bundle found, rebooting to update", 3);
+      _reinit_spiffs = true;
+    }
     /*Check SPIFFS file I/O*/
     syslog("Testing SPIFFS file I/O... ", 0);
     if(!writeFile(SPIFFS, "/test.txt", "Hello ") || !appendFile(SPIFFS, "/test.txt", "World!\r\n")  || !readFile(SPIFFS, "/test.txt") || !deleteFile(SPIFFS, "/test.txt")){
@@ -261,6 +265,10 @@ void checkConnection(){
       }
       if(mqttHostError) setupMqtt();
       else connectMqtt();
+      if(mqttWasPaused){
+        connectMqtt();
+        mqttWasPaused = false;
+      }
     }
   }
 }
@@ -342,6 +350,14 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
         }
         file = root.openNextFile();
     }
+}
+
+size_t LittleFSFilesize(const char* filename) {
+  auto file = LittleFS.open(filename, "r");
+  size_t filesize = file.size();
+  // Don't forget to clean up!
+  file.close();
+  return filesize;
 }
 
 void createDir(fs::FS &fs, const char * path){

@@ -1,5 +1,30 @@
 /*Home Assistant functions, e.g. MQTT autodiscovery*/
 
+void controlHA(){
+  /*Control function for the Home Assistant integration
+   * Performs MQTT autodiscovery once enough telegrams have been received to populate all data fields, and repeats this
+   * every once in a while.
+   */
+  //If MQTT is not connected, we can't do much
+  if(_mqtt_tls){
+    if(!mqttclientSecure.connected()) return;
+  }
+  else{
+    if(!mqttclient.connected()) return;
+  }
+  if(telegramAction < 4){
+    haEraseDevice();                                            //make sure any existing device and sensor in HA is erased to prevent double entries
+    hadebugDevice(true);
+  }
+  if(telegramAction == 4){
+    haDiscovered = false;                                       //then, perform the MQTT autodiscovery untill succes
+    hadebugDevice(false);
+  }
+  if(!haDiscovered && telegramAction > 4) doHaAutoDiscovery();
+  if(telegramAction > 600) telegramAction = 4;                  //reperform the autodiscovery every once in a while
+  telegramAction++;
+}
+
 void doHaAutoDiscovery() {
   /*Create an MQTT device "Utility meter" in Home Assistant and register the enabled DSMR keys as entities
    * by sending a HA autodiscovery payload for each key.
@@ -7,6 +32,12 @@ void doHaAutoDiscovery() {
    */
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
+  }
+  if(_mqtt_tls){
+    if(!mqttclientSecure.connected()) return;
+  }
+  else{
+    if(!mqttclient.connected()) return;
   }
   for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){
     if(dsmrKeys[i].keyFound){
@@ -35,6 +66,7 @@ void doHaAutoDiscovery() {
       }
     }
   }
+  haDiscovered = true;
 }
 
 
@@ -98,6 +130,12 @@ void haEraseDevice(){
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
   }
+  if(_mqtt_tls){
+    if(!mqttclientSecure.connected()) return;
+  }
+  else{
+    if(!mqttclient.connected()) return;
+  }
   syslog("Erasing Home Assistant MQTT autodiscovery entries", 0);
   for(int i = 0; i < sizeof(dsmrKeys)/sizeof(dsmrKeys[0]); i++){ //erase all the DSMR keys
     String tempTopic = "homeassistant/sensor/";
@@ -146,6 +184,12 @@ void haEraseDevice(){
 void hadebugDevice(bool eraseMeter){
   if(!_ha_en || !_mqtt_en || mqttClientError || mqttHostError) {
     return;
+  }
+  if(_mqtt_tls){
+    if(!mqttclientSecure.connected()) return;
+  }
+  else{
+    if(!mqttclient.connected()) return;
   }
   //if(eraseMeter) syslog("Erasing Home Assistant MQTT debug entries", 0);
   //else syslog("Performing Home Assistant MQTT debug autodiscovery", 0);
@@ -208,9 +252,18 @@ void hadebugDevice(bool eraseMeter){
     else if(i == 10){
       chanName = String(apSSID) + "_reboot";
       doc["name"] = "Reboot";
-      doc["payload_on"] = "{\"value\": \"true\"}";
-      doc["payload_off"] = "{\"value\": \"false\"}";
-      doc["command_topic"] = "set/devices/utility_meter/reboot";
+      doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboot";
+      doc["payload_on"] = "{\"value\": \"on\"}";
+      doc["payload_off"] = "{\"value\": \"off\"}";
+      doc["state_on"] = "on";
+      doc["state_off"] = "off";
+      doc["value_template"] = "{{ value_json.value }}";
+      String tempTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+      tempTopic += "/set/reboot";
+      tempTopic.replace(" ", "_");
+      tempTopic.toLowerCase();
+      doc["command_topic"] = tempTopic;
+      doc["icon"] = "mdi:restart";
     }
     doc["unique_id"] = chanName;
     doc["object_id"] = chanName;
@@ -251,4 +304,5 @@ void hadebugDevice(bool eraseMeter){
     }
     if(mqttPushCount < 4) delay(100);
   }
+  pubMqtt("sys/devices/" + String(apSSID) + "/reboot", "{\"value\": \"off\"}", false);
 }

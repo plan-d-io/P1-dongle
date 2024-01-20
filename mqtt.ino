@@ -105,7 +105,7 @@ void connectMqtt() {
       if(!mqttclientSecure.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          if(!mqttPaused){
+          if(!mqttPaused && !mqttWasPaused){
             syslog("Lost connection to secure MQTT broker", 4);
             if(unitState < 6) unitState = 5;
           }
@@ -129,7 +129,7 @@ void connectMqtt() {
       if(!mqttclient.connected()) {
         disconnected = true;
         if(mqttWasConnected){
-          if(!mqttPaused){
+          if(!mqttPaused && !mqttWasPaused){
             syslog("Lost connection to MQTT broker", 4);
             if(unitState < 6) unitState = 5;
           }
@@ -149,15 +149,16 @@ void connectMqtt() {
     }
     if(disconnected){
       if(mqttretry < 2){
-        syslog("Connected to MQTT broker", 1);
+        if(!mqttPaused) syslog("Connected to MQTT broker", 1);
         if(unitState < 6) unitState = 4;
         if(mqttPaused) mqttPaused = false;
         String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
         if(_mqtt_tls){
           mqttclientSecure.publish(availabilityTopic.c_str(), "online", true);
-          mqttclientSecure.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
-          mqttclientSecure.subscribe((availabilityTopic+"/set/reboot").c_str());
-          mqttclientSecure.subscribe((availabilityTopic+"/set/config").c_str());
+          mqttclientSecure.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"off\"}", false);
+          mqttclientSecure.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
+          mqttclientSecure.subscribe((availabilityTopic + "/set/reboot").c_str());
+          mqttclientSecure.subscribe((availabilityTopic + "/set/config").c_str());
           secureClientError = 0;
           if(_rebootSecure > 0){
             _rebootSecure = 0;
@@ -166,9 +167,10 @@ void connectMqtt() {
         }
         else{
           mqttclient.publish(availabilityTopic.c_str(), "online", true);
-          mqttclient.publish((availabilityTopic +"/sys/config").c_str(), returnBasicConfig().c_str(), true);
-          mqttclient.subscribe((availabilityTopic+"/set/reboot").c_str());
-          mqttclient.subscribe((availabilityTopic+"/set/config").c_str());
+          mqttclient.publish(("sys/devices/" + String(apSSID) + "/reboot").c_str(), "{\"value\": \"off\"}", false);
+          mqttclient.publish((availabilityTopic + "/sys/config").c_str(), returnBasicConfig().c_str(), true);
+          mqttclient.subscribe((availabilityTopic + "/set/reboot").c_str());
+          mqttclient.subscribe((availabilityTopic + "/set/config").c_str());
         }
         mqttClientError = false;
         pushSyslog(30);
@@ -193,6 +195,10 @@ void connectMqtt() {
 
 bool pubMqtt(String topic, String payload, boolean retain){
   bool pushed = false;
+  if(mqttDebug){
+    Serial.print("MQTT push to ");
+    Serial.println(topic);
+  }
   if(_mqtt_en && !mqttClientError && !mqttHostError && !mqttPaused && !clientSecureBusy){
     if(_mqtt_tls){
       if(mqttclientSecure.connected()){
@@ -228,6 +234,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   time_t now;
   unsigned long dtimestamp = time(&now);
   String availabilityTopic = _mqtt_prefix.substring(0, _mqtt_prefix.length()-1);
+  String dtopic = "set/devices/" + _ha_device;
   if(mqttDebug){
     Serial.print("got mqtt message on ");
     Serial.print(String(topic));
@@ -247,13 +254,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
       saveResetReason("Reboot requested by MQTT");
       if(saveConfig()){
         syslog("Reboot requested from MQTT", 2);
-        pubMqtt(availabilityTopic + "/set/reboot", "{\"value\": \"false\"}", false);
+        pubMqtt(dtopic + "/set/reboot", "{\"value\": \"false\"}", false);
+        pubMqtt("sys/devices/" + String(apSSID) + "/reboot", "{\"value\": \"on\"}", false);
         delay(500);
         setReboot();
       }
     }
   }
-  if (String(topic) == availabilityTopic + "/set/config") {
+  if (String(topic) == dtopic + "/config") {
     syslog("Got config update over MQTT", 1);
     String configResponse;
     processConfigJson(messageTemp, configResponse, true);

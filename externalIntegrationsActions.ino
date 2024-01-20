@@ -3,8 +3,9 @@
 void externalIntegrationsBootstrap(){
   /*Put variables that need to be initted at boot here*/
   sinceLastUpload = _upload_throttle*1000;
+  _key_pushlist = 4294967295;
   if(_wifi_ssid != "") _wifi_STA = true;
-  if(_eid_en) lastEIDcheck = EIDcheckInterval;
+  if(_eid_en) lastEIDcheck = EIDcheckInterval-60000;
 }
 
 void eidUpload(){
@@ -31,20 +32,7 @@ void eidUpload(){
     eidData.clear();
     eidOutput += tempOutput;
     eidOutput += ",";
-    tempOutput = "";/*
-    for(int i = 0; i < sizeof(mbusMeter)/sizeof(mbusMeter[0]); i++){
-      if(mbusMeter[i].keyFound == true){
-        if(mbusMeter[i].type == 3) eidData["g"] = round2(mbusMeter[i].keyValueFloat);
-        else if(mbusMeter[i].type == 7) eidData["w"] = round2(mbusMeter[i].keyValueFloat);
-        else if(mbusMeter[i].type == 4) eidData["h"] = round2(mbusMeter[i].keyValueFloat);
-        eidData["ts"] = mbusMeter[i].keyTimeStamp;
-        serializeJson(eidData, tempOutput);
-        eidData.clear();
-        eidOutput += tempOutput;
-        eidOutput += ",";
-        tempOutput = "";
-      }
-    }*/
+    tempOutput = "";
     eidData["ts"] = maxDemTime;
     eidData["high-pp"] = round2(maxDemM);
     serializeJson(eidData, tempOutput);
@@ -93,7 +81,7 @@ void eidUpload(){
     if(bundleLoaded){
       syslog("Performing EID upload", 0);
       syslog("Connecting to " + EIDwebhookUrl, 0);
-      if (https.begin(*client, EIDwebhookUrl)) { 
+      if (https.begin(*client, EIDwebhookUrl)) {
         https.addHeader("Authorization", EIDauthorization);
         https.addHeader("x-twin-id", EIDxtwinid);
         https.addHeader("Content-Type", "application/json");
@@ -103,29 +91,32 @@ void eidUpload(){
             syslog("EID upload succeeded", 0);
           }
           secureClientError = 0;
+          lastEIDupload = 0;
           if(_rebootSecure > 0){
             _rebootSecure = 0;
             saveConfig();
           }
-          
         }
         else{
           syslog("Could not connect to EID, HTTPS code " + String(https.errorToString(httpCode)), 2);
+          lastEIDupload = EIDuploadInterval - 60000;
           secureClientError++;
         }
         https.end();
+        while(client->read() != -1);
         client->stop();
       }
       else {
         syslog("Unable to connect to EID", 2);
+        lastEIDupload = EIDuploadInterval - 60000;
       }
       clientSecureBusy = false;
       if(mqttPaused){
-        sinceConnCheck = 10000;
+        sinceConnCheck = 60000;
         mqttPaused = false;
+        mqttWasPaused = true;
       }
     }
-    lastEIDupload = 0;
   }
 }
 
@@ -142,11 +133,11 @@ void eidHello(){
         mqttPaused = true;
       }
     }
-    if(bundleLoaded){
+    if(client && bundleLoaded){
       syslog("Performing EID hello", 0);
       String checkUrl = "https://hooks.energyid.eu/hello";
       syslog("Connecting to " + checkUrl, 0);
-      if (https.begin(*client, checkUrl)) {  
+      if (https.begin(*client, checkUrl)) {
         https.addHeader("X-Provisioning-Key", _eid_provkey);
         https.addHeader("X-Provisioning-Secret", _eid_provsec);
         https.addHeader("Content-Type", "application/json");
@@ -218,6 +209,7 @@ void eidHello(){
           EIDcheckInterval = 150000;
         }
         https.end();
+        while(client->read() != -1);
         client->stop();
       }
       else {
@@ -227,8 +219,9 @@ void eidHello(){
       }
       clientSecureBusy = false;
       if(mqttPaused){
-        sinceConnCheck = 10000;
+        sinceConnCheck = 60000;
         mqttPaused = false;
+        mqttWasPaused = true;
       }
     }
   }
@@ -245,6 +238,6 @@ String eidHelloMsg(){
   doc["ipAddress"] = WiFi.localIP().toString();
   doc["lcoalDeviceUrl"] = "http://" + WiFi.localIP().toString();
   serializeJson(doc, jsonOutput);
-  Serial.println(jsonOutput);
+  if(httpDebug) Serial.println(jsonOutput);
   return jsonOutput;
 }

@@ -49,7 +49,7 @@ void restoreSPIFFS(){
   else if(_alpha_fleet) baseUrl += "alpha/data/cert/x509_crt_bundle.bin";
   else if(_v2_fleet) baseUrl += "V2-0/data/x509_crt_bundle.bin";
   else baseUrl += "main/data/cert/x509_crt_bundle.bin";
-  String fileUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/data/cert/x509_crt_bundle.bin";//"https://github.com/plan-d-io/P1-dongle/raw/develop/data/x509_crt_bundle.bin";
+  String fileUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/main/data/x509_crt_bundle.bin";//"https://github.com/plan-d-io/P1-dongle/raw/develop/data/x509_crt_bundle.bin";
   String s = "/x509_crt_bundle.bin";
   if(repoOK){
     /*Reformat the SPIFFS*/
