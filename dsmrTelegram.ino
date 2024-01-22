@@ -447,26 +447,32 @@ bool checkFloat(String floatKey, String floatType, float floatValue){
   if(floatType == "energy"){
     if(floatValue > 999999.9 || floatValue < -1.0) floatValid = false;
     if(floatKey == "A-0:0.0.1"){
+      if(prevtotCon == 0) prevtotCon = floatValue;
       if(floatValue < prevtotCon || (floatValue > prevtotCon + 23.9)) floatValid = false; //limit to 23.9kWh being consumed between two meter readings
       else if(floatValid = true) prevtotCon = floatValue;
     }
     if(floatKey == "A-0:0.0.2"){
+      if(prevtotIn == 0) prevtotIn = floatValue;
       if(floatValue < prevtotIn || (floatValue > prevtotIn + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIn = floatValue;
     }
     if(floatKey == "1-0:1.8.1"){
+      if(prevtotConT1 == 0) prevtotConT1 = floatValue;
       if(floatValue < prevtotConT1 || (floatValue > prevtotConT1 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotConT1 = floatValue;
     }
     if(floatKey == "1-0:1.8.2"){
+      if(prevtotConT2 == 0) prevtotConT2 = floatValue;
       if(floatValue < prevtotConT2 || (floatValue > prevtotConT2 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotConT2 = floatValue;
     }
     if(floatKey == "1-0:2.8.1"){
+      if(prevtotIntT1 == 0) prevtotIntT1 = floatValue;
       if(floatValue < prevtotIntT1 || (floatValue > prevtotIntT1 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIntT1 = floatValue;
     }
     if(floatKey == "1-0:2.8.2"){
+      if(prevtotIntT2 == 0) prevtotIntT2 = floatValue;
       if(floatValue < prevtotIntT2 || (floatValue > prevtotIntT2 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIntT2 = floatValue;
     }
