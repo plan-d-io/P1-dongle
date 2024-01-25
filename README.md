@@ -24,3 +24,11 @@ And, as this is an open-source project, you are free to contribute yourself!
 2. When the LED turns greens, connect to the `p1-dongle` access point
 3. When connected, open the login page or go to `192.168.4.1`
 4. Complete the configuration, and click the reboot button at the bottom of the webpage
+
+# Development
+- [Development roadmap](https://github.com/plan-d-io/P1-dongle/wiki/Development:-roadmap)
+
+# Project sponsors
+**Elia Innovation**
+
+![](https://raw.githubusercontent.com/wiki/plan-d-io/P1-dongle/images/eliagroup.png)
