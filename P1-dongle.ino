@@ -27,7 +27,7 @@
 #define HWSERIAL Serial1
 #define TRIGGER 25 //Pin to trigger meter telegram request
 
-unsigned int fw_ver = 221;
+unsigned int fw_ver = 222;
 
 //General global vars
 Preferences preferences;
