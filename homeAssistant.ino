@@ -253,8 +253,8 @@ void hadebugDevice(bool eraseMeter){
       chanName = String(apSSID) + "_reboot";
       doc["name"] = "Reboot";
       doc["state_topic"] = "sys/devices/" + String(apSSID) + "/reboot";
-      doc["payload_on"] = "{\"value\": \"on\"}";
-      doc["payload_off"] = "{\"value\": \"off\"}";
+      doc["payload_on"] = "{\"value\": \"true\"}";
+      doc["payload_off"] = "{\"value\": \"false\"}";
       doc["state_on"] = "on";
       doc["state_off"] = "off";
       doc["value_template"] = "{{ value_json.value }}";
