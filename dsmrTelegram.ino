@@ -239,26 +239,26 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
         float tempFloat = 0.0;
         if(totConT1Found && totConT2Found){
           tempFloat = totConT1 + totConT2;
-          if(checkFloat("A-0:0.0.1", "energy", tempFloat)){
+          //if(checkFloat("A-0:0.0.1", "energy", tempFloat)){
             totCon = tempFloat;
             totConFound = true;
-          }
+          //}
         }
         tempFloat = 0.0;
         if(totInT1Found && totInT2Found){
           tempFloat = totInT1 + totInT2;
-          if(checkFloat("A-0:0.0.2", "energy", tempFloat)){
+          //if(checkFloat("A-0:0.0.2", "energy", tempFloat)){
             totIn = tempFloat;
             totInFound = true;
-          }
+          //}
         }
         tempFloat = 0.0;
         if(powConFound && powInFound){
           tempFloat = powCon - powIn;
-          if(checkFloat("A-0:0.0.3", "power", tempFloat)){
+          //if(checkFloat("A-0:0.0.3", "power", tempFloat)){
             netPowCon = tempFloat;
             netPowConFound = true; 
-          }
+          //}
         }
         spurCount = 0;
       }
