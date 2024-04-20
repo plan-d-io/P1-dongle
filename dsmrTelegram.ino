@@ -38,6 +38,8 @@ float prevtotConT1, prevtotConT2, prevtotCon, prevtotIntT1, prevtotIntT2, prevto
 unsigned long dummyInt, actTarrif, maxDemTime, totGasTime, totWatTime, totHeatTime;
 String dummyString, p1Version, meterId;
 bool dummyBool, totConFound, totInFound, netPowConFound, totConT1Found, totConT2Found, totInT1Found, totInT2Found, actTarrifFound, powConFound, powInFound, avgDemFound, maxDemMFound, volt1Found, current1Found, volt2Found, volt3Found, current2Found, current3Found;
+int spurCount;
+
 static const keyConfig dsmrKeys[] PROGMEM = {
   /*The list of all possible DSMR keys and how to parse them.
    * { "DSMR key code", key type, "HA device type", "user-readable name", "mqtt topic", retain, key found in telegram }
@@ -211,6 +213,9 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
               *dsmrKeys[i].keyValueFloat = splitValue;
               *dsmrKeys[i].keyFound = true;
             }
+            else{
+              meterIdFound = false;
+            }
           }
           else if(dsmrKeys[i].keyType == 3){
             /*timestamped (Mbus) message*/
@@ -220,6 +225,9 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
               *dsmrKeys[i].keyValueLong = splitTimestamp;
               *dsmrKeys[i].keyFound = true;
             }
+            else{
+              meterIdFound = false;
+            }
           }
           else{
             //No need for any processing
@@ -227,30 +235,34 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
         }
       }
       /*Process minimum required readings*/
-      float tempFloat = 0.0;
-      if(totConT1Found && totConT2Found){
-        tempFloat = totConT1 + totConT2;
-        if(checkFloat("A-0:0.0.1", "energy", tempFloat)){
-          totCon = tempFloat;
-          totConFound = true;
+      if(meterIdFound){
+        float tempFloat = 0.0;
+        if(totConT1Found && totConT2Found){
+          tempFloat = totConT1 + totConT2;
+          //if(checkFloat("A-0:0.0.1", "energy", tempFloat)){
+            totCon = tempFloat;
+            totConFound = true;
+          //}
         }
-      }
-      tempFloat = 0.0;
-      if(totInT1Found && totInT2Found){
-        tempFloat = totInT1 + totInT2;
-        if(checkFloat("A-0:0.0.2", "energy", tempFloat)){
-          totIn = tempFloat;
-          totInFound = true;
+        tempFloat = 0.0;
+        if(totInT1Found && totInT2Found){
+          tempFloat = totInT1 + totInT2;
+          //if(checkFloat("A-0:0.0.2", "energy", tempFloat)){
+            totIn = tempFloat;
+            totInFound = true;
+          //}
         }
-      }
-      tempFloat = 0.0;
-      if(powConFound && powInFound){
-        tempFloat = powCon - powIn;
-        if(checkFloat("A-0:0.0.3", "power", tempFloat)){
-          netPowCon = tempFloat;
-          netPowConFound = true; 
+        tempFloat = 0.0;
+        if(powConFound && powInFound){
+          tempFloat = powCon - powIn;
+          //if(checkFloat("A-0:0.0.3", "power", tempFloat)){
+            netPowCon = tempFloat;
+            netPowConFound = true; 
+          //}
         }
+        spurCount = 0;
       }
+      else spurCount++;
       /* We do not know how many, and which, M-bus meters are connected to the digtial meter ex-ante. We analyse the first three telegrams to 
        * check which M-Bus meters are present and register them into the mbusMeter array. This array is then used for further telegram parsing.
        * We only do this check during startup (first 3 telegrams), as M-bus meters do not change during later operation.
@@ -311,7 +323,7 @@ void processMeterTelegram(String rawTelegram, String rawCRC){
       if(telegramDebug) Serial.println("");
     }
   }
-  onTelegram();
+  if(meterIdFound) onTelegram();
   if(_push_full_telegram){
     String tempTopic = _mqtt_prefix;
     tempTopic = tempTopic + "telegram";
@@ -447,27 +459,33 @@ bool checkFloat(String floatKey, String floatType, float floatValue){
   if(floatType == "energy"){
     if(floatValue > 999999.9 || floatValue < -1.0) floatValid = false;
     if(floatKey == "A-0:0.0.1"){
-      if(floatValue < prevtotCon) floatValid = false;
+      if(prevtotCon == 0 || spurCount > 10) prevtotCon = floatValue;
+      if(floatValue < prevtotCon || (floatValue > prevtotCon + 23.9)) floatValid = false; //limit to 23.9kWh being consumed between two meter readings
       else if(floatValid = true) prevtotCon = floatValue;
     }
     if(floatKey == "A-0:0.0.2"){
-      if(floatValue < prevtotIn) floatValid = false;
+      if(prevtotIn == 0 || spurCount > 10) prevtotIn = floatValue;
+      if(floatValue < prevtotIn || (floatValue > prevtotIn + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIn = floatValue;
     }
     if(floatKey == "1-0:1.8.1"){
-      if(floatValue < prevtotConT1) floatValid = false;
+      if(prevtotConT1 == 0 || spurCount > 10) prevtotConT1 = floatValue;
+      if(floatValue < prevtotConT1 || (floatValue > prevtotConT1 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotConT1 = floatValue;
     }
     if(floatKey == "1-0:1.8.2"){
-      if(floatValue < prevtotConT2) floatValid = false;
+      if(prevtotConT2 == 0 || spurCount > 10) prevtotConT2 = floatValue;
+      if(floatValue < prevtotConT2 || (floatValue > prevtotConT2 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotConT2 = floatValue;
     }
     if(floatKey == "1-0:2.8.1"){
-      if(floatValue < prevtotIntT1) floatValid = false;
+      if(prevtotIntT1 == 0 || spurCount > 10) prevtotIntT1 = floatValue;
+      if(floatValue < prevtotIntT1 || (floatValue > prevtotIntT1 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIntT1 = floatValue;
     }
     if(floatKey == "1-0:2.8.2"){
-      if(floatValue < prevtotIntT2) floatValid = false;
+      if(prevtotIntT2 == 0 || spurCount > 10) prevtotIntT2 = floatValue;
+      if(floatValue < prevtotIntT2 || (floatValue > prevtotIntT2 + 23.9)) floatValid = false;
       else if(floatValid = true) prevtotIntT2 = floatValue;
     }
   }
@@ -477,7 +495,8 @@ bool checkFloat(String floatKey, String floatType, float floatValue){
   else if(floatType == "voltage"){
     if(floatValue > 430.0 || floatValue < -1.0) floatValid = false;
   }
-  if(!floatValid) syslog("Spurious value for DSMR key " + floatKey, 2);
+  if(!floatValid) syslog("Spurious value for DSMR key " + floatKey + ": " + String(floatValue), 2);
+  if(spurCount > 10) spurCount = 0;
   return floatValid;
 }
 
