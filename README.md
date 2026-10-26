@@ -26,7 +26,7 @@ firmware stays available in the history of this repository (tag `V2.23`).
 - Source-available firmware and hardware design (PolyForm Noncommercial 1.0.0)
 
 I do not provide any guarantees nor timelines for developing functionality. I am however available for specific functionality or developments at request. 
-Contributions are welcome in P1-firmware.
+Contributions are welcome in [P1-firmware](https://github.com/plan-d-io/P1-firmware).
 
 ## Basic installation
 1. Plug the P1-dongle into the P1 port of your digital meter
